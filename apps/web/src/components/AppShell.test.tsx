@@ -1,20 +1,12 @@
-import { render, screen } from "@testing-library/react";
+import { screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
-import { MemoryRouter } from "react-router-dom";
-import { AppRoutes } from "../app/router";
-import { DemoSessionProvider } from "../auth/DemoSessionProvider";
 import { SESSION_KEY } from "../auth/demoSession";
+import { renderAppRoutes } from "../test/renderAppRoutes";
 
 function renderAuthenticatedShell() {
   window.localStorage.setItem(SESSION_KEY, "active");
 
-  render(
-    <DemoSessionProvider>
-      <MemoryRouter initialEntries={["/app"]}>
-        <AppRoutes />
-      </MemoryRouter>
-    </DemoSessionProvider>,
-  );
+  renderAppRoutes(["/app"]);
 }
 
 describe("AppShell", () => {

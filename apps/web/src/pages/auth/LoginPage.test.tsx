@@ -1,18 +1,10 @@
-import { render, screen } from "@testing-library/react";
+import { screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
-import { MemoryRouter } from "react-router-dom";
-import { AppRoutes } from "../../app/router";
-import { DemoSessionProvider } from "../../auth/DemoSessionProvider";
 import { SESSION_KEY } from "../../auth/demoSession";
+import { renderAppRoutes } from "../../test/renderAppRoutes";
 
 function renderRoute(initialEntry: string) {
-  render(
-    <DemoSessionProvider>
-      <MemoryRouter initialEntries={[initialEntry]}>
-        <AppRoutes />
-      </MemoryRouter>
-    </DemoSessionProvider>,
-  );
+  renderAppRoutes([initialEntry]);
 }
 
 describe("authentication preview", () => {

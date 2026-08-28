@@ -1,19 +1,11 @@
-import { render, screen } from "@testing-library/react";
+import { screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
-import { MemoryRouter } from "react-router-dom";
-import { DemoSessionProvider } from "../auth/DemoSessionProvider";
-import { AppRoutes } from "./router";
+import { renderAppRoutes } from "../test/renderAppRoutes";
 
 const SESSION_KEY = "knowledge-ai.demo-session";
 
 function renderRoute(initialEntries: string[]) {
-  render(
-    <DemoSessionProvider>
-      <MemoryRouter initialEntries={initialEntries}>
-        <AppRoutes />
-      </MemoryRouter>
-    </DemoSessionProvider>,
-  );
+  renderAppRoutes(initialEntries);
 }
 
 describe("application routing", () => {

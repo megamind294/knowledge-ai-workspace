@@ -26,11 +26,20 @@ function createRepository(
 ): KnowledgeRepository {
   return {
     getDashboard,
+    async getWorkspaces() {
+      return [];
+    },
     async getWorkspace() {
       return null;
     },
+    async getCollections() {
+      return [];
+    },
     async getCollection() {
       return null;
+    },
+    async getDocuments() {
+      return [];
     },
   };
 }

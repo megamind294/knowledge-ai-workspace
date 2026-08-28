@@ -23,7 +23,7 @@ const navigationItems = [
     label: "Workspaces",
     to: "/app/workspaces",
     icon: Layers3,
-    available: false,
+    available: true,
   },
   {
     label: "Documents",
@@ -64,7 +64,7 @@ export function AppNav({ ariaLabel, onNavigate }: AppNavProps) {
                         : "text-slate-300 hover:bg-white/5 hover:text-white",
                     ].join(" ")
                   }
-                  end
+                  end={item.to === "/app"}
                   onClick={onNavigate}
                   to={item.to}
                 >

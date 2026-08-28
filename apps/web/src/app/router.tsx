@@ -5,6 +5,9 @@ import { HomePage } from "../pages/HomePage";
 import { LoginPage } from "../pages/auth/LoginPage";
 import { RegisterPage } from "../pages/auth/RegisterPage";
 import { DashboardPage } from "../pages/dashboard/DashboardPage";
+import { CollectionPage } from "../pages/collections/CollectionPage";
+import { WorkspaceListPage } from "../pages/workspaces/WorkspaceListPage";
+import { WorkspacePage } from "../pages/workspaces/WorkspacePage";
 import { RouteErrorPage } from "./RouteErrorPage";
 
 export function AppRoutes() {
@@ -16,6 +19,12 @@ export function AppRoutes() {
       <Route element={<RequireSession />}>
         <Route element={<AppShell />}>
           <Route element={<DashboardPage />} path="/app" />
+          <Route element={<WorkspaceListPage />} path="/app/workspaces" />
+          <Route element={<WorkspacePage />} path="/app/workspaces/:workspaceId" />
+          <Route
+            element={<CollectionPage />}
+            path="/app/workspaces/:workspaceId/collections/:collectionId"
+          />
         </Route>
       </Route>
       <Route element={<RouteErrorPage />} path="*" />

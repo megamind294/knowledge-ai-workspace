@@ -12,11 +12,17 @@ import {
 
 export interface KnowledgeRepository {
   getDashboard(): Promise<DashboardSnapshot>;
+  getWorkspaces(): Promise<WorkspaceSummary[]>;
   getWorkspace(id: string): Promise<WorkspaceSummary | null>;
+  getCollections(workspaceId: string): Promise<CollectionSummary[]>;
   getCollection(
     workspaceId: string,
     collectionId: string,
   ): Promise<CollectionSummary | null>;
+  getDocuments(
+    workspaceId: string,
+    collectionId?: string,
+  ): Promise<RecentDocument[]>;
 }
 
 function copyWorkspace(workspace: WorkspaceSummary): WorkspaceSummary {
@@ -55,9 +61,19 @@ export const fixtureKnowledgeRepository: KnowledgeRepository = {
     };
   },
 
+  async getWorkspaces() {
+    return workspaceFixtures.map(copyWorkspace);
+  },
+
   async getWorkspace(id) {
     const workspace = workspaceFixtures.find((item) => item.id === id);
     return workspace ? copyWorkspace(workspace) : null;
+  },
+
+  async getCollections(workspaceId) {
+    return collectionFixtures
+      .filter((collection) => collection.workspaceId === workspaceId)
+      .map(copyCollection);
   },
 
   async getCollection(workspaceId, collectionId) {
@@ -66,5 +82,15 @@ export const fixtureKnowledgeRepository: KnowledgeRepository = {
         item.workspaceId === workspaceId && item.id === collectionId,
     );
     return collection ? copyCollection(collection) : null;
+  },
+
+  async getDocuments(workspaceId, collectionId) {
+    return documentFixtures
+      .filter(
+        (document) =>
+          document.workspaceId === workspaceId &&
+          (!collectionId || document.collectionId === collectionId),
+      )
+      .map(copyDocument);
   },
 };

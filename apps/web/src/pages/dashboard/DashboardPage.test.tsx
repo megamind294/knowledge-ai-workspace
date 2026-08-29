@@ -25,22 +25,8 @@ function createRepository(
   getDashboard: KnowledgeRepository["getDashboard"],
 ): KnowledgeRepository {
   return {
+    ...fixtureKnowledgeRepository,
     getDashboard,
-    async getWorkspaces() {
-      return [];
-    },
-    async getWorkspace() {
-      return null;
-    },
-    async getCollections() {
-      return [];
-    },
-    async getCollection() {
-      return null;
-    },
-    async getDocuments() {
-      return [];
-    },
   };
 }
 

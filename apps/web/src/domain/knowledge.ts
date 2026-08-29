@@ -31,12 +31,17 @@ export interface CollectionSummary {
 export interface RecentDocument {
   id: string;
   workspaceId: string;
-  collectionId: string;
+  collectionId: string | null;
   name: string;
   mediaType: DocumentMediaType;
   status: IngestionStatus;
   sizeBytes: number;
   updatedAt: string;
+}
+
+export interface DocumentDetail extends RecentDocument {
+  failureReason: string | null;
+  createdAt: string;
 }
 
 export interface DocumentUploadInput {

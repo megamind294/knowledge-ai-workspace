@@ -114,7 +114,7 @@ export const documentFixtures = [
     collectionId: "onboarding",
     name: "Delivery checklist.md",
     mediaType: "markdown",
-    status: "uploaded",
+    status: "failed",
     sizeBytes: 21_620,
     updatedAt: "2026-08-26T14:45:00.000Z",
   },

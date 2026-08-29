@@ -1,0 +1,8 @@
+export const knowledgeQueryKeys = {
+  dashboard: ["knowledge", "dashboard"] as const,
+  workspaces: ["knowledge", "workspaces"] as const,
+  workspace: (workspaceId: string) =>
+    ["knowledge", "workspace", workspaceId] as const,
+  collection: (workspaceId: string, collectionId: string) =>
+    ["knowledge", "workspace", workspaceId, "collection", collectionId] as const,
+};

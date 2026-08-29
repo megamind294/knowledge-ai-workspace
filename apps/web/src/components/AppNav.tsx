@@ -29,7 +29,7 @@ const navigationItems = [
     label: "Documents",
     to: "/app/documents",
     icon: Files,
-    available: false,
+    available: true,
   },
   {
     label: "Conversations",

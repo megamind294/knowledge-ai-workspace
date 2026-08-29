@@ -5,4 +5,7 @@ export const knowledgeQueryKeys = {
     ["knowledge", "workspace", workspaceId] as const,
   collection: (workspaceId: string, collectionId: string) =>
     ["knowledge", "workspace", workspaceId, "collection", collectionId] as const,
+  documents: ["knowledge", "documents"] as const,
+  document: (documentId: string) =>
+    ["knowledge", "document", documentId] as const,
 };

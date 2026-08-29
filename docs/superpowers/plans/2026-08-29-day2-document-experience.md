@@ -10,6 +10,8 @@
 
 **Day 2 boundaries:** No file contents leave the browser, no parser runs, no object is stored, and no AI/provider call occurs. Upload, indexing, search, and chat behavior must be labelled as local simulation or mock data.
 
+**Progress:** Tasks 1 and 2 are implemented on `feature/day2-document-library`; Tasks 3–6 remain.
+
 ---
 
 ## Task 1: Define upload contracts and validation

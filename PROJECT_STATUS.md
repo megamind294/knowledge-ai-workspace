@@ -2,11 +2,24 @@
 
 ## Current milestone
 
-**Day 1 — Product shell: complete**
+**Day 2 — Document experience: in progress**
 
-The Day 1 implementation was merged into `main` through [pull request #2](https://github.com/megamind294/knowledge-ai-workspace/pull/2). It delivers the React and TypeScript frontend foundation defined in the approved design and implementation plan. Draft pull request #1 was closed after GitHub's ready-for-review transition failed, then superseded by PR #2 at the same verified head commit.
+Day 1 was merged into `main` through [pull request #2](https://github.com/megamind294/knowledge-ai-workspace/pull/2). Day 2 development continues on `feature/day2-document-library`.
 
-## Verified scope
+## Day 2 foundation completed
+
+- pure validation for PDF, TXT, Markdown, and DOCX metadata
+- extension/MIME consistency checks and a 10 MiB local-preview limit
+- explicit empty-file, unsupported-format, size, and workspace errors
+- isolated mutable fixture repository factory with defensive snapshots
+- document detail lookup and deterministic local document creation
+- simulated `uploaded` creation and failed-to-processing retry transitions
+- repository-backed workspace, collection, dashboard, and ingestion-count updates
+- 38 automated tests passing locally with lint, strict type-check, and build verification
+
+No file bytes are uploaded, parsed, stored, embedded, or sent to an AI provider by this foundation.
+
+## Day 1 verified scope
 
 - npm workspace with reproducible lockfile and Node 20 CI
 - responsive desktop/mobile shell and keyboard-accessible navigation
@@ -29,18 +42,13 @@ The Day 1 implementation was merged into `main` through [pull request #2](https:
 
 These are planned milestones, not hidden or partially implemented features.
 
-## Next milestone
+## Remaining Day 2 work
 
-**Day 2 — Document library and mock knowledge flows**
-
-Planned work:
-
-1. typed document-library repository operations
-2. PDF, TXT, Markdown, and DOCX upload UX with validation
-3. explicit uploaded, processing, indexed, and failed states
-4. document detail and ingestion-progress views
-5. retry/re-index preview behavior
-6. mock scoped search and chat surfaces, clearly labelled as non-AI fixtures
-7. expanded tests and CI verification
+1. document library and detail routes
+2. ingestion-status filtering and visible progress/failure states
+3. accessible file-selection UX backed by the validated metadata contract
+4. retry controls and query invalidation
+5. mock scoped search and chat surfaces, clearly labelled as non-AI fixtures
+6. expanded route/component tests, final documentation, CI, and merge
 
 The Day 3 API will later replace fixture-backed persistence through the existing repository boundary.

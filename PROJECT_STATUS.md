@@ -15,7 +15,11 @@ Day 1 was merged into `main` through [pull request #2](https://github.com/megami
 - document detail lookup and deterministic local document creation
 - simulated `uploaded` creation and failed-to-processing retry transitions
 - repository-backed workspace, collection, dashboard, and ingestion-count updates
-- 38 automated tests passing locally with lint, strict type-check, and build verification
+- direct-linkable document library and document detail routes
+- ingestion-status filtering with accessible status labels
+- explicit loading, empty, failure, filter-empty, and not-found states
+- failed-document retry controls with query-cache synchronization
+- 43 automated tests passing locally with lint, strict type-check, and build verification
 
 No file bytes are uploaded, parsed, stored, embedded, or sent to an AI provider by this foundation.
 
@@ -44,11 +48,8 @@ These are planned milestones, not hidden or partially implemented features.
 
 ## Remaining Day 2 work
 
-1. document library and detail routes
-2. ingestion-status filtering and visible progress/failure states
-3. accessible file-selection UX backed by the validated metadata contract
-4. retry controls and query invalidation
-5. mock scoped search and chat surfaces, clearly labelled as non-AI fixtures
-6. expanded route/component tests, final documentation, CI, and merge
+1. accessible file-selection UX backed by the validated metadata contract
+2. mock scoped search and chat surfaces, clearly labelled as non-AI fixtures
+3. expanded component tests, final documentation, CI, and merge
 
 The Day 3 API will later replace fixture-backed persistence through the existing repository boundary.

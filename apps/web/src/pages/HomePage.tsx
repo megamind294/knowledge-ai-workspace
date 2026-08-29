@@ -9,8 +9,8 @@ export function HomePage() {
           Turn trusted documents into a useful AI workspace.
         </h1>
         <p className="mt-6 max-w-2xl text-lg leading-8 text-slate-300">
-          The product foundation is ready. Workspaces, collections, and
-          source-grounded conversations are the next Day 1 slices.
+          The Day 1 product shell brings typed workspaces, collections, and
+          source-document states together behind a tested repository boundary.
         </p>
       </section>
     </main>

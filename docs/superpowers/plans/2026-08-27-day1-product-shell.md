@@ -43,11 +43,11 @@
 - Produces: npm scripts `dev`, `lint`, `typecheck`, `test`, and `build`.
 - Produces: Vite entry point for later routing tasks.
 
-- [ ] **Step 1: Create the workspace manifests and strict TypeScript configuration**
+- [x] **Step 1: Create the workspace manifests and strict TypeScript configuration**
 
 Use npm workspaces with the root scripts delegating to `@knowledge-ai/web`. Configure TypeScript with `strict: true`, `noUncheckedIndexedAccess: true`, and `noFallthroughCasesInSwitch: true`.
 
-- [ ] **Step 2: Add the minimal application entry point**
+- [x] **Step 2: Add the minimal application entry point**
 
 ```tsx
 import React from "react";
@@ -61,21 +61,21 @@ ReactDOM.createRoot(document.getElementById("root")!).render(
 );
 ```
 
-- [ ] **Step 3: Install dependencies and create the lockfile**
+- [x] **Step 3: Install dependencies and create the lockfile**
 
 Run: `npm install`  
 Expected: exit 0 and a root `package-lock.json` containing both workspace packages.
 
-- [ ] **Step 4: Verify the initial toolchain**
+- [x] **Step 4: Verify the initial toolchain**
 
 Run: `npm run typecheck && npm run lint && npm run build`  
 Expected: all commands exit 0.
 
-- [ ] **Step 5: Add CI**
+- [x] **Step 5: Add CI**
 
 Configure Node 20 with `npm ci`, then run lint, type checking, tests with `--run`, and the production build on pushes and pull requests.
 
-- [ ] **Step 6: Commit**
+- [x] **Step 6: Commit**
 
 ```bash
 git add package.json package-lock.json .gitignore .github apps/web
@@ -96,7 +96,7 @@ git commit -m "chore: scaffold knowledge workspace web app"
 - Produces: `KnowledgeRepository.getWorkspace(id: string): Promise<WorkspaceSummary | null>`.
 - Produces: `KnowledgeRepository.getCollection(workspaceId: string, collectionId: string): Promise<CollectionSummary | null>`.
 
-- [ ] **Step 1: Write failing repository tests**
+- [x] **Step 1: Write failing repository tests**
 
 ```ts
 it("returns dashboard totals derived from fixtures", async () => {
@@ -112,21 +112,21 @@ it("does not return a collection from another workspace", async () => {
 });
 ```
 
-- [ ] **Step 2: Run the focused test**
+- [x] **Step 2: Run the focused test**
 
 Run: `npm test -- --run src/data/knowledgeRepository.test.ts`  
 Expected: FAIL because the repository does not exist.
 
-- [ ] **Step 3: Implement immutable fixtures and the asynchronous repository**
+- [x] **Step 3: Implement immutable fixtures and the asynchronous repository**
 
 Define branded string IDs only where they improve safety. Return copied arrays so callers cannot mutate fixture state. Derive all dashboard counts from the same workspace/document/collection fixtures used by detail queries.
 
-- [ ] **Step 4: Run repository tests**
+- [x] **Step 4: Run repository tests**
 
 Run: `npm test -- --run src/data/knowledgeRepository.test.ts`  
 Expected: PASS.
 
-- [ ] **Step 5: Commit**
+- [x] **Step 5: Commit**
 
 ```bash
 git add apps/web/src/domain apps/web/src/data
@@ -148,7 +148,7 @@ git commit -m "feat: add typed knowledge fixture repository"
 - Produces: `RequireSession`, which redirects missing sessions to `/login` while preserving the requested location.
 - Produces: browser routes defined in the design spec.
 
-- [ ] **Step 1: Write failing protected-route tests**
+- [x] **Step 1: Write failing protected-route tests**
 
 ```tsx
 it("redirects an unauthenticated app route to login", async () => {
@@ -163,21 +163,21 @@ it("renders the dashboard for the persisted demo session", async () => {
 });
 ```
 
-- [ ] **Step 2: Run the focused test**
+- [x] **Step 2: Run the focused test**
 
 Run: `npm test -- --run src/app/router.test.tsx`  
 Expected: FAIL because session and routes are missing.
 
-- [ ] **Step 3: Implement session state and route guards**
+- [x] **Step 3: Implement session state and route guards**
 
 Persist only a fixed demo-session marker. Use `replace` navigation for redirects and retain `location.state.from` for the post-login destination. Add route-level not-found and error pages.
 
-- [ ] **Step 4: Run routing tests**
+- [x] **Step 4: Run routing tests**
 
 Run: `npm test -- --run src/app/router.test.tsx`  
 Expected: PASS.
 
-- [ ] **Step 5: Commit**
+- [x] **Step 5: Commit**
 
 ```bash
 git add apps/web/src/auth apps/web/src/app apps/web/src/main.tsx
@@ -198,25 +198,25 @@ git commit -m "feat: add demo session and protected routes"
 - Consumes: `useDemoSession()`.
 - Produces: `AppShell` with an `Outlet`, desktop sidebar, mobile header, skip link, account menu, and active-route navigation.
 
-- [ ] **Step 1: Write failing accessibility/navigation tests**
+- [x] **Step 1: Write failing accessibility/navigation tests**
 
 Assert that the shell has a skip link, labeled primary navigation, an active Dashboard link, a button that opens mobile navigation, and a sign-out action.
 
-- [ ] **Step 2: Run the focused test**
+- [x] **Step 2: Run the focused test**
 
 Run: `npm test -- --run src/components/AppShell.test.tsx`  
 Expected: FAIL because the shell is missing.
 
-- [ ] **Step 3: Implement the shell**
+- [x] **Step 3: Implement the shell**
 
 Use semantic `header`, `nav`, `main`, and button elements. Keep the mobile menu state local, close it on route change, and make focus states visible. Use a calm slate/indigo visual system with high-contrast surfaces and no placeholder gradients.
 
-- [ ] **Step 4: Run the shell tests**
+- [x] **Step 4: Run the shell tests**
 
 Run: `npm test -- --run src/components/AppShell.test.tsx`  
 Expected: PASS.
 
-- [ ] **Step 5: Commit**
+- [x] **Step 5: Commit**
 
 ```bash
 git add apps/web/src/components apps/web/src/styles.css
@@ -236,25 +236,25 @@ git commit -m "feat: add responsive application shell"
 - Consumes: `useDemoSession().startDemo()`.
 - Produces: accessible login/register forms and a clearly labeled `Explore demo workspace` action.
 
-- [ ] **Step 1: Write a failing demo-entry test**
+- [x] **Step 1: Write a failing demo-entry test**
 
 Render `/login`, activate `Explore demo workspace`, and assert navigation to the preserved app destination. Verify that the page states the demo does not create a real account.
 
-- [ ] **Step 2: Run the focused test**
+- [x] **Step 2: Run the focused test**
 
 Run: `npm test -- --run src/pages/auth/LoginPage.test.tsx`  
 Expected: FAIL because the login page is missing.
 
-- [ ] **Step 3: Implement auth screens**
+- [x] **Step 3: Implement auth screens**
 
 Provide semantic email/password fields and a Google button as disabled previews with honest `Coming in Day 3` text. Only the demo action establishes a session.
 
-- [ ] **Step 4: Run auth tests**
+- [x] **Step 4: Run auth tests**
 
 Run: `npm test -- --run src/pages/auth/LoginPage.test.tsx`  
 Expected: PASS.
 
-- [ ] **Step 5: Commit**
+- [x] **Step 5: Commit**
 
 ```bash
 git add apps/web/src/pages/auth apps/web/src/components/AuthLayout.tsx apps/web/src/app/router.tsx
@@ -278,25 +278,25 @@ git commit -m "feat: add honest authentication preview"
 - Produces: `useKnowledgeRepository()`.
 - Produces: dashboard loading, populated, empty, and failure views through TanStack Query.
 
-- [ ] **Step 1: Write failing dashboard-state tests**
+- [x] **Step 1: Write failing dashboard-state tests**
 
 Test one deferred promise for loading, one populated repository for metrics/recent lists, one empty repository for the first-workspace call to action, and one rejecting repository for retry UI.
 
-- [ ] **Step 2: Run the focused test**
+- [x] **Step 2: Run the focused test**
 
 Run: `npm test -- --run src/pages/dashboard/DashboardPage.test.tsx`  
 Expected: FAIL because the page/provider is missing.
 
-- [ ] **Step 3: Implement the repository provider and dashboard**
+- [x] **Step 3: Implement the repository provider and dashboard**
 
 Keep query keys in a focused module and format dates with `Intl.DateTimeFormat`. All metric values must come from `DashboardSnapshot.metrics`.
 
-- [ ] **Step 4: Run dashboard tests**
+- [x] **Step 4: Run dashboard tests**
 
 Run: `npm test -- --run src/pages/dashboard/DashboardPage.test.tsx`  
 Expected: PASS.
 
-- [ ] **Step 5: Commit**
+- [x] **Step 5: Commit**
 
 ```bash
 git add apps/web/src/data apps/web/src/pages/dashboard apps/web/src/main.tsx apps/web/src/app/router.tsx
@@ -318,25 +318,25 @@ git commit -m "feat: build repository-backed dashboard"
 - Produces: direct-linkable workspace and collection pages with breadcrumbs.
 - Produces: reusable `StatePanel` for empty, not-found, and recoverable error states.
 
-- [ ] **Step 1: Write failing route-state tests**
+- [x] **Step 1: Write failing route-state tests**
 
 Cover a valid workspace, valid nested collection, empty collection list, unknown workspace, collection/workspace mismatch, and browser navigation between list and detail routes.
 
-- [ ] **Step 2: Run the focused test**
+- [x] **Step 2: Run the focused test**
 
 Run: `npm test -- --run src/pages/workspaces/WorkspaceRoutes.test.tsx`  
 Expected: FAIL because the pages are missing.
 
-- [ ] **Step 3: Implement workspace and collection pages**
+- [x] **Step 3: Implement workspace and collection pages**
 
 Render collection and document summaries from repository results. Link every card with React Router. A missing entity renders a clear not-found state with a safe route back to the workspace list.
 
-- [ ] **Step 4: Run route-state tests**
+- [x] **Step 4: Run route-state tests**
 
 Run: `npm test -- --run src/pages/workspaces/WorkspaceRoutes.test.tsx`  
 Expected: PASS.
 
-- [ ] **Step 5: Commit**
+- [x] **Step 5: Commit**
 
 ```bash
 git add apps/web/src/pages/workspaces apps/web/src/pages/collections apps/web/src/components/StatePanel.tsx apps/web/src/app/router.tsx
@@ -354,26 +354,26 @@ git commit -m "feat: add workspace and collection views"
 - Consumes: all Day 1 deliverables.
 - Produces: truthful setup, testing, architecture, limitations, and roadmap documentation.
 
-- [ ] **Step 1: Run the complete verification suite**
+- [x] **Step 1: Run the complete verification suite**
 
 Run: `npm ci && npm run lint && npm run typecheck && npm test -- --run && npm run build`  
 Expected: every command exits 0 with no failed tests.
 
-- [ ] **Step 2: Check acceptance criteria**
+- [x] **Step 2: Check acceptance criteria**
 
 Confirm each Day 1 criterion in the design spec against a route, component, test, CI step, or documentation section. Record any gap as incomplete; do not re-label it complete.
 
-- [ ] **Step 3: Write documentation**
+- [x] **Step 3: Write documentation**
 
 Document Node 20+, installation, scripts, demo-session limitations, the repository adapter boundary, implemented routes, tests, and the remaining Day 2–6 roadmap.
 
-- [ ] **Step 4: Commit**
+- [x] **Step 4: Commit**
 
 ```bash
 git add README.md PROJECT_STATUS.md docs/superpowers/plans/2026-08-27-day1-product-shell.md
 git commit -m "docs: record knowledge workspace Day 1 status"
 ```
 
-- [ ] **Step 5: Push and verify CI**
+- [x] **Step 5: Push and verify CI**
 
 Push the Day 1 branch, open a pull request to `main`, and wait for CI. Merge only when the PR head is unchanged, all required steps pass, and documentation matches the verified result.

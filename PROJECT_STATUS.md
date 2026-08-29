@@ -4,7 +4,7 @@
 
 **Day 1 — Product shell: complete**
 
-The Day 1 implementation is contained in [pull request #1](https://github.com/megamind294/knowledge-ai-workspace/pull/1). It delivers the React and TypeScript frontend foundation defined in the approved design and implementation plan.
+The Day 1 implementation was merged into `main` through [pull request #2](https://github.com/megamind294/knowledge-ai-workspace/pull/2). It delivers the React and TypeScript frontend foundation defined in the approved design and implementation plan. Draft pull request #1 was closed after GitHub's ready-for-review transition failed, then superseded by PR #2 at the same verified head commit.
 
 ## Verified scope
 

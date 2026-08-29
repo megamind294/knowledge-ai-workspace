@@ -7,6 +7,7 @@ import { knowledgeQueryKeys } from "../../data/queryKeys";
 import { useKnowledgeRepository } from "../../data/useKnowledgeRepository";
 import type { IngestionStatus } from "../../domain/knowledge";
 import { DocumentStatusBadge } from "./DocumentStatusBadge";
+import { DocumentUploadPanel } from "./DocumentUploadPanel";
 
 type StatusFilter = "all" | IngestionStatus;
 
@@ -45,6 +46,10 @@ export function DocumentLibraryPage() {
         eyebrow="Day 2"
         title="Document library"
       />
+
+      <div className="mt-8">
+        <DocumentUploadPanel />
+      </div>
 
       <div className="mt-8">
         {documentsQuery.isPending ? (

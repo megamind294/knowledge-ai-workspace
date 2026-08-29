@@ -6,7 +6,7 @@
 
 Day 1 was merged into `main` through [pull request #2](https://github.com/megamind294/knowledge-ai-workspace/pull/2). Day 2 development continues on `feature/day2-document-library`.
 
-## Day 2 foundation completed
+## Day 2 completed so far
 
 - pure validation for PDF, TXT, Markdown, and DOCX metadata
 - extension/MIME consistency checks and a 10 MiB local-preview limit
@@ -19,7 +19,11 @@ Day 1 was merged into `main` through [pull request #2](https://github.com/megami
 - ingestion-status filtering with accessible status labels
 - explicit loading, empty, failure, filter-empty, and not-found states
 - failed-document retry controls with query-cache synchronization
-- 43 automated tests passing locally with lint, strict type-check, and build verification
+- accessible native file selection with workspace-scoped collection targeting
+- inline metadata validation for supported format, MIME, size, and workspace rules
+- duplicate-submission protection, successful form reset, and library refresh
+- explicit local-only messaging before and after preview creation
+- 49 automated tests passing locally with lint, strict type-check, and build verification
 
 No file bytes are uploaded, parsed, stored, embedded, or sent to an AI provider by this foundation.
 
@@ -39,7 +43,7 @@ No file bytes are uploaded, parsed, stored, embedded, or sent to an AI provider 
 ## Explicitly not implemented
 
 - real authentication or account creation
-- document upload, parsing, chunking, or object storage
+- real document upload, parsing, chunking, or object storage
 - Express API, PostgreSQL, or pgvector
 - embeddings, retrieval, AI chat, or citations
 - production deployment
@@ -48,8 +52,7 @@ These are planned milestones, not hidden or partially implemented features.
 
 ## Remaining Day 2 work
 
-1. accessible file-selection UX backed by the validated metadata contract
-2. mock scoped search and chat surfaces, clearly labelled as non-AI fixtures
-3. expanded component tests, final documentation, CI, and merge
+1. mock scoped search and chat surfaces, clearly labelled as non-AI fixtures
+2. expanded component tests, final documentation, CI, and merge
 
 The Day 3 API will later replace fixture-backed persistence through the existing repository boundary.

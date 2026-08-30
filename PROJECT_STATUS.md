@@ -2,11 +2,36 @@
 
 ## Current milestone
 
-**Day 1 — Product shell: complete**
+**Day 2 — Document experience: implementation complete; integration pending**
 
-The Day 1 implementation was merged into `main` through [pull request #2](https://github.com/megamind294/knowledge-ai-workspace/pull/2). It delivers the React and TypeScript frontend foundation defined in the approved design and implementation plan. Draft pull request #1 was closed after GitHub's ready-for-review transition failed, then superseded by PR #2 at the same verified head commit.
+Day 1 was merged into `main` through [pull request #2](https://github.com/megamind294/knowledge-ai-workspace/pull/2). Day 2 development continues on `feature/day2-document-library`.
 
-## Verified scope
+## Day 2 completed scope
+
+- pure validation for PDF, TXT, Markdown, and DOCX metadata
+- extension/MIME consistency checks and a 10 MiB local-preview limit
+- explicit empty-file, unsupported-format, size, and workspace errors
+- isolated mutable fixture repository factory with defensive snapshots
+- document detail lookup and deterministic local document creation
+- simulated `uploaded` creation and failed-to-processing retry transitions
+- repository-backed workspace, collection, dashboard, and ingestion-count updates
+- direct-linkable document library and document detail routes
+- ingestion-status filtering with accessible status labels
+- explicit loading, empty, failure, filter-empty, and not-found states
+- failed-document retry controls with query-cache synchronization
+- accessible native file selection with workspace-scoped collection targeting
+- inline metadata validation for supported format, MIME, size, and workspace rules
+- duplicate-submission protection, successful form reset, and library refresh
+- explicit local-only messaging before and after preview creation
+- direct-linkable mock knowledge preview with workspace, collection, and document scopes
+- deterministic local fixture matching, answer summaries, and source labels
+- empty-query handling and document-scope enforcement
+- explicit non-AI, non-network, and non-citation messaging
+- 54 automated tests passing locally with lint, strict type-check, and build verification
+
+No file bytes are uploaded, parsed, stored, embedded, or sent to an AI provider by this foundation.
+
+## Day 1 verified scope
 
 - npm workspace with reproducible lockfile and Node 20 CI
 - responsive desktop/mobile shell and keyboard-accessible navigation
@@ -22,25 +47,17 @@ The Day 1 implementation was merged into `main` through [pull request #2](https:
 ## Explicitly not implemented
 
 - real authentication or account creation
-- document upload, parsing, chunking, or object storage
+- real document upload, parsing, chunking, or object storage
 - Express API, PostgreSQL, or pgvector
 - embeddings, retrieval, AI chat, or citations
 - production deployment
 
 These are planned milestones, not hidden or partially implemented features.
 
-## Next milestone
+## Remaining Day 2 integration
 
-**Day 2 — Document library and mock knowledge flows**
-
-Planned work:
-
-1. typed document-library repository operations
-2. PDF, TXT, Markdown, and DOCX upload UX with validation
-3. explicit uploaded, processing, indexed, and failed states
-4. document detail and ingestion-progress views
-5. retry/re-index preview behavior
-6. mock scoped search and chat surfaces, clearly labelled as non-AI fixtures
-7. expanded tests and CI verification
+1. clean-install acceptance verification
+2. GitHub Actions verification for the final branch head
+3. pull request readiness and merge
 
 The Day 3 API will later replace fixture-backed persistence through the existing repository boundary.

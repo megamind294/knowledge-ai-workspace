@@ -1,6 +1,6 @@
 # Keystone — AI Knowledge Workspace
 
-Keystone is a portfolio-oriented knowledge workspace for organizing source documents and, in later milestones, asking grounded questions with citations. The repository currently contains the completed Day 1 React and TypeScript product shell.
+Keystone is a portfolio-oriented knowledge workspace for organizing source documents and, in later milestones, asking grounded questions with citations. The repository currently contains the completed Day 1 product shell and the Day 2 frontend document experience.
 
 ## Day 1 capabilities
 
@@ -15,6 +15,17 @@ Keystone is a portfolio-oriented knowledge workspace for organizing source docum
 - Loading, populated, empty, failure, retry, and not-found states
 - Automated linting, strict type checking, component tests, and production builds in CI
 
+## Day 2 capabilities
+
+- Direct-linkable document library and document detail views
+- Accessible filtering across uploaded, processing, indexed, and failed ingestion states
+- Validated PDF, TXT, Markdown, and DOCX metadata selection with a 10 MiB limit
+- Workspace and collection targeting with extension/MIME consistency checks
+- Local fixture document creation, failed-document retry, and synchronized dashboard counts
+- Explicit loading, empty, filtered-empty, failure, retry, and not-found states
+- Deterministic workspace-, collection-, and document-scoped mock knowledge search
+- Mock answer and source labels that are explicitly identified as non-AI and non-citations
+
 ## Architecture
 
 This npm workspace currently hosts the frontend in `apps/web`.
@@ -26,7 +37,7 @@ Key boundaries:
 - `apps/web/src/domain` — shared frontend domain contracts
 - `apps/web/src/data` — fixture repository, provider, and query keys
 - `apps/web/src/auth` — clearly labelled local demo-session boundary
-- `apps/web/src/pages` — route-level dashboard, authentication, workspace, and collection views
+- `apps/web/src/pages` — route-level dashboard, authentication, workspace, collection, document, and mock knowledge views
 - `apps/web/src/components` — reusable navigation, layout, heading, and state components
 
 The approved architecture and milestone plan are in [`docs/superpowers/specs/2026-08-27-ai-knowledge-workspace-design.md`](docs/superpowers/specs/2026-08-27-ai-knowledge-workspace-design.md) and [`docs/superpowers/plans/2026-08-27-day1-product-shell.md`](docs/superpowers/plans/2026-08-27-day1-product-shell.md).
@@ -42,6 +53,9 @@ The approved architecture and milestone plan are in [`docs/superpowers/specs/202
 | `/app/workspaces` | Workspace directory |
 | `/app/workspaces/:workspaceId` | Workspace collections |
 | `/app/workspaces/:workspaceId/collections/:collectionId` | Collection documents |
+| `/app/documents` | Filterable document library and local metadata preview |
+| `/app/documents/:documentId` | Document metadata, ingestion state, and retry controls |
+| `/app/knowledge` | Deterministic scoped mock search and answer preview |
 
 Routes below `/app` require the local demo session. Unknown entities render recoverable not-found states, while unknown application URLs use the global 404 page.
 
@@ -68,16 +82,16 @@ npm test -- --run
 npm run build
 ```
 
-Day 1 verification covers the fixture repository, protected routing, authentication preview, responsive shell, dashboard states, direct workspace/collection navigation, empty states, and scoped not-found behavior. GitHub Actions runs a clean install and every command above for feature branches and pull requests.
+Verification covers the fixture repository, protected routing, authentication preview, responsive shell, dashboards, workspace/collection/document navigation, metadata validation, ingestion simulation, retry behavior, scoped mock search, and recovery states. GitHub Actions runs a clean install and every command above for feature branches and pull requests.
 
 ## Honest limitations
 
-Day 1 is frontend-only. It does **not** provide real authentication, accounts, uploads, parsing, a database, vector search, AI calls, or deployment. Email/password and Google controls are disabled previews. The demo session stores only a fixed marker in browser LocalStorage, and all knowledge data resets to typed fixtures on reload.
+The current implementation is frontend-only. It does **not** provide real authentication, accounts, file transfer, parsing, durable storage, a database, vector search, AI calls, citations, or deployment. Email/password and Google controls are disabled previews. The demo session stores only a fixed marker in browser LocalStorage. File selection reads metadata only; no file bytes leave the browser. Document lifecycle and knowledge results are deterministic fixtures that reset on reload.
 
 ## Roadmap
 
 1. **Day 1 — complete:** React/TypeScript shell, demo auth boundary, dashboard, workspaces, collections, tests, and CI
-2. **Day 2:** document library, upload experience, ingestion states, and mock search/chat flows
+2. **Day 2 — complete:** document library, validated local metadata preview, simulated ingestion states, retry flows, and scoped mock knowledge search
 3. **Day 3:** Express API, PostgreSQL, email/password authentication, Google OAuth boundary, and durable persistence
 4. **Day 4:** parsing, chunking, provider embeddings, pgvector storage, and scoped retrieval
 5. **Day 5:** grounded chat, citations, conversation history, and low-confidence behavior

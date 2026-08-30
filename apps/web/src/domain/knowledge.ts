@@ -31,13 +31,46 @@ export interface CollectionSummary {
 export interface RecentDocument {
   id: string;
   workspaceId: string;
-  collectionId: string;
+  collectionId: string | null;
   name: string;
   mediaType: DocumentMediaType;
   status: IngestionStatus;
   sizeBytes: number;
   updatedAt: string;
 }
+
+export interface DocumentDetail extends RecentDocument {
+  failureReason: string | null;
+  createdAt: string;
+}
+
+export interface DocumentUploadInput {
+  name: string;
+  mimeType: string;
+  sizeBytes: number;
+  workspaceId: string;
+  collectionId: string | null;
+}
+
+export interface DocumentUploadCandidate extends DocumentUploadInput {
+  mediaType: DocumentMediaType;
+}
+
+export type DocumentUploadErrorCode =
+  | "unsupported-format"
+  | "media-type-mismatch"
+  | "empty-file"
+  | "file-too-large"
+  | "workspace-required";
+
+export interface DocumentUploadError {
+  code: DocumentUploadErrorCode;
+  message: string;
+}
+
+export type DocumentUploadValidation =
+  | { ok: true; candidate: DocumentUploadCandidate }
+  | { ok: false; errors: DocumentUploadError[] };
 
 export interface DashboardMetrics {
   workspaces: number;

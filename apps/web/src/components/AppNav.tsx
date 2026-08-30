@@ -29,13 +29,13 @@ const navigationItems = [
     label: "Documents",
     to: "/app/documents",
     icon: Files,
-    available: false,
+    available: true,
   },
   {
-    label: "Conversations",
-    to: "/app/conversations",
+    label: "Knowledge preview",
+    to: "/app/knowledge",
     icon: MessagesSquare,
-    available: false,
+    available: true,
   },
   {
     label: "Settings",

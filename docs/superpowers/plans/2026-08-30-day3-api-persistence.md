@@ -10,7 +10,7 @@
 
 **Spec:** `docs/superpowers/specs/2026-08-27-ai-knowledge-workspace-design.md`
 
-**Progress:** Task 1 is implemented on `feature/day3-api-foundation`; Tasks 2–8 remain.
+**Progress:** Tasks 1–2 are implemented on `feature/day3-api-foundation`; Tasks 3–8 remain.
 
 ## Global Constraints
 

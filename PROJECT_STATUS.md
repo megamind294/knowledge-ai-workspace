@@ -48,7 +48,8 @@ No file bytes are uploaded, parsed, stored, embedded, or sent to an AI provider 
 
 - real authentication or account creation
 - real document upload, parsing, chunking, or object storage
-- Express API, PostgreSQL, or pgvector
+- database-backed application routes or durable application data
+- pgvector
 - embeddings, retrieval, AI chat, or citations
 - production deployment
 
@@ -74,6 +75,11 @@ Day 3 now includes:
 - normalized 404 and internal-error envelopes without route, query, or exception leakage
 - test-safe separation between Express app composition and server startup
 - root quality commands covering contracts, API, and web workspaces
-- 62 automated tests passing locally across all three workspaces
+- an idempotent, transactional PostgreSQL migration ledger
+- relational tables for users, Google identities, refresh sessions, workspaces, memberships, collections, and document metadata
+- database constraints for membership roles, unique membership, ownership cascades, and workspace-scoped collection references
+- a validated `DATABASE_URL` and `pg` connection-pool boundary
+- local migration coverage through an in-memory PostgreSQL adapter and real PostgreSQL 16 verification in CI
+- 68 automated tests passing locally across all three workspaces
 
-Next: PostgreSQL schema, migrations, and the database connection boundary. Email/password authentication, Google OAuth, authorized persistence, and the web API adapter remain planned Day 3 work.
+Next: secure email/password credential and refresh-session services. Authentication HTTP routes, Google OAuth, authorized persistence, and the web API adapter remain planned Day 3 work.

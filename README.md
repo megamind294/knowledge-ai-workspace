@@ -44,6 +44,7 @@ Key boundaries:
 - `apps/web/src/pages` — route-level dashboard, authentication, workspace, collection, document, and mock knowledge views
 - `apps/web/src/components` — reusable navigation, layout, heading, and state components
 - `apps/api/src` — environment validation, Express composition, request correlation, and server startup
+- `apps/api/migrations` — versioned PostgreSQL schema migrations
 - `packages/contracts/src` — transport-neutral Zod schemas and inferred TypeScript types
 
 The approved architecture and milestone plan are in [`docs/superpowers/specs/2026-08-27-ai-knowledge-workspace-design.md`](docs/superpowers/specs/2026-08-27-ai-knowledge-workspace-design.md) and [`docs/superpowers/plans/2026-08-27-day1-product-shell.md`](docs/superpowers/plans/2026-08-27-day1-product-shell.md).
@@ -85,7 +86,7 @@ Run the current API foundation separately with:
 npm run dev:api
 ```
 
-It exposes `GET /api/health` on port `4000` by default. `PORT` and `NODE_ENV` are validated before startup.
+It exposes `GET /api/health` on port `4000` by default. `PORT`, `NODE_ENV`, and an optional PostgreSQL `DATABASE_URL` are validated before startup. The Day 3 database boundary now includes an idempotent migration runner and relational schema for users, external identities, refresh sessions, workspaces, memberships, collections, and document metadata. Application routes do not use that persistence layer yet.
 
 ## Quality commands
 
@@ -96,11 +97,11 @@ npm test -- --run
 npm run build
 ```
 
-Verification covers the fixture repository, protected routing, authentication preview, responsive shell, dashboards, workspace/collection/document navigation, metadata validation, ingestion simulation, retry behavior, scoped mock search, and recovery states. GitHub Actions runs a clean install and every command above for feature branches and pull requests.
+Verification covers the fixture repository, protected routing, authentication preview, responsive shell, dashboards, workspace/collection/document navigation, metadata validation, ingestion simulation, retry behavior, scoped mock search, API contracts, HTTP error handling, migration idempotency, relational constraints, and recovery states. GitHub Actions runs a clean install and every command above against a real PostgreSQL 16 service for feature branches and pull requests; local tests use a PostgreSQL-compatible in-memory adapter when `TEST_DATABASE_URL` is absent.
 
 ## Honest limitations
 
-The current API is a foundation only. It does **not** yet provide real authentication, accounts, file transfer, parsing, durable storage, PostgreSQL, vector search, AI calls, citations, or deployment. Email/password and Google controls remain disabled previews. The demo session stores only a fixed marker in browser LocalStorage. File selection reads metadata only; no file bytes leave the browser. Document lifecycle and knowledge results are deterministic fixtures that reset on reload.
+The current API and PostgreSQL schema are foundations only. The app does **not** yet provide real authentication, account flows, database-backed routes, file transfer, parsing, durable document storage, vector search, AI calls, citations, or deployment. Email/password and Google controls remain disabled previews. The demo session stores only a fixed marker in browser LocalStorage. File selection reads metadata only; no file bytes leave the browser. Document lifecycle and knowledge results are deterministic fixtures that reset on reload.
 
 ## Roadmap
 

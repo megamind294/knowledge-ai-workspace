@@ -2,9 +2,9 @@
 
 ## Current milestone
 
-**Day 2 — Document experience: implementation complete; integration pending**
+**Day 3 — API, authentication, and persistence: ready to start**
 
-Day 1 was merged into `main` through [pull request #2](https://github.com/megamind294/knowledge-ai-workspace/pull/2). Day 2 development continues on `feature/day2-document-library`.
+Day 1 was merged into `main` through [pull request #2](https://github.com/megamind294/knowledge-ai-workspace/pull/2). Day 2 was merged through [pull request #4](https://github.com/megamind294/knowledge-ai-workspace/pull/4) after clean local acceptance and GitHub Actions verification.
 
 ## Day 2 completed scope
 
@@ -54,10 +54,14 @@ No file bytes are uploaded, parsed, stored, embedded, or sent to an AI provider 
 
 These are planned milestones, not hidden or partially implemented features.
 
-## Remaining Day 2 integration
+## Day 2 verification
 
-1. clean-install acceptance verification
-2. GitHub Actions verification for the final branch head
-3. pull request readiness and merge
+- clean `npm ci`
+- lint and strict type-check passed
+- 54 automated tests passed
+- production build passed
+- GitHub Actions run #28 passed on the merged pull-request head
 
-The Day 3 API will later replace fixture-backed persistence through the existing repository boundary.
+## Next milestone
+
+Day 3 introduces the Express API, PostgreSQL schema, email/password authentication, a Google OAuth boundary, and durable workspace/document persistence. The existing `KnowledgeRepository` interface remains the frontend adapter seam.

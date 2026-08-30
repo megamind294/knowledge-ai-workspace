@@ -10,6 +10,8 @@
 
 **Spec:** `docs/superpowers/specs/2026-08-27-ai-knowledge-workspace-design.md`
 
+**Progress:** Task 1 is implemented on `feature/day3-api-foundation`; Tasks 2–8 remain.
+
 ## Global Constraints
 
 - Password credentials are hashed; plaintext passwords are never persisted or logged.
@@ -26,12 +28,14 @@
 **Files:**
 - Create: `packages/contracts/package.json`
 - Create: `packages/contracts/tsconfig.json`
+- Create: `packages/contracts/tsconfig.build.json`
 - Create: `packages/contracts/eslint.config.js`
 - Create: `packages/contracts/src/http.ts`
 - Create: `packages/contracts/src/index.ts`
 - Create: `packages/contracts/src/http.test.ts`
 - Create: `apps/api/package.json`
 - Create: `apps/api/tsconfig.json`
+- Create: `apps/api/tsconfig.build.json`
 - Create: `apps/api/eslint.config.js`
 - Create: `apps/api/src/config.ts`
 - Create: `apps/api/src/app.ts`

@@ -2,7 +2,7 @@
 
 ## Current milestone
 
-**Day 3 — API, authentication, and persistence: ready to start**
+**Day 3 — API, authentication, and persistence: in progress**
 
 Day 1 was merged into `main` through [pull request #2](https://github.com/megamind294/knowledge-ai-workspace/pull/2). Day 2 was merged through [pull request #4](https://github.com/megamind294/knowledge-ai-workspace/pull/4) after clean local acceptance and GitHub Actions verification.
 
@@ -64,4 +64,16 @@ These are planned milestones, not hidden or partially implemented features.
 
 ## Next milestone
 
-Day 3 introduces the Express API, PostgreSQL schema, email/password authentication, a Google OAuth boundary, and durable workspace/document persistence. The existing `KnowledgeRepository` interface remains the frontend adapter seam.
+Day 3 now includes:
+
+- a new `apps/api` Express and TypeScript workspace
+- runtime-validated shared HTTP contracts in `packages/contracts`
+- validated API environment configuration
+- a contract-backed `/api/health` endpoint
+- caller-preserving or generated request IDs
+- normalized 404 and internal-error envelopes without route, query, or exception leakage
+- test-safe separation between Express app composition and server startup
+- root quality commands covering contracts, API, and web workspaces
+- 62 automated tests passing locally across all three workspaces
+
+Next: PostgreSQL schema, migrations, and the database connection boundary. Email/password authentication, Google OAuth, authorized persistence, and the web API adapter remain planned Day 3 work.

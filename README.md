@@ -1,6 +1,6 @@
 # Keystone — AI Knowledge Workspace
 
-Keystone is a portfolio-oriented knowledge workspace for organizing source documents and, in later milestones, asking grounded questions with citations. The repository currently contains the completed Day 1 product shell and the Day 2 frontend document experience.
+Keystone is a portfolio-oriented knowledge workspace for organizing source documents and, in later milestones, asking grounded questions with citations. The repository contains the completed Day 1 product shell and Day 2 document experience; Day 3 API development is underway.
 
 ## Day 1 capabilities
 
@@ -28,7 +28,11 @@ Keystone is a portfolio-oriented knowledge workspace for organizing source docum
 
 ## Architecture
 
-This npm workspace currently hosts the frontend in `apps/web`.
+This npm workspace currently hosts:
+
+- `apps/web` — the React and TypeScript product experience
+- `apps/api` — the Express and TypeScript HTTP service foundation
+- `packages/contracts` — runtime-validated request, response, and error contracts
 
 The page layer consumes an asynchronous `KnowledgeRepository` through a provider. Day 1 uses immutable typed fixtures; Day 3 will introduce an HTTP adapter without coupling pages to transport details. TanStack Query manages repository state, React Router owns direct URLs and browser navigation, and Tailwind provides the responsive visual system.
 
@@ -39,6 +43,8 @@ Key boundaries:
 - `apps/web/src/auth` — clearly labelled local demo-session boundary
 - `apps/web/src/pages` — route-level dashboard, authentication, workspace, collection, document, and mock knowledge views
 - `apps/web/src/components` — reusable navigation, layout, heading, and state components
+- `apps/api/src` — environment validation, Express composition, request correlation, and server startup
+- `packages/contracts/src` — transport-neutral Zod schemas and inferred TypeScript types
 
 The approved architecture and milestone plan are in [`docs/superpowers/specs/2026-08-27-ai-knowledge-workspace-design.md`](docs/superpowers/specs/2026-08-27-ai-knowledge-workspace-design.md) and [`docs/superpowers/plans/2026-08-27-day1-product-shell.md`](docs/superpowers/plans/2026-08-27-day1-product-shell.md).
 
@@ -73,6 +79,14 @@ npm run dev
 
 Vite will print the local development URL.
 
+Run the current API foundation separately with:
+
+```bash
+npm run dev:api
+```
+
+It exposes `GET /api/health` on port `4000` by default. `PORT` and `NODE_ENV` are validated before startup.
+
 ## Quality commands
 
 ```bash
@@ -86,7 +100,7 @@ Verification covers the fixture repository, protected routing, authentication pr
 
 ## Honest limitations
 
-The current implementation is frontend-only. It does **not** provide real authentication, accounts, file transfer, parsing, durable storage, a database, vector search, AI calls, citations, or deployment. Email/password and Google controls are disabled previews. The demo session stores only a fixed marker in browser LocalStorage. File selection reads metadata only; no file bytes leave the browser. Document lifecycle and knowledge results are deterministic fixtures that reset on reload.
+The current API is a foundation only. It does **not** yet provide real authentication, accounts, file transfer, parsing, durable storage, PostgreSQL, vector search, AI calls, citations, or deployment. Email/password and Google controls remain disabled previews. The demo session stores only a fixed marker in browser LocalStorage. File selection reads metadata only; no file bytes leave the browser. Document lifecycle and knowledge results are deterministic fixtures that reset on reload.
 
 ## Roadmap
 

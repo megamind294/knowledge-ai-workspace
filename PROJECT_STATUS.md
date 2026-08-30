@@ -2,11 +2,11 @@
 
 ## Current milestone
 
-**Day 2 — Document experience: in progress**
+**Day 2 — Document experience: implementation complete; integration pending**
 
 Day 1 was merged into `main` through [pull request #2](https://github.com/megamind294/knowledge-ai-workspace/pull/2). Day 2 development continues on `feature/day2-document-library`.
 
-## Day 2 completed so far
+## Day 2 completed scope
 
 - pure validation for PDF, TXT, Markdown, and DOCX metadata
 - extension/MIME consistency checks and a 10 MiB local-preview limit
@@ -23,7 +23,11 @@ Day 1 was merged into `main` through [pull request #2](https://github.com/megami
 - inline metadata validation for supported format, MIME, size, and workspace rules
 - duplicate-submission protection, successful form reset, and library refresh
 - explicit local-only messaging before and after preview creation
-- 49 automated tests passing locally with lint, strict type-check, and build verification
+- direct-linkable mock knowledge preview with workspace, collection, and document scopes
+- deterministic local fixture matching, answer summaries, and source labels
+- empty-query handling and document-scope enforcement
+- explicit non-AI, non-network, and non-citation messaging
+- 54 automated tests passing locally with lint, strict type-check, and build verification
 
 No file bytes are uploaded, parsed, stored, embedded, or sent to an AI provider by this foundation.
 
@@ -50,9 +54,10 @@ No file bytes are uploaded, parsed, stored, embedded, or sent to an AI provider 
 
 These are planned milestones, not hidden or partially implemented features.
 
-## Remaining Day 2 work
+## Remaining Day 2 integration
 
-1. mock scoped search and chat surfaces, clearly labelled as non-AI fixtures
-2. expanded component tests, final documentation, CI, and merge
+1. clean-install acceptance verification
+2. GitHub Actions verification for the final branch head
+3. pull request readiness and merge
 
 The Day 3 API will later replace fixture-backed persistence through the existing repository boundary.

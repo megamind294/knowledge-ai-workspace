@@ -44,6 +44,7 @@ Key boundaries:
 - `apps/web/src/pages` — route-level dashboard, authentication, workspace, collection, document, and mock knowledge views
 - `apps/web/src/components` — reusable navigation, layout, heading, and state components
 - `apps/api/src` — environment validation, Express composition, request correlation, and server startup
+- `apps/api/src/auth` — credential hashing, token issuance, refresh rotation, and interchangeable auth repositories
 - `apps/api/migrations` — versioned PostgreSQL schema migrations
 - `packages/contracts/src` — transport-neutral Zod schemas and inferred TypeScript types
 
@@ -97,11 +98,11 @@ npm test -- --run
 npm run build
 ```
 
-Verification covers the fixture repository, protected routing, authentication preview, responsive shell, dashboards, workspace/collection/document navigation, metadata validation, ingestion simulation, retry behavior, scoped mock search, API contracts, HTTP error handling, migration idempotency, relational constraints, and recovery states. GitHub Actions runs a clean install and every command above against a real PostgreSQL 16 service for feature branches and pull requests; local tests use a PostgreSQL-compatible in-memory adapter when `TEST_DATABASE_URL` is absent.
+Verification covers the fixture repository, protected routing, authentication preview, responsive shell, dashboards, workspace/collection/document navigation, metadata validation, ingestion simulation, retry behavior, scoped mock search, API contracts, HTTP error handling, migration idempotency, relational constraints, password hashing, signed access tokens, refresh rotation/replay handling, and recovery states. GitHub Actions runs a clean install and every command above against a real PostgreSQL 16 service for feature branches and pull requests; local tests use a PostgreSQL-compatible in-memory adapter when `TEST_DATABASE_URL` is absent.
 
 ## Honest limitations
 
-The current API and PostgreSQL schema are foundations only. The app does **not** yet provide real authentication, account flows, database-backed routes, file transfer, parsing, durable document storage, vector search, AI calls, citations, or deployment. Email/password and Google controls remain disabled previews. The demo session stores only a fixed marker in browser LocalStorage. File selection reads metadata only; no file bytes leave the browser. Document lifecycle and knowledge results are deterministic fixtures that reset on reload.
+The current API, PostgreSQL schema, and internal authentication service are foundations only. The app does **not** yet expose authentication HTTP routes, cookies, account screens, database-backed knowledge routes, file transfer, parsing, durable document storage, vector search, AI calls, citations, or deployment. Email/password and Google controls remain disabled previews. The demo session stores only a fixed marker in browser LocalStorage. File selection reads metadata only; no file bytes leave the browser. Document lifecycle and knowledge results are deterministic fixtures that reset on reload.
 
 ## Roadmap
 

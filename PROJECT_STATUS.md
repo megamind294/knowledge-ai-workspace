@@ -80,6 +80,11 @@ Day 3 now includes:
 - database constraints for membership roles, unique membership, ownership cascades, and workspace-scoped collection references
 - a validated `DATABASE_URL` and `pg` connection-pool boundary
 - local migration coverage through an in-memory PostgreSQL adapter and real PostgreSQL 16 verification in CI
-- 68 automated tests passing locally across all three workspaces
+- normalized email registration and bcrypt password hashing
+- short-lived HS256 access tokens with subject, email, issued-at, and expiry claims
+- opaque random refresh credentials stored only as SHA-256 hashes
+- atomic refresh rotation, replay-family containment, expiry rejection, and logout revocation
+- interchangeable in-memory and PostgreSQL authentication repositories with parity coverage
+- 78 automated tests passing locally across all three workspaces
 
-Next: secure email/password credential and refresh-session services. Authentication HTTP routes, Google OAuth, authorized persistence, and the web API adapter remain planned Day 3 work.
+Next: schema-validated authentication HTTP routes, HTTP-only refresh cookies, and bearer authorization middleware. Google OAuth, authorized persistence, and the web API adapter remain planned Day 3 work.

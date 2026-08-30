@@ -8,6 +8,7 @@ import { DashboardPage } from "../pages/dashboard/DashboardPage";
 import { CollectionPage } from "../pages/collections/CollectionPage";
 import { DocumentDetailPage } from "../pages/documents/DocumentDetailPage";
 import { DocumentLibraryPage } from "../pages/documents/DocumentLibraryPage";
+import { MockKnowledgePage } from "../pages/knowledge/MockKnowledgePage";
 import { WorkspaceListPage } from "../pages/workspaces/WorkspaceListPage";
 import { WorkspacePage } from "../pages/workspaces/WorkspacePage";
 import { RouteErrorPage } from "./RouteErrorPage";
@@ -23,6 +24,7 @@ export function AppRoutes() {
           <Route element={<DashboardPage />} path="/app" />
           <Route element={<WorkspaceListPage />} path="/app/workspaces" />
           <Route element={<DocumentLibraryPage />} path="/app/documents" />
+          <Route element={<MockKnowledgePage />} path="/app/knowledge" />
           <Route
             element={<DocumentDetailPage />}
             path="/app/documents/:documentId"

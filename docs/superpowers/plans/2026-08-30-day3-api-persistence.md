@@ -157,11 +157,11 @@ export function createApp() {
 - Produces: authenticated list/detail/create endpoints for workspaces and collections plus list/detail/create/retry metadata endpoints for documents.
 - Consumes: `requireAuth`, shared knowledge schemas, and PostgreSQL membership tables.
 
-- [ ] **Step 1: Write failing API tests proving owner/member access, viewer read-only behavior, cross-workspace denial, missing-resource handling, input validation, and deterministic document status transitions**
-- [ ] **Step 2: Verify failures come from missing routes**
-- [ ] **Step 3: Implement repository queries with membership predicates in every operation and transactionally create owner membership with each workspace**
-- [ ] **Step 4: Run API integration and root quality suites**
-- [ ] **Step 5: Commit `feat: add authorized workspace API`**
+- [x] **Step 1: Write failing API tests proving owner/member access, viewer read-only behavior, cross-workspace denial, missing-resource handling, input validation, and deterministic document status transitions**
+- [x] **Step 2: Verify failures come from missing routes**
+- [x] **Step 3: Implement repository queries with membership predicates in every operation and transactionally create owner membership with each workspace**
+- [x] **Step 4: Run API integration and root quality suites**
+- [x] **Step 5: Commit `feat: add authorized workspace API`**
 
 ### Task 6: API-backed web authentication and repository adapter
 

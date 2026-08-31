@@ -97,7 +97,7 @@ Run the current API foundation separately with:
 npm run dev:api
 ```
 
-It exposes `GET /api/health` on port `4000` by default. `PORT`, `NODE_ENV`, and an optional PostgreSQL `DATABASE_URL` are validated before startup. The Day 3 database boundary now includes an idempotent migration runner and relational schema for users, external identities, refresh sessions, workspaces, memberships, collections, and document metadata. Application routes do not use that persistence layer yet.
+It exposes `GET /api/health` on port `4000` by default. `PORT`, `NODE_ENV`, and an optional PostgreSQL `DATABASE_URL` are validated before startup. The Day 3 database boundary includes an idempotent migration runner and relational schema for users, external identities, refresh sessions, workspaces, memberships, collections, and document metadata. Express composition can now mount authenticated PostgreSQL-backed workspace, collection, and document routes; the default server startup remains intentionally unwired until the Day 3 integration task.
 
 ## Quality commands
 
@@ -108,11 +108,11 @@ npm test -- --run
 npm run build
 ```
 
-Verification covers the fixture repository, protected routing, authentication preview, responsive shell, dashboards, workspace/collection/document navigation, metadata validation, ingestion simulation, retry behavior, scoped mock search, API contracts, HTTP error handling, migration idempotency, relational constraints, password hashing, signed bearer tokens, refresh-cookie rotation/replay handling, and recovery states. GitHub Actions runs a clean install and every command above against a real PostgreSQL 16 service for feature branches and pull requests; local tests use a PostgreSQL-compatible in-memory adapter when `TEST_DATABASE_URL` is absent.
+Verification covers the fixture repository, protected routing, authentication preview, responsive shell, dashboards, workspace/collection/document navigation, metadata validation, ingestion simulation, retry behavior, scoped mock search, API contracts, HTTP error handling, migration idempotency, relational constraints, password hashing, signed bearer tokens, refresh-cookie rotation/replay handling, membership authorization, cross-workspace isolation, and recovery states. GitHub Actions runs a clean install and every command above against a real PostgreSQL 16 service for feature branches and pull requests; local tests use a PostgreSQL-compatible in-memory adapter when `TEST_DATABASE_URL` is absent.
 
 ## Honest limitations
 
-The backend now has configurable authentication routes, but the default server startup and frontend are not connected to them yet. The app does **not** yet provide live account screens, database-backed knowledge routes, Google OAuth, file transfer, parsing, durable document storage, vector search, AI calls, citations, or deployment. Email/password and Google controls in the web app remain disabled previews. The demo session stores only a fixed marker in browser LocalStorage. File selection reads metadata only; no file bytes leave the browser. Document lifecycle and knowledge results are deterministic fixtures that reset on reload.
+The backend now has configurable authentication and database-backed knowledge routes, but the default server startup and frontend are not connected to them yet. The app does **not** yet provide live account screens, Google OAuth, file transfer, parsing, durable file storage, vector search, AI calls, citations, or deployment. The new document API persists metadata only. Email/password and Google controls in the web app remain disabled previews. The demo session stores only a fixed marker in browser LocalStorage. File selection reads metadata only; no file bytes leave the browser. Frontend document lifecycle and knowledge results remain deterministic fixtures that reset on reload.
 
 ## Roadmap
 

@@ -90,6 +90,11 @@ Day 3 now includes:
 - scoped HTTP-only SameSite refresh cookies with production `Secure` mode
 - bearer authentication middleware with signature and expiry verification
 - normalized validation, conflict, and unauthorized responses without password or token leakage
-- 89 automated tests passing locally across all three workspaces
+- shared runtime contracts for workspace, collection, and document metadata
+- membership-authorized workspace, collection, and document list/detail/create routes
+- transactional workspace creation with automatic owner membership
+- viewer read-only enforcement and non-member resource isolation
+- deterministic failed-document retry transitions with conflict protection
+- 93 automated tests passing locally across all three workspaces
 
-Next: authorized workspace, collection, and document persistence endpoints. Production server wiring, Google OAuth, and the web API adapter remain planned Day 3 work.
+Next: connect the frontend authentication and knowledge repository adapters. Production server wiring and Google OAuth remain planned Day 3 work.

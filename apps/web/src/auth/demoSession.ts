@@ -10,8 +10,12 @@ export interface DemoUser {
 
 export interface DemoSessionValue {
   user: DemoUser | null;
+  mode: "fixture" | "api";
+  status: "restoring" | "ready";
   startDemo(): void;
-  endDemo(): void;
+  login(input: {email:string;password:string}): Promise<void>;
+  register(input: {displayName:string;email:string;password:string}): Promise<void>;
+  endDemo(): void | Promise<void>;
 }
 
 export const demoUser: DemoUser = {

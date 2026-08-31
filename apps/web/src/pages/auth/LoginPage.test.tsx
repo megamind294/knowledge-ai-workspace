@@ -25,7 +25,7 @@ describe("authentication preview", () => {
     expect(
       screen.getByRole("button", { name: /continue with google/i }),
     ).toBeDisabled();
-    expect(screen.getByText(/available in day 3/i)).toBeVisible();
+    expect(screen.getByText(/google sign-in remains unavailable/i)).toBeVisible();
     expect(screen.getByRole("link", { name: /create account/i })).toHaveAttribute(
       "href",
       "/register",

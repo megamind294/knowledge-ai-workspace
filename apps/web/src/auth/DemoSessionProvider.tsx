@@ -23,6 +23,8 @@ export function DemoSessionProvider({ children }: PropsWithChildren) {
   const value = useMemo<DemoSessionValue>(
     () => ({
       user,
+      mode: "fixture",
+      status: "ready",
       startDemo() {
         window.localStorage.setItem(SESSION_KEY, "active");
         setUser(demoUser);
@@ -31,6 +33,8 @@ export function DemoSessionProvider({ children }: PropsWithChildren) {
         window.localStorage.removeItem(SESSION_KEY);
         setUser(null);
       },
+      async login() { throw new Error("Email sign-in is unavailable in fixture mode"); },
+      async register() { throw new Error("Registration is unavailable in fixture mode"); },
     }),
     [user],
   );

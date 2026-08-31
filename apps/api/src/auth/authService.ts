@@ -161,6 +161,14 @@ export class AuthService {
     return this.repository.revokeRefreshSession(tokenHash, this.now());
   }
 
+  async getPublicUser(userId: string) {
+    const user = await this.repository.findUserById(userId);
+    if (!user) {
+      throw new AuthError("INVALID_CREDENTIALS");
+    }
+    return publicUser(user);
+  }
+
   private async findUserForSession(session: RefreshSession) {
     const user = await this.repository.findUserById(session.userId);
     if (user) {

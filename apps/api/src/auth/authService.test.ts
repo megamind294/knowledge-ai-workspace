@@ -47,7 +47,9 @@ describe("AuthService", () => {
     const storedSession = await repository.findRefreshSessionByHash(
       hashRefreshToken(result.refreshToken),
     );
-    const verified = await jwtVerify(result.accessToken, accessTokenSecret);
+    const verified = await jwtVerify(result.accessToken, accessTokenSecret, {
+      currentDate: new Date("2026-08-31T00:00:00.000Z"),
+    });
 
     expect(result.user).toEqual({
       id: expect.any(String),

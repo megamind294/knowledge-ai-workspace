@@ -4,6 +4,8 @@ import express, {
   type ErrorRequestHandler,
   type Express,
 } from "express";
+import { createAuthRouter } from "./auth/authRouter.js";
+import type { AuthService } from "./auth/authService.js";
 
 const REQUEST_ID_PATTERN = /^[A-Za-z0-9._-]{1,128}$/;
 
@@ -12,6 +14,11 @@ function resolveRequestId(value: string | undefined) {
 }
 
 interface CreateAppOptions {
+  auth?: {
+    service: AuthService;
+    accessTokenSecret: Uint8Array;
+    secureCookies: boolean;
+  };
   registerRoutes?: (app: Express) => void;
 }
 
@@ -33,6 +40,10 @@ export function createApp(options: CreateAppOptions = {}) {
     };
     response.json(body);
   });
+
+  if (options.auth) {
+    app.use("/api/auth", createAuthRouter(options.auth));
+  }
 
   options.registerRoutes?.(app);
 

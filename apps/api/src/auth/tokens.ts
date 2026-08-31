@@ -1,5 +1,5 @@
 import { createHash, randomBytes } from "node:crypto";
-import { SignJWT } from "jose";
+import { jwtVerify, SignJWT } from "jose";
 import type { PublicUser } from "./authTypes.js";
 
 export function createRefreshToken() {
@@ -29,4 +29,20 @@ export async function issueAccessToken(options: IssueAccessTokenOptions) {
     .setIssuedAt(issuedAt)
     .setExpirationTime(issuedAt + options.ttlSeconds)
     .sign(options.secret);
+}
+
+export interface AccessTokenClaims {
+  userId: string;
+  email: string;
+}
+
+export async function verifyAccessToken(
+  token: string,
+  secret: Uint8Array,
+): Promise<AccessTokenClaims> {
+  const verified = await jwtVerify(token, secret, { algorithms: ["HS256"] });
+  if (!verified.payload.sub || typeof verified.payload.email !== "string") {
+    throw new Error("Invalid access-token claims");
+  }
+  return { userId: verified.payload.sub, email: verified.payload.email };
 }

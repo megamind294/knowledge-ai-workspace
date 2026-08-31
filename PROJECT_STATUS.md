@@ -95,6 +95,11 @@ Day 3 now includes:
 - transactional workspace creation with automatic owner membership
 - viewer read-only enforcement and non-member resource isolation
 - deterministic failed-document retry transitions with conflict protection
-- 93 automated tests passing locally across all three workspaces
+- access-token-aware browser API client with one refresh-cookie retry
+- real email/password login and registration forms in API mode
+- secure session restoration and logout without browser token persistence
+- an HTTP `KnowledgeRepository` adapter mapping API contracts into the existing UI domain
+- explicitly configured fixture fallback through `VITE_DATA_MODE=fixture`
+- 101 automated tests passing locally across all three workspaces
 
-Next: connect the frontend authentication and knowledge repository adapters. Production server wiring and Google OAuth remain planned Day 3 work.
+Next: add the Google OAuth adapter boundary. Production server composition and final Day 3 acceptance remain planned work.

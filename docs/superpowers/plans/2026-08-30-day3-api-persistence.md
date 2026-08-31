@@ -179,11 +179,11 @@ export function createApp() {
 - Produces: access-token-aware API client with one refresh retry, real email/password forms, and a `KnowledgeRepository` HTTP adapter.
 - Consumes: Task 4 auth contracts and Task 5 knowledge contracts.
 
-- [ ] **Step 1: Write failing frontend tests for login/register validation, session restoration, refresh retry, logout, API error display, and repository response mapping**
-- [ ] **Step 2: Confirm failures are caused by the demo-only provider and missing adapter**
-- [ ] **Step 3: Implement the API client and preserve an explicitly labelled fixture mode only when `VITE_DATA_MODE=fixture`**
-- [ ] **Step 4: Run frontend and root quality gates**
-- [ ] **Step 5: Commit `feat: connect web app to authenticated API`**
+- [x] **Step 1: Write failing frontend tests for login/register validation, session restoration, refresh retry, logout, API error display, and repository response mapping**
+- [x] **Step 2: Confirm failures are caused by the demo-only provider and missing adapter**
+- [x] **Step 3: Implement the API client and preserve an explicitly labelled fixture mode only when `VITE_DATA_MODE=fixture`**
+- [x] **Step 4: Run frontend and root quality gates**
+- [x] **Step 5: Commit `feat: connect web app to authenticated API`**
 
 ### Task 7: Google OAuth adapter boundary
 

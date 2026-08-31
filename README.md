@@ -6,7 +6,7 @@ Keystone is a portfolio-oriented knowledge workspace for organizing source docum
 
 - Responsive authenticated application shell with desktop and mobile navigation
 - Explicitly labelled local demo session with protected routes and sign-out
-- Accessible login and registration previews for the Day 3 authentication milestone
+- Accessible login and registration screens with fixture and API modes
 - Typed workspace, collection, document, and ingestion-status contracts
 - Asynchronous fixture repository behind a replaceable `KnowledgeRepository` interface
 - Dashboard metrics and recent items derived from repository data
@@ -34,12 +34,13 @@ This npm workspace currently hosts:
 - `apps/api` — the Express and TypeScript HTTP service foundation
 - `packages/contracts` — runtime-validated request, response, and error contracts
 
-The page layer consumes an asynchronous `KnowledgeRepository` through a provider. Day 1 uses immutable typed fixtures; Day 3 will introduce an HTTP adapter without coupling pages to transport details. TanStack Query manages repository state, React Router owns direct URLs and browser navigation, and Tailwind provides the responsive visual system.
+The page layer consumes an asynchronous `KnowledgeRepository` through a provider. It can use immutable typed fixtures or the Day 3 HTTP adapter without coupling pages to transport details. TanStack Query manages repository state, React Router owns direct URLs and browser navigation, and Tailwind provides the responsive visual system.
 
 Key boundaries:
 
 - `apps/web/src/domain` — shared frontend domain contracts
-- `apps/web/src/data` — fixture repository, provider, and query keys
+- `apps/web/src/api` — access-token-aware HTTP client and refresh retry
+- `apps/web/src/data` — fixture/API repositories, provider, and query keys
 - `apps/web/src/auth` — clearly labelled local demo-session boundary
 - `apps/web/src/pages` — route-level dashboard, authentication, workspace, collection, document, and mock knowledge views
 - `apps/web/src/components` — reusable navigation, layout, heading, and state components
@@ -91,6 +92,8 @@ npm run dev
 
 Vite will print the local development URL.
 
+The web build uses API mode by default. Set `VITE_API_URL` when the API is hosted on another origin. To run the deliberately local, non-networked portfolio preview instead, set `VITE_DATA_MODE=fixture`; this is the only mode that exposes the demo-session control.
+
 Run the current API foundation separately with:
 
 ```bash
@@ -108,11 +111,11 @@ npm test -- --run
 npm run build
 ```
 
-Verification covers the fixture repository, protected routing, authentication preview, responsive shell, dashboards, workspace/collection/document navigation, metadata validation, ingestion simulation, retry behavior, scoped mock search, API contracts, HTTP error handling, migration idempotency, relational constraints, password hashing, signed bearer tokens, refresh-cookie rotation/replay handling, membership authorization, cross-workspace isolation, and recovery states. GitHub Actions runs a clean install and every command above against a real PostgreSQL 16 service for feature branches and pull requests; local tests use a PostgreSQL-compatible in-memory adapter when `TEST_DATABASE_URL` is absent.
+Verification covers fixture and API repositories, protected routing, session restoration, real credential forms, refresh retry, logout, responsive shell, dashboards, workspace/collection/document navigation, metadata validation, ingestion simulation, retry behavior, scoped mock search, API contracts, HTTP error handling, migration idempotency, relational constraints, password hashing, signed bearer tokens, refresh-cookie rotation/replay handling, membership authorization, cross-workspace isolation, and recovery states. GitHub Actions runs a clean install and every command above against a real PostgreSQL 16 service for feature branches and pull requests; local tests use a PostgreSQL-compatible in-memory adapter when `TEST_DATABASE_URL` is absent.
 
 ## Honest limitations
 
-The backend now has configurable authentication and database-backed knowledge routes, but the default server startup and frontend are not connected to them yet. The app does **not** yet provide live account screens, Google OAuth, file transfer, parsing, durable file storage, vector search, AI calls, citations, or deployment. The new document API persists metadata only. Email/password and Google controls in the web app remain disabled previews. The demo session stores only a fixed marker in browser LocalStorage. File selection reads metadata only; no file bytes leave the browser. Frontend document lifecycle and knowledge results remain deterministic fixtures that reset on reload.
+The frontend now has API-backed authentication and knowledge adapters, but the default API server composition is not connected to PostgreSQL-backed route dependencies yet. The app does **not** yet provide Google OAuth, file transfer, parsing, durable file storage, vector search, AI calls, citations, or deployment. The document API persists metadata only. Google remains disabled. Fixture mode stores only a fixed marker in browser LocalStorage; API mode keeps access tokens in memory and relies on the HTTP-only refresh cookie. File selection reads metadata only, so no file bytes leave the browser.
 
 ## Roadmap
 

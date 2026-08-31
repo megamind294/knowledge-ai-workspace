@@ -6,6 +6,8 @@ import express, {
 } from "express";
 import { createAuthRouter } from "./auth/authRouter.js";
 import type { AuthService } from "./auth/authService.js";
+import { createKnowledgeRouter } from "./knowledge/knowledgeRouter.js";
+import type { KnowledgeRepository } from "./knowledge/knowledgeRepository.js";
 
 const REQUEST_ID_PATTERN = /^[A-Za-z0-9._-]{1,128}$/;
 
@@ -18,6 +20,10 @@ interface CreateAppOptions {
     service: AuthService;
     accessTokenSecret: Uint8Array;
     secureCookies: boolean;
+  };
+  knowledge?: {
+    repository: KnowledgeRepository;
+    accessTokenSecret: Uint8Array;
   };
   registerRoutes?: (app: Express) => void;
 }
@@ -43,6 +49,9 @@ export function createApp(options: CreateAppOptions = {}) {
 
   if (options.auth) {
     app.use("/api/auth", createAuthRouter(options.auth));
+  }
+  if (options.knowledge) {
+    app.use("/api", createKnowledgeRouter(options.knowledge));
   }
 
   options.registerRoutes?.(app);

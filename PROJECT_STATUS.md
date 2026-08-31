@@ -85,6 +85,11 @@ Day 3 now includes:
 - opaque random refresh credentials stored only as SHA-256 hashes
 - atomic refresh rotation, replay-family containment, expiry rejection, and logout revocation
 - interchangeable in-memory and PostgreSQL authentication repositories with parity coverage
-- 78 automated tests passing locally across all three workspaces
+- strict shared registration, login, public-user, and session response contracts
+- configurable register, login, refresh, logout, and current-user HTTP routes
+- scoped HTTP-only SameSite refresh cookies with production `Secure` mode
+- bearer authentication middleware with signature and expiry verification
+- normalized validation, conflict, and unauthorized responses without password or token leakage
+- 89 automated tests passing locally across all three workspaces
 
-Next: schema-validated authentication HTTP routes, HTTP-only refresh cookies, and bearer authorization middleware. Google OAuth, authorized persistence, and the web API adapter remain planned Day 3 work.
+Next: authorized workspace, collection, and document persistence endpoints. Production server wiring, Google OAuth, and the web API adapter remain planned Day 3 work.

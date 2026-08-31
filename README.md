@@ -65,6 +65,16 @@ The approved architecture and milestone plan are in [`docs/superpowers/specs/202
 | `/app/documents/:documentId` | Document metadata, ingestion state, and retry controls |
 | `/app/knowledge` | Deterministic scoped mock search and answer preview |
 
+The configurable API composition also exposes:
+
+| API route | Purpose |
+| --- | --- |
+| `POST /api/auth/register` | Validate registration, create credentials, and start a session |
+| `POST /api/auth/login` | Authenticate without revealing which credential failed |
+| `POST /api/auth/refresh` | Atomically rotate the HTTP-only refresh credential |
+| `POST /api/auth/logout` | Revoke and clear the refresh credential |
+| `GET /api/auth/me` | Return the current public user for a valid bearer token |
+
 Routes below `/app` require the local demo session. Unknown entities render recoverable not-found states, while unknown application URLs use the global 404 page.
 
 ## Run locally
@@ -98,11 +108,11 @@ npm test -- --run
 npm run build
 ```
 
-Verification covers the fixture repository, protected routing, authentication preview, responsive shell, dashboards, workspace/collection/document navigation, metadata validation, ingestion simulation, retry behavior, scoped mock search, API contracts, HTTP error handling, migration idempotency, relational constraints, password hashing, signed access tokens, refresh rotation/replay handling, and recovery states. GitHub Actions runs a clean install and every command above against a real PostgreSQL 16 service for feature branches and pull requests; local tests use a PostgreSQL-compatible in-memory adapter when `TEST_DATABASE_URL` is absent.
+Verification covers the fixture repository, protected routing, authentication preview, responsive shell, dashboards, workspace/collection/document navigation, metadata validation, ingestion simulation, retry behavior, scoped mock search, API contracts, HTTP error handling, migration idempotency, relational constraints, password hashing, signed bearer tokens, refresh-cookie rotation/replay handling, and recovery states. GitHub Actions runs a clean install and every command above against a real PostgreSQL 16 service for feature branches and pull requests; local tests use a PostgreSQL-compatible in-memory adapter when `TEST_DATABASE_URL` is absent.
 
 ## Honest limitations
 
-The current API, PostgreSQL schema, and internal authentication service are foundations only. The app does **not** yet expose authentication HTTP routes, cookies, account screens, database-backed knowledge routes, file transfer, parsing, durable document storage, vector search, AI calls, citations, or deployment. Email/password and Google controls remain disabled previews. The demo session stores only a fixed marker in browser LocalStorage. File selection reads metadata only; no file bytes leave the browser. Document lifecycle and knowledge results are deterministic fixtures that reset on reload.
+The backend now has configurable authentication routes, but the default server startup and frontend are not connected to them yet. The app does **not** yet provide live account screens, database-backed knowledge routes, Google OAuth, file transfer, parsing, durable document storage, vector search, AI calls, citations, or deployment. Email/password and Google controls in the web app remain disabled previews. The demo session stores only a fixed marker in browser LocalStorage. File selection reads metadata only; no file bytes leave the browser. Document lifecycle and knowledge results are deterministic fixtures that reset on reload.
 
 ## Roadmap
 

@@ -2,7 +2,7 @@
 
 ## Current milestone
 
-**Day 3 — API, authentication, and persistence: in progress**
+**Day 3 — API, authentication, and persistence: complete**
 
 Day 1 was merged into `main` through [pull request #2](https://github.com/megamind294/knowledge-ai-workspace/pull/2). Day 2 was merged through [pull request #4](https://github.com/megamind294/knowledge-ai-workspace/pull/4) after clean local acceptance and GitHub Actions verification.
 
@@ -44,11 +44,9 @@ No file bytes are uploaded, parsed, stored, embedded, or sent to an AI provider 
 - 23 automated tests covering repository and critical view/routing contracts
 - clean lint, strict type-check, test, and production-build commands
 
-## Explicitly not implemented
+## Explicitly not implemented after Day 3
 
-- real authentication or account creation
-- real document upload, parsing, chunking, or object storage
-- database-backed application routes or durable application data
+- document-byte upload, parsing, chunking, or object storage
 - pgvector
 - embeddings, retrieval, AI chat, or citations
 - production deployment
@@ -63,7 +61,7 @@ These are planned milestones, not hidden or partially implemented features.
 - production build passed
 - GitHub Actions run #28 passed on the merged pull-request head
 
-## Next milestone
+## Day 3 completed scope
 
 Day 3 now includes:
 
@@ -106,6 +104,21 @@ Day 3 now includes:
 - public capability discovery that enables the web Google control only when the API adapter is configured
 - normalized provider failures that do not expose response bodies or client secrets
 - in-memory and PostgreSQL external-identity parity coverage
-- 116 automated tests passing locally across all three workspaces
+- production runtime composition with startup migrations and graceful pool shutdown
+- exact-origin credentialed CORS and HTTPS enforcement for public production origins
+- complete-or-disabled Google environment validation
+- a reproducible environment template without committed credentials
+- 125 automated tests across all three workspaces
 
-Next: compose the production server from validated environment configuration, PostgreSQL repositories, authentication services, and API routes. Final Day 3 acceptance, documentation, and merge remain planned work.
+## Day 3 verification
+
+- clean `npm ci`
+- lint and strict type-check passed across all workspaces
+- 125 automated tests passed
+- API, contracts, and web production builds passed
+- production dependency audit reported zero vulnerabilities
+- final security review found no unresolved critical or important issues
+
+## Next milestone
+
+Day 4 is ready to start with document parsing, chunking, embeddings, pgvector storage, and workspace-scoped retrieval.

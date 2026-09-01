@@ -1,6 +1,6 @@
 # Keystone — AI Knowledge Workspace
 
-Keystone is a portfolio-oriented knowledge workspace for organizing source documents and, in later milestones, asking grounded questions with citations. The repository contains the completed Day 1 product shell and Day 2 document experience; Day 3 API development is underway.
+Keystone is a portfolio-oriented knowledge workspace for organizing source documents and, in later milestones, asking grounded questions with citations. Days 1–3 provide a tested React application, Express API, PostgreSQL persistence, secure sessions, and an optional Google OAuth boundary.
 
 ## Day 1 capabilities
 
@@ -75,8 +75,12 @@ The configurable API composition also exposes:
 | `POST /api/auth/refresh` | Atomically rotate the HTTP-only refresh credential |
 | `POST /api/auth/logout` | Revoke and clear the refresh credential |
 | `GET /api/auth/me` | Return the current public user for a valid bearer token |
+| `GET /api/auth/capabilities` | Report whether Google OAuth is fully configured |
+| `GET /api/auth/google/start` | Begin the state- and PKCE-protected Google flow |
+| `GET /api/auth/google/callback` | Exchange a verified callback and create a Keystone session |
+| `/api/workspaces/*` | Membership-authorized workspace, collection, and document metadata APIs |
 
-Routes below `/app` require the local demo session. Unknown entities render recoverable not-found states, while unknown application URLs use the global 404 page.
+Routes below `/app` require the selected session provider: a local marker in explicit fixture mode or the authenticated API session in default API mode. Unknown entities render recoverable not-found states, while unknown application URLs use the global 404 page.
 
 ## Run locally
 
@@ -84,23 +88,34 @@ Requirements:
 
 - Node.js 20.19 or newer
 - npm 10 or newer
+- PostgreSQL 16 or newer
 
 ```bash
 npm ci
+cp .env.example .env
+```
+
+Create the database named by `DATABASE_URL`, then export the API values from `.env` in your shell and start both processes:
+
+```bash
+# Terminal 1
+set -a
+. ./.env
+set +a
+npm run dev:api
+
+# Terminal 2
+set -a
+. ./.env
+set +a
 npm run dev
 ```
 
-Vite will print the local development URL.
+Before starting, generate a private signing secret (for example, `openssl rand -base64 48`) and assign it to `ACCESS_TOKEN_SECRET`; the example intentionally leaves it blank so a known key cannot start the API. The API applies serialized, idempotent migrations before listening. Vite prints the web URL. `DATABASE_URL` and a 32-character-or-longer `ACCESS_TOKEN_SECRET` are required by the composed API runtime. `WEB_APP_URL` controls exact-origin credentialed CORS and the post-OAuth redirect; non-local production web and Google callback URLs must use HTTPS.
 
 The web build uses API mode by default. Set `VITE_API_URL` when the API is hosted on another origin. To run the deliberately local, non-networked portfolio preview instead, set `VITE_DATA_MODE=fixture`; this is the only mode that exposes the demo-session control.
 
-Run the current API foundation separately with:
-
-```bash
-npm run dev:api
-```
-
-It exposes `GET /api/health` on port `4000` by default. `PORT`, `NODE_ENV`, and an optional PostgreSQL `DATABASE_URL` are validated before startup. The Day 3 database boundary includes an idempotent migration runner and relational schema for users, external identities, refresh sessions, workspaces, memberships, collections, and document metadata. Express composition can now mount authenticated PostgreSQL-backed workspace, collection, and document routes; the default server startup remains intentionally unwired until the Day 3 integration task.
+Google OAuth remains disabled unless `GOOGLE_OAUTH_CLIENT_ID`, `GOOGLE_OAUTH_CLIENT_SECRET`, and `GOOGLE_OAUTH_REDIRECT_URI` are all present. Configure the callback URI in Google to match exactly. The client control is enabled only after API capability discovery confirms complete configuration.
 
 ## Quality commands
 
@@ -115,13 +130,13 @@ Verification covers fixture and API repositories, protected routing, session res
 
 ## Honest limitations
 
-The frontend now has API-backed authentication and knowledge adapters, but the default API server composition is not connected to PostgreSQL-backed route dependencies yet. A tested Google OAuth boundary exists, including state/PKCE validation, external-identity linking, and capability discovery, but it remains disabled until complete provider configuration is wired during production composition. The app does **not** yet provide file transfer, parsing, durable file storage, vector search, AI calls, citations, deployment, or a configured live Google sign-in. The document API persists metadata only. Fixture mode stores only a fixed marker in browser LocalStorage; API mode keeps access tokens in memory and relies on the HTTP-only refresh cookie. File selection reads metadata only, so no file bytes leave the browser.
+The API stores document metadata only. It does **not** yet transfer or retain file bytes, parse documents, create chunks or embeddings, use pgvector, retrieve sources, call an AI model, generate citations, persist conversations, or provide a deployment. Google OAuth code is complete but no live provider credentials are committed or claimed. Fixture mode stores only a fixed marker in browser LocalStorage; API mode keeps access tokens in memory and relies on the HTTP-only refresh cookie.
 
 ## Roadmap
 
 1. **Day 1 — complete:** React/TypeScript shell, demo auth boundary, dashboard, workspaces, collections, tests, and CI
 2. **Day 2 — complete:** document library, validated local metadata preview, simulated ingestion states, retry flows, and scoped mock knowledge search
-3. **Day 3:** Express API, PostgreSQL, email/password authentication, Google OAuth boundary, and durable persistence
+3. **Day 3 — complete:** Express API, PostgreSQL, email/password authentication, optional Google OAuth boundary, authorized metadata persistence, and frontend API integration
 4. **Day 4:** parsing, chunking, provider embeddings, pgvector storage, and scoped retrieval
 5. **Day 5:** grounded chat, citations, conversation history, and low-confidence behavior
 6. **Day 6:** end-to-end coverage, Docker, deployment, operations documentation, and final polish

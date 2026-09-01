@@ -10,7 +10,7 @@
 
 **Spec:** `docs/superpowers/specs/2026-08-27-ai-knowledge-workspace-design.md`
 
-**Progress:** Tasks 1–4 are implemented on `feature/day3-api-foundation`; Tasks 5–8 remain.
+**Progress:** All eight Day 3 tasks are complete on `feature/day3-api-foundation` after clean-install acceptance and security review.
 
 ## Global Constraints
 
@@ -47,7 +47,7 @@
 - Produces: `HealthResponseSchema`, `ApiErrorResponseSchema`, `ApiErrorCode`, `createApp()`, and `loadApiConfig()`.
 - Consumes: no earlier Day 3 code.
 
-- [ ] **Step 1: Write failing contract and API tests**
+- [x] **Step 1: Write failing contract and API tests**
 
 ```ts
 expect(HealthResponseSchema.parse(response.body)).toEqual({
@@ -58,11 +58,11 @@ expect(ApiErrorResponseSchema.parse(missing.body).error.code).toBe("NOT_FOUND");
 expect(missing.headers["x-request-id"]).toBe(missing.body.error.requestId);
 ```
 
-- [ ] **Step 2: Run focused tests and confirm failures are caused by missing packages and exports**
+- [x] **Step 2: Run focused tests and confirm failures are caused by missing packages and exports**
 
 Run: `npm test --workspace @knowledge-ai/contracts -- --run src/http.test.ts && npm test --workspace @knowledge-ai/api -- --run src/app.test.ts`
 
-- [ ] **Step 3: Implement minimal shared schemas, configuration validation, health route, request IDs, normalized 404 handling, and test-safe app/server separation**
+- [x] **Step 3: Implement minimal shared schemas, configuration validation, health route, request IDs, normalized 404 handling, and test-safe app/server separation**
 
 ```ts
 export const HealthResponseSchema = z.object({
@@ -79,8 +79,8 @@ export function createApp() {
 }
 ```
 
-- [ ] **Step 4: Run contract/API tests, then root lint, type-check, tests, and builds**
-- [ ] **Step 5: Commit `feat: establish shared API contracts`**
+- [x] **Step 4: Run contract/API tests, then root lint, type-check, tests, and builds**
+- [x] **Step 5: Commit `feat: establish shared API contracts`**
 
 ### Task 2: PostgreSQL schema and migration boundary
 
@@ -95,11 +95,11 @@ export function createApp() {
 - Consumes: `loadApiConfig()` from Task 1.
 - Produces: `DatabasePool`, `runMigrations(pool)`, and relational tables for users, external identities, refresh sessions, workspaces, members, collections, and document metadata.
 
-- [ ] **Step 1: Add a failing PostgreSQL integration test that runs the migration twice and verifies tables, foreign keys, role checks, unique membership, and cascade behavior**
-- [ ] **Step 2: Run the focused test against the CI-compatible PostgreSQL test URL and confirm the migration is absent**
-- [ ] **Step 3: Add an idempotent migration ledger and parameterized `pg` pool boundary**
-- [ ] **Step 4: Add a PostgreSQL service to CI and run the full root quality pipeline**
-- [ ] **Step 5: Commit `feat: add PostgreSQL core schema`**
+- [x] **Step 1: Add a failing PostgreSQL integration test that runs the migration twice and verifies tables, foreign keys, role checks, unique membership, and cascade behavior**
+- [x] **Step 2: Run the focused test against the CI-compatible PostgreSQL test URL and confirm the migration is absent**
+- [x] **Step 3: Add an idempotent migration ledger and parameterized `pg` pool boundary**
+- [x] **Step 4: Add a PostgreSQL service to CI and run the full root quality pipeline**
+- [x] **Step 5: Commit `feat: add PostgreSQL core schema`**
 
 ### Task 3: Secure credential and session services
 
@@ -116,11 +116,11 @@ export function createApp() {
 - Produces: `AuthRepository`, `AuthService.register()`, `login()`, `refresh()`, and `logout()` returning public users plus access-token/refresh-token pairs.
 - Consumes: PostgreSQL pool and shared error codes.
 
-- [ ] **Step 1: Write failing tests for normalized email uniqueness, password policy, bcrypt verification, invalid credentials, refresh rotation, replay rejection, expiry, and logout revocation**
-- [ ] **Step 2: Verify the tests fail because the service is absent**
-- [ ] **Step 3: Implement bcrypt password hashing, signed short-lived access tokens, random opaque refresh tokens, SHA-256 refresh hashes, and repository adapters**
-- [ ] **Step 4: Run focused and full suites, including PostgreSQL repository parity tests**
-- [ ] **Step 5: Commit `feat: add secure authentication sessions`**
+- [x] **Step 1: Write failing tests for normalized email uniqueness, password policy, bcrypt verification, invalid credentials, refresh rotation, replay rejection, expiry, and logout revocation**
+- [x] **Step 2: Verify the tests fail because the service is absent**
+- [x] **Step 3: Implement bcrypt password hashing, signed short-lived access tokens, random opaque refresh tokens, SHA-256 refresh hashes, and repository adapters**
+- [x] **Step 4: Run focused and full suites, including PostgreSQL repository parity tests**
+- [x] **Step 5: Commit `feat: add secure authentication sessions`**
 
 ### Task 4: Authentication HTTP API and authorization middleware
 
@@ -136,11 +136,11 @@ export function createApp() {
 - Produces: `POST /api/auth/register`, `/login`, `/refresh`, `/logout`, `GET /api/auth/me`, and `requireAuth` with typed `request.auth.userId`.
 - Consumes: `AuthService` and shared request/response schemas.
 
-- [ ] **Step 1: Write failing Supertest cases for registration/login, HTTP-only SameSite refresh cookies, access-token authentication, validation failures, rotation, and logout**
-- [ ] **Step 2: Confirm failures are missing-route failures**
-- [ ] **Step 3: Implement schema-validated handlers, cookie security by environment, bearer middleware, and normalized auth errors**
-- [ ] **Step 4: Run focused and full quality gates**
-- [ ] **Step 5: Commit `feat: expose secure authentication API`**
+- [x] **Step 1: Write failing Supertest cases for registration/login, HTTP-only SameSite refresh cookies, access-token authentication, validation failures, rotation, and logout**
+- [x] **Step 2: Confirm failures are missing-route failures**
+- [x] **Step 3: Implement schema-validated handlers, cookie security by environment, bearer middleware, and normalized auth errors**
+- [x] **Step 4: Run focused and full quality gates**
+- [x] **Step 5: Commit `feat: expose secure authentication API`**
 
 ### Task 5: Authorized workspace persistence API
 
@@ -217,11 +217,11 @@ export function createApp() {
 - Consumes: all Day 3 deliverables.
 - Produces: truthful setup, migration, authentication, API, limitation, and verification documentation.
 
-- [ ] **Step 1: Document only merged behavior, required environment variables, local PostgreSQL setup, and the explicit Day 4/5 exclusions**
-- [ ] **Step 2: Run clean install, lint, strict type-check, all tests, all builds, migration tests, and `git diff --check`**
-- [ ] **Step 3: Review for secrets, permissive authorization, unsafe cookies, generated files, placeholders, and unsupported claims**
-- [ ] **Step 4: Commit `docs: complete Day 3 API milestone`**
-- [ ] **Step 5: Confirm GitHub Actions passes on the exact final head and merge the Day 3 pull request**
+- [x] **Step 1: Document only merged behavior, required environment variables, local PostgreSQL setup, and the explicit Day 4/5 exclusions**
+- [x] **Step 2: Run clean install, lint, strict type-check, all tests, all builds, migration tests, and `git diff --check`**
+- [x] **Step 3: Review for secrets, permissive authorization, unsafe cookies, generated files, placeholders, and unsupported claims**
+- [x] **Step 4: Commit `docs: complete Day 3 API milestone`**
+- [x] **Step 5: Confirm GitHub Actions passes on the exact final head and merge the Day 3 pull request**
 
 ## Plan self-review
 

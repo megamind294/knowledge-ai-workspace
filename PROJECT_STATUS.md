@@ -2,7 +2,7 @@
 
 ## Current milestone
 
-**Day 3 — API, authentication, and persistence: complete**
+**Day 4 — document ingestion and retrieval: in progress**
 
 Day 1 was merged into `main` through [pull request #2](https://github.com/megamind294/knowledge-ai-workspace/pull/2). Day 2 was merged through [pull request #4](https://github.com/megamind294/knowledge-ai-workspace/pull/4) after clean local acceptance and GitHub Actions verification.
 
@@ -44,9 +44,9 @@ No file bytes are uploaded, parsed, stored, embedded, or sent to an AI provider 
 - 23 automated tests covering repository and critical view/routing contracts
 - clean lint, strict type-check, test, and production-build commands
 
-## Explicitly not implemented after Day 3
+## Explicitly not implemented in the current Day 4 slice
 
-- document-byte upload, parsing, chunking, or object storage
+- document-byte upload, format parsing, persistent chunks, or object storage
 - pgvector
 - embeddings, retrieval, AI chat, or citations
 - production deployment
@@ -119,6 +119,17 @@ Day 3 now includes:
 - production dependency audit reported zero vulnerabilities
 - final security review found no unresolved critical or important issues
 
+## Day 4 completed scope
+
+- parser-neutral extracted-section, normalized-section, and chunk-draft contracts
+- Unicode NFC and line-ending normalization
+- horizontal-whitespace cleanup with paragraph boundary preservation
+- deterministic overlapping word windows with stable global ordinals
+- page-number and section-heading provenance retained on every chunk draft
+- explicit rejection of invalid chunk-size and overlap options
+- 8 focused chunking tests, bringing the project total to 133 automated tests
+- lint, strict type-check, all tests, and all production builds passing locally
+
 ## Next milestone
 
-Day 4 is ready to start with document parsing, chunking, embeddings, pgvector storage, and workspace-scoped retrieval.
+Task 2 will add strict plain-text and Markdown parsers plus isolated PDF and DOCX adapters. Byte upload, persistence, embeddings, pgvector, and semantic retrieval remain later Day 4 tasks.

@@ -1,6 +1,6 @@
 # Keystone — AI Knowledge Workspace
 
-Keystone is a portfolio-oriented knowledge workspace for organizing source documents and, in later milestones, asking grounded questions with citations. Days 1–3 provide a tested React application, Express API, PostgreSQL persistence, secure sessions, and an optional Google OAuth boundary.
+Keystone is a portfolio-oriented knowledge workspace for organizing source documents and, in later milestones, asking grounded questions with citations. Days 1–3 provide a tested React application, Express API, PostgreSQL persistence, secure sessions, and an optional Google OAuth boundary. Day 4 ingestion and retrieval work is now underway.
 
 ## Day 1 capabilities
 
@@ -46,6 +46,7 @@ Key boundaries:
 - `apps/web/src/components` — reusable navigation, layout, heading, and state components
 - `apps/api/src` — environment validation, Express composition, request correlation, and server startup
 - `apps/api/src/auth` — credential hashing, token issuance, refresh rotation, and interchangeable auth repositories
+- `apps/api/src/ingestion` — parser-neutral normalization and deterministic chunking foundations
 - `apps/api/migrations` — versioned PostgreSQL schema migrations
 - `packages/contracts/src` — transport-neutral Zod schemas and inferred TypeScript types
 
@@ -126,18 +127,18 @@ npm test -- --run
 npm run build
 ```
 
-Verification covers fixture and API repositories, protected routing, session restoration, real credential forms, refresh retry, logout, responsive shell, dashboards, workspace/collection/document navigation, metadata validation, ingestion simulation, retry behavior, scoped mock search, API contracts, HTTP error handling, migration idempotency, relational constraints, password hashing, signed bearer tokens, refresh-cookie rotation/replay handling, Google OAuth state and PKCE handling, provider-failure normalization, external-identity persistence, membership authorization, cross-workspace isolation, and recovery states. GitHub Actions runs a clean install and every command above against a real PostgreSQL 16 service for feature branches and pull requests; local tests use a PostgreSQL-compatible in-memory adapter when `TEST_DATABASE_URL` is absent.
+Verification covers fixture and API repositories, protected routing, session restoration, real credential forms, refresh retry, logout, responsive shell, dashboards, workspace/collection/document navigation, metadata validation, ingestion simulation, deterministic text normalization and chunk windows, retry behavior, scoped mock search, API contracts, HTTP error handling, migration idempotency, relational constraints, password hashing, signed bearer tokens, refresh-cookie rotation/replay handling, Google OAuth state and PKCE handling, provider-failure normalization, external-identity persistence, membership authorization, cross-workspace isolation, and recovery states. GitHub Actions runs a clean install and every command above against a real PostgreSQL 16 service for feature branches and pull requests; local tests use a PostgreSQL-compatible in-memory adapter when `TEST_DATABASE_URL` is absent.
 
 ## Honest limitations
 
-The API stores document metadata only. It does **not** yet transfer or retain file bytes, parse documents, create chunks or embeddings, use pgvector, retrieve sources, call an AI model, generate citations, persist conversations, or provide a deployment. Google OAuth code is complete but no live provider credentials are committed or claimed. Fixture mode stores only a fixed marker in browser LocalStorage; API mode keeps access tokens in memory and relies on the HTTP-only refresh cookie.
+The API stores document metadata only. Day 4 currently provides parser-neutral normalization and in-memory chunk-draft generation, but those utilities are not connected to document bytes or persistence. The application does **not** yet transfer or retain file bytes, parse supported formats, persist chunks or embeddings, use pgvector, retrieve sources, call an AI model, generate citations, persist conversations, or provide a deployment. Google OAuth code is complete but no live provider credentials are committed or claimed. Fixture mode stores only a fixed marker in browser LocalStorage; API mode keeps access tokens in memory and relies on the HTTP-only refresh cookie.
 
 ## Roadmap
 
 1. **Day 1 — complete:** React/TypeScript shell, demo auth boundary, dashboard, workspaces, collections, tests, and CI
 2. **Day 2 — complete:** document library, validated local metadata preview, simulated ingestion states, retry flows, and scoped mock knowledge search
 3. **Day 3 — complete:** Express API, PostgreSQL, email/password authentication, optional Google OAuth boundary, authorized metadata persistence, and frontend API integration
-4. **Day 4:** parsing, chunking, provider embeddings, pgvector storage, and scoped retrieval
+4. **Day 4 — in progress:** normalization/chunking foundation, followed by parsing, provider embeddings, pgvector storage, and scoped retrieval
 5. **Day 5:** grounded chat, citations, conversation history, and low-confidence behavior
 6. **Day 6:** end-to-end coverage, Docker, deployment, operations documentation, and final polish
 

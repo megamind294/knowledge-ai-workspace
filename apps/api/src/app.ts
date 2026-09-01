@@ -6,6 +6,7 @@ import express, {
 } from "express";
 import { createAuthRouter } from "./auth/authRouter.js";
 import type { AuthService } from "./auth/authService.js";
+import type { GoogleOAuthAdapter } from "./auth/googleOAuth.js";
 import { createKnowledgeRouter } from "./knowledge/knowledgeRouter.js";
 import type { KnowledgeRepository } from "./knowledge/knowledgeRepository.js";
 
@@ -20,6 +21,7 @@ interface CreateAppOptions {
     service: AuthService;
     accessTokenSecret: Uint8Array;
     secureCookies: boolean;
+    googleOAuth?: {adapter:GoogleOAuthAdapter;frontendRedirectUrl:string};
   };
   knowledge?: {
     repository: KnowledgeRepository;

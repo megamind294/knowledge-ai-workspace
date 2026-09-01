@@ -5,10 +5,12 @@ import {
   type ApiErrorResponse,
   type AuthSessionResponse,
   type CurrentUserResponse,
+  type AuthCapabilitiesResponse,
 } from "@knowledge-ai/contracts";
 import { Router, type NextFunction, type Request, type Response } from "express";
 import { AuthError, type AuthResult, type AuthService } from "./authService.js";
 import { requireAuth } from "./requireAuth.js";
+import { GoogleOAuthError, type GoogleOAuthAdapter } from "./googleOAuth.js";
 
 const REFRESH_COOKIE = "keystone_refresh";
 const REFRESH_COOKIE_PATH = "/api/auth";
@@ -17,7 +19,9 @@ interface AuthRouterOptions {
   service: AuthService;
   accessTokenSecret: Uint8Array;
   secureCookies: boolean;
+  googleOAuth?: {adapter:GoogleOAuthAdapter;frontendRedirectUrl:string};
 }
+const OAUTH_STATE_COOKIE="keystone_oauth_state"; const OAUTH_VERIFIER_COOKIE="keystone_oauth_verifier"; const OAUTH_COOKIE_PATH="/api/auth/google";
 
 function sendError(
   response: Response,
@@ -67,12 +71,15 @@ function clearRefreshCookie(response: Response, secure: boolean) {
 }
 
 function readRefreshCookie(request: Request) {
+  return readCookie(request,REFRESH_COOKIE);
+}
+function readCookie(request:Request,name:string){
   const header = request.header("cookie");
   if (!header) return null;
   for (const segment of header.split(";")) {
     const separator = segment.indexOf("=");
     if (separator < 0) continue;
-    if (segment.slice(0, separator).trim() !== REFRESH_COOKIE) continue;
+    if (segment.slice(0, separator).trim() !== name) continue;
     try {
       return decodeURIComponent(segment.slice(separator + 1).trim());
     } catch {
@@ -105,6 +112,10 @@ function handleAuthError(error: unknown, response: Response, next: NextFunction)
 
 export function createAuthRouter(options: AuthRouterOptions) {
   const router = Router();
+
+  router.get("/capabilities",(_request,response)=>{const body:AuthCapabilitiesResponse={googleOAuth:options.googleOAuth?.adapter.enabled===true};response.json(body);});
+  router.get("/google/start",(_request,response)=>{if(!options.googleOAuth?.adapter.enabled){sendError(response,404,"NOT_FOUND","Google authentication is not configured");return;}const start=options.googleOAuth.adapter.createAuthorization();const cookie={httpOnly:true,sameSite:"lax" as const,secure:options.secureCookies,path:OAUTH_COOKIE_PATH,maxAge:10*60*1000};response.cookie(OAUTH_STATE_COOKIE,start.state,cookie);response.cookie(OAUTH_VERIFIER_COOKIE,start.verifier,cookie);response.redirect(start.url);});
+  router.get("/google/callback",async(request,response,next)=>{if(!options.googleOAuth?.adapter.enabled){sendError(response,404,"NOT_FOUND","Google authentication is not configured");return;}const code=typeof request.query.code==="string"?request.query.code:null;const state=typeof request.query.state==="string"?request.query.state:null;const expectedState=readCookie(request,OAUTH_STATE_COOKIE);const verifier=readCookie(request,OAUTH_VERIFIER_COOKIE);if(!code||!state||!expectedState||!verifier){sendError(response,400,"BAD_REQUEST","Google authentication state is invalid");return;}try{const identity=await options.googleOAuth.adapter.exchange({code,state,expectedState,verifier});const result=await options.service.loginWithOAuth(identity);setRefreshCookie(response,result,options.secureCookies);response.clearCookie(OAUTH_STATE_COOKIE,{path:OAUTH_COOKIE_PATH});response.clearCookie(OAUTH_VERIFIER_COOKIE,{path:OAUTH_COOKIE_PATH});response.redirect(options.googleOAuth.frontendRedirectUrl);}catch(error){if(error instanceof GoogleOAuthError){sendError(response,error.code==="INVALID_STATE"?400:502,error.code==="INVALID_STATE"?"BAD_REQUEST":"INTERNAL_ERROR",error.message);return;}handleAuthError(error,response,next);}});
 
   router.post("/register", async (request, response, next) => {
     const parsed = RegisterRequestSchema.safeParse(request.body);

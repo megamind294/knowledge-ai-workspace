@@ -15,11 +15,14 @@ export interface RefreshSession {
   expiresAt: Date;
   revokedAt: Date | null;
 }
+export interface ExternalIdentity { id:string; userId:string; provider:"google"; providerSubject:string; email:string; }
 
 export interface AuthRepository {
   findUserByEmail(email: string): Promise<StoredUser | null>;
   findUserById(id: string): Promise<StoredUser | null>;
   createUser(user: StoredUser): Promise<StoredUser>;
+  findUserByExternalIdentity(provider:"google",providerSubject:string):Promise<StoredUser|null>;
+  createExternalIdentity(identity:ExternalIdentity):Promise<void>;
   findRefreshSessionByHash(tokenHash: string): Promise<RefreshSession | null>;
   createRefreshSession(session: RefreshSession): Promise<void>;
   rotateRefreshSession(
@@ -32,7 +35,7 @@ export interface AuthRepository {
 }
 
 export class AuthRepositoryError extends Error {
-  constructor(readonly code: "EMAIL_IN_USE") {
+  constructor(readonly code: "EMAIL_IN_USE" | "IDENTITY_IN_USE") {
     super(code);
     this.name = "AuthRepositoryError";
   }

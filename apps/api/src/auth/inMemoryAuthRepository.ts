@@ -20,6 +20,7 @@ function cloneSession(session: RefreshSession): RefreshSession {
 export class InMemoryAuthRepository implements AuthRepository {
   private readonly usersByEmail = new Map<string, StoredUser>();
   private readonly sessionsByHash = new Map<string, RefreshSession>();
+  private readonly identities=new Map<string,{userId:string}>();
 
   async findUserByEmail(email: string) {
     const user = this.usersByEmail.get(email);
@@ -38,6 +39,8 @@ export class InMemoryAuthRepository implements AuthRepository {
     this.usersByEmail.set(user.email, cloneUser(user));
     return cloneUser(user);
   }
+  async findUserByExternalIdentity(provider:"google",providerSubject:string){const identity=this.identities.get(`${provider}:${providerSubject}`);return identity?this.findUserById(identity.userId):null;}
+  async createExternalIdentity(identity:import("./authTypes.js").ExternalIdentity){const key=`${identity.provider}:${identity.providerSubject}`;if(this.identities.has(key))throw new AuthRepositoryError("IDENTITY_IN_USE");this.identities.set(key,{userId:identity.userId});}
 
   async findRefreshSessionByHash(tokenHash: string) {
     const session = this.sessionsByHash.get(tokenHash);

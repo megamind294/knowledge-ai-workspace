@@ -100,6 +100,12 @@ Day 3 now includes:
 - secure session restoration and logout without browser token persistence
 - an HTTP `KnowledgeRepository` adapter mapping API contracts into the existing UI domain
 - explicitly configured fixture fallback through `VITE_DATA_MODE=fixture`
-- 101 automated tests passing locally across all three workspaces
+- a server-controlled Google OAuth adapter with state validation and PKCE
+- verified Google-profile mapping into existing or newly created Keystone accounts
+- transient HTTP-only OAuth cookies and refresh-session issuance without browser token exposure
+- public capability discovery that enables the web Google control only when the API adapter is configured
+- normalized provider failures that do not expose response bodies or client secrets
+- in-memory and PostgreSQL external-identity parity coverage
+- 116 automated tests passing locally across all three workspaces
 
-Next: add the Google OAuth adapter boundary. Production server composition and final Day 3 acceptance remain planned work.
+Next: compose the production server from validated environment configuration, PostgreSQL repositories, authentication services, and API routes. Final Day 3 acceptance, documentation, and merge remain planned work.

@@ -12,6 +12,8 @@ export interface DemoSessionValue {
   user: DemoUser | null;
   mode: "fixture" | "api";
   status: "restoring" | "ready";
+  googleOAuthEnabled:boolean;
+  googleOAuthStartUrl:string|null;
   startDemo(): void;
   login(input: {email:string;password:string}): Promise<void>;
   register(input: {displayName:string;email:string;password:string}): Promise<void>;

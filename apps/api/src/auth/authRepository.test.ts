@@ -18,7 +18,7 @@ const firstSession = {
   id: "00000000-0000-4000-8000-000000000201",
   userId: user.id,
   tokenHash: "first-token-hash",
-  expiresAt: new Date("2026-09-01T00:00:00.000Z"),
+  expiresAt: new Date("2099-09-01T00:00:00.000Z"),
   revokedAt: null,
 };
 
@@ -92,6 +92,29 @@ describe.sequential("AuthRepository parity", () => {
       ).resolves.toBeGreaterThanOrEqual(1);
       await expect(repository.findRefreshSessionByHash(replacement.tokenHash))
         .resolves.toMatchObject({ revokedAt: expect.any(Date) });
+    });
+
+    it(`${name} links external identities once and resolves their user`, async () => {
+      const repository = createRepository();
+      const owner = await repository.findUserByEmail(user.email);
+      if (!owner) {
+        await repository.createUser(user);
+      }
+      const identity = {
+        id: firstSession.id.replace("201", "301"),
+        userId: user.id,
+        provider: "google" as const,
+        providerSubject: `${name.toLowerCase()}-google-subject`,
+        email: user.email,
+      };
+
+      await repository.createExternalIdentity(identity);
+
+      await expect(
+        repository.findUserByExternalIdentity("google", identity.providerSubject),
+      ).resolves.toMatchObject({ id: user.id });
+      await expect(repository.createExternalIdentity({ ...identity, id: identity.id.replace("301", "302") }))
+        .rejects.toMatchObject({ code: "IDENTITY_IN_USE" });
     });
   }
 });

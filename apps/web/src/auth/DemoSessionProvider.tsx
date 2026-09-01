@@ -25,6 +25,8 @@ export function DemoSessionProvider({ children }: PropsWithChildren) {
       user,
       mode: "fixture",
       status: "ready",
+      googleOAuthEnabled: false,
+      googleOAuthStartUrl: null,
       startDemo() {
         window.localStorage.setItem(SESSION_KEY, "active");
         setUser(demoUser);

@@ -199,11 +199,11 @@ export function createApp() {
 - Produces: server-controlled authorization start/callback flow with state verification and an `OAuthIdentity` mapped through `AuthService`.
 - Consumes: configured Google issuer/client credentials and Task 3 session issuance.
 
-- [ ] **Step 1: Write failing tests for disabled configuration, generated state, state mismatch, callback identity mapping, and provider errors without secret leakage**
-- [ ] **Step 2: Verify failures are caused by the missing adapter**
-- [ ] **Step 3: Implement the adapter and enable the web control only when API capability discovery reports Google configured**
-- [ ] **Step 4: Run focused and complete quality gates**
-- [ ] **Step 5: Commit `feat: add Google OAuth boundary`**
+- [x] **Step 1: Write failing tests for disabled configuration, generated state, state mismatch, callback identity mapping, and provider errors without secret leakage**
+- [x] **Step 2: Verify failures are caused by the missing adapter**
+- [x] **Step 3: Implement the adapter and enable the web control only when API capability discovery reports Google configured**
+- [x] **Step 4: Run focused and complete quality gates**
+- [x] **Step 5: Commit `feat: add Google OAuth boundary`**
 
 ### Task 8: Day 3 acceptance and integration
 

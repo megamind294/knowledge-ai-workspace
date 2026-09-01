@@ -4,6 +4,7 @@ import type {
   PublicUser,
   RefreshSession,
 } from "./authTypes.js";
+import type { OAuthIdentity } from "@knowledge-ai/contracts";
 import { AuthRepositoryError } from "./authTypes.js";
 import {
   createPasswordService,
@@ -126,6 +127,7 @@ export class AuthService {
     }
     return this.issueSession(publicUser(user));
   }
+  async loginWithOAuth(identity:OAuthIdentity){const existing=await this.repository.findUserByExternalIdentity(identity.provider,identity.subject);if(existing)return this.issueSession(publicUser(existing));const email=normalizeEmail(identity.email);let user=await this.repository.findUserByEmail(email);if(!user){try{user=await this.repository.createUser({id:this.createId(),email,displayName:identity.displayName.trim(),passwordHash:null});}catch(error){if(error instanceof AuthRepositoryError&&error.code==="EMAIL_IN_USE")user=await this.repository.findUserByEmail(email);else throw error;}}if(!user)throw new AuthError("INVALID_CREDENTIALS");try{await this.repository.createExternalIdentity({id:this.createId(),userId:user.id,provider:identity.provider,providerSubject:identity.subject,email});}catch(error){if(error instanceof AuthRepositoryError&&error.code==="IDENTITY_IN_USE"){const linked=await this.repository.findUserByExternalIdentity(identity.provider,identity.subject);if(linked)return this.issueSession(publicUser(linked));}throw error;}return this.issueSession(publicUser(user));}
 
   async refresh(refreshToken: string) {
     const now = this.now();

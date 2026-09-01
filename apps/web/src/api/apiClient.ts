@@ -1,4 +1,4 @@
-import type { AuthSessionResponse, LoginRequest, PublicUser, RegisterRequest } from "@knowledge-ai/contracts";
+import type { AuthCapabilitiesResponse, AuthSessionResponse, LoginRequest, PublicUser, RegisterRequest } from "@knowledge-ai/contracts";
 
 export class ApiClientError extends Error {
   constructor(public readonly status: number, public readonly code: string, message: string) { super(message); }
@@ -35,4 +35,6 @@ export class ApiClient {
   }
   async logout() { try { await this.raw<void>("/api/auth/logout",{method:"POST"}); } finally { this.accessToken=null; } }
   async currentUser():Promise<PublicUser> { const response=await this.request<{user:PublicUser}>("/api/auth/me"); return response.user; }
+  async capabilities(){return this.raw<AuthCapabilitiesResponse>("/api/auth/capabilities");}
+  googleOAuthStartUrl(){return `${this.options.baseUrl}/api/auth/google/start`;}
 }

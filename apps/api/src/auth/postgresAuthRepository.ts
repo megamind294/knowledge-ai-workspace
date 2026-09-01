@@ -82,6 +82,8 @@ export class PostgresAuthRepository implements AuthRepository {
       throw error;
     }
   }
+  async findUserByExternalIdentity(provider:"google",providerSubject:string){const result=await this.pool.query<UserRow>(`SELECT u.id,u.email,u.display_name,u.password_hash FROM users u JOIN external_identities e ON e.user_id=u.id WHERE e.provider=$1 AND e.provider_subject=$2`,[provider,providerSubject]);return result.rows[0]?mapUser(result.rows[0]):null;}
+  async createExternalIdentity(identity:import("./authTypes.js").ExternalIdentity){try{await this.pool.query(`INSERT INTO external_identities (id,user_id,provider,provider_subject,email) VALUES ($1,$2,$3,$4,$5)`,[identity.id,identity.userId,identity.provider,identity.providerSubject,identity.email]);}catch(error){if(isUniqueViolation(error))throw new AuthRepositoryError("IDENTITY_IN_USE");throw error;}}
 
   async findRefreshSessionByHash(tokenHash: string) {
     const result = await this.pool.query<SessionRow>(

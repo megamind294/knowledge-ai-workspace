@@ -15,7 +15,7 @@ interface LoginLocationState {
 }
 
 export function LoginPage() {
-  const { startDemo, login, mode } = useDemoSession();
+  const { startDemo, login, mode, googleOAuthEnabled, googleOAuthStartUrl } = useDemoSession();
   const [error,setError]=useState<string|null>(null); const [pending,setPending]=useState(false);
   const location = useLocation();
   const navigate = useNavigate();
@@ -79,15 +79,20 @@ export function LoginPage() {
         <span className="h-px flex-1 bg-white/10" />
       </div>
 
-      <button
+      {googleOAuthEnabled && googleOAuthStartUrl ? <a
+        className="block w-full rounded-xl border border-indigo-300/30 px-5 py-3 text-center font-semibold text-indigo-200 hover:bg-indigo-400/10"
+        href={googleOAuthStartUrl}
+      >Continue with Google</a> : <button
         className="w-full cursor-not-allowed rounded-xl border border-white/10 px-5 py-3 font-semibold text-slate-500"
         disabled
         type="button"
       >
         Continue with Google
-      </button>
+      </button>}
       <p className="mt-3 text-center text-xs text-slate-500">
-        Google sign-in remains unavailable until provider configuration is added.
+        {googleOAuthEnabled
+          ? "Google authentication is handled by the configured provider; credentials never pass through this form."
+          : "Google sign-in remains unavailable until provider configuration is added."}
       </p>
 
       {mode === "fixture" ? <div className="mt-6 rounded-2xl border border-indigo-400/20 bg-indigo-400/5 p-4">

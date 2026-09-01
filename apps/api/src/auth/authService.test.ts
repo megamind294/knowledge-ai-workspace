@@ -94,6 +94,14 @@ describe("AuthService", () => {
     ).rejects.toEqual(new AuthError("INVALID_CREDENTIALS"));
   });
 
+  it("links a verified Google identity and reuses the same account on later sign-ins", async () => {
+    const { repository, service } = createHarness();
+    const identity={provider:"google" as const,subject:"google-123",email:"RINKLE@example.com",displayName:"Rinkle Sharma"};
+    const first=await service.loginWithOAuth(identity); const second=await service.loginWithOAuth({...identity,email:"rinkle@example.com"});
+    expect(second.user.id).toBe(first.user.id);
+    await expect(repository.findUserByExternalIdentity("google","google-123")).resolves.toMatchObject({email:"rinkle@example.com",passwordHash:null});
+  });
+
   it("rotates refresh credentials and contains replay by revoking the token family", async () => {
     const { service } = createHarness();
     const registered = await service.register(registration);

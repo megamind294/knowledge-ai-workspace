@@ -7,7 +7,7 @@ import { BrandMark } from "./BrandMark";
 
 export function AppShell() {
   const [mobileOpen, setMobileOpen] = useState(false);
-  const { user, endDemo } = useDemoSession();
+  const { user, endDemo, mode } = useDemoSession();
   const location = useLocation();
   const navigate = useNavigate();
 
@@ -16,8 +16,7 @@ export function AppShell() {
   }, [location.pathname]);
 
   function signOut() {
-    endDemo();
-    navigate("/login", { replace: true });
+    void Promise.resolve(endDemo()).then(()=>navigate("/login", { replace: true }));
   }
 
   return (
@@ -36,14 +35,14 @@ export function AppShell() {
         </div>
         <div className="rounded-2xl border border-white/10 bg-slate-950/70 p-4">
           <p className="font-medium text-white">{user?.name}</p>
-          <p className="mt-1 text-xs text-slate-400">Local demo preview</p>
+          <p className="mt-1 text-xs text-slate-400">{mode === "api" ? "Authenticated API session" : "Local demo preview"}</p>
           <button
             className="mt-4 flex w-full items-center justify-center gap-2 rounded-xl border border-white/10 px-3 py-2 text-sm font-medium text-slate-300 transition hover:border-white/20 hover:text-white"
             onClick={signOut}
             type="button"
           >
             <LogOut aria-hidden="true" size={16} />
-            Sign out of demo
+            {mode === "api" ? "Sign out" : "Sign out of demo"}
           </button>
         </div>
       </aside>

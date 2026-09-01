@@ -1,4 +1,7 @@
 import {
+  useState,
+} from "react";
+import {
   Link,
   type Location,
   useLocation,
@@ -12,7 +15,8 @@ interface LoginLocationState {
 }
 
 export function LoginPage() {
-  const { startDemo } = useDemoSession();
+  const { startDemo, login, mode, googleOAuthEnabled, googleOAuthStartUrl } = useDemoSession();
+  const [error,setError]=useState<string|null>(null); const [pending,setPending]=useState(false);
   const location = useLocation();
   const navigate = useNavigate();
   const state = location.state as LoginLocationState | null;
@@ -21,10 +25,11 @@ export function LoginPage() {
     startDemo();
     navigate(state?.from?.pathname ?? "/app", { replace: true });
   }
+  async function submit(event:React.FormEvent<HTMLFormElement>){event.preventDefault();setError(null);setPending(true);const data=new FormData(event.currentTarget);try{await login({email:String(data.get("email")),password:String(data.get("password"))});navigate(state?.from?.pathname??"/app",{replace:true});}catch(cause){setError(cause instanceof Error?cause.message:"Sign in failed");}finally{setPending(false);}}
 
   return (
     <AuthLayout
-      description="Authentication arrives with the API milestone. For now, explore the product with a local demo session."
+      description={mode === "api" ? "Sign in to your secure Keystone workspace." : "Explore the product with an explicitly local fixture session."}
       footer={
         <p>
           New to Keystone?{" "}
@@ -35,7 +40,7 @@ export function LoginPage() {
       }
       title="Welcome back"
     >
-      <form className="space-y-5" onSubmit={(event) => event.preventDefault()}>
+      <form className="space-y-5" onSubmit={submit}>
         <label className="block text-sm font-medium text-slate-200">
           Email address
           <input
@@ -43,6 +48,7 @@ export function LoginPage() {
             className="mt-2 w-full rounded-xl border border-white/10 bg-slate-900 px-4 py-3 text-slate-100 placeholder:text-slate-600"
             name="email"
             placeholder="you@example.com"
+            required
             type="email"
           />
         </label>
@@ -53,36 +59,43 @@ export function LoginPage() {
             className="mt-2 w-full rounded-xl border border-white/10 bg-slate-900 px-4 py-3 text-slate-100 placeholder:text-slate-600"
             name="password"
             placeholder="Enter your password"
+            required
             type="password"
           />
         </label>
         <button
-          className="w-full cursor-not-allowed rounded-xl bg-slate-700 px-5 py-3 font-semibold text-slate-400"
-          disabled
+          className="w-full rounded-xl bg-indigo-400 px-5 py-3 font-semibold text-slate-950 disabled:cursor-wait disabled:opacity-60"
+          disabled={mode === "fixture" || pending}
           type="submit"
         >
           Sign in
         </button>
       </form>
 
+      {error ? <p className="mt-4 rounded-xl border border-rose-400/20 bg-rose-400/5 px-4 py-3 text-sm text-rose-200" role="alert">{error}</p> : null}
       <div className="my-6 flex items-center gap-3 text-xs uppercase tracking-[0.16em] text-slate-600">
         <span className="h-px flex-1 bg-white/10" />
         Preview access
         <span className="h-px flex-1 bg-white/10" />
       </div>
 
-      <button
+      {googleOAuthEnabled && googleOAuthStartUrl ? <a
+        className="block w-full rounded-xl border border-indigo-300/30 px-5 py-3 text-center font-semibold text-indigo-200 hover:bg-indigo-400/10"
+        href={googleOAuthStartUrl}
+      >Continue with Google</a> : <button
         className="w-full cursor-not-allowed rounded-xl border border-white/10 px-5 py-3 font-semibold text-slate-500"
         disabled
         type="button"
       >
         Continue with Google
-      </button>
+      </button>}
       <p className="mt-3 text-center text-xs text-slate-500">
-        Email/password and Google sign-in become available in Day 3.
+        {googleOAuthEnabled
+          ? "Google authentication is handled by the configured provider; credentials never pass through this form."
+          : "Google sign-in remains unavailable until provider configuration is added."}
       </p>
 
-      <div className="mt-6 rounded-2xl border border-indigo-400/20 bg-indigo-400/5 p-4">
+      {mode === "fixture" ? <div className="mt-6 rounded-2xl border border-indigo-400/20 bg-indigo-400/5 p-4">
         <p className="text-sm leading-6 text-slate-300">
           Demo access stores only a local session marker. It does not create a
           real account or send credentials.
@@ -94,7 +107,7 @@ export function LoginPage() {
         >
           Explore demo workspace
         </button>
-      </div>
+      </div> : null}
     </AuthLayout>
   );
 }

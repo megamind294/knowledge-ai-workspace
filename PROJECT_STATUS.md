@@ -2,7 +2,7 @@
 
 ## Current milestone
 
-**Day 3 — API, authentication, and persistence: ready to start**
+**Day 3 — API, authentication, and persistence: complete**
 
 Day 1 was merged into `main` through [pull request #2](https://github.com/megamind294/knowledge-ai-workspace/pull/2). Day 2 was merged through [pull request #4](https://github.com/megamind294/knowledge-ai-workspace/pull/4) after clean local acceptance and GitHub Actions verification.
 
@@ -44,11 +44,10 @@ No file bytes are uploaded, parsed, stored, embedded, or sent to an AI provider 
 - 23 automated tests covering repository and critical view/routing contracts
 - clean lint, strict type-check, test, and production-build commands
 
-## Explicitly not implemented
+## Explicitly not implemented after Day 3
 
-- real authentication or account creation
-- real document upload, parsing, chunking, or object storage
-- Express API, PostgreSQL, or pgvector
+- document-byte upload, parsing, chunking, or object storage
+- pgvector
 - embeddings, retrieval, AI chat, or citations
 - production deployment
 
@@ -62,6 +61,64 @@ These are planned milestones, not hidden or partially implemented features.
 - production build passed
 - GitHub Actions run #28 passed on the merged pull-request head
 
+## Day 3 completed scope
+
+Day 3 now includes:
+
+- a new `apps/api` Express and TypeScript workspace
+- runtime-validated shared HTTP contracts in `packages/contracts`
+- validated API environment configuration
+- a contract-backed `/api/health` endpoint
+- caller-preserving or generated request IDs
+- normalized 404 and internal-error envelopes without route, query, or exception leakage
+- test-safe separation between Express app composition and server startup
+- root quality commands covering contracts, API, and web workspaces
+- an idempotent, transactional PostgreSQL migration ledger
+- relational tables for users, Google identities, refresh sessions, workspaces, memberships, collections, and document metadata
+- database constraints for membership roles, unique membership, ownership cascades, and workspace-scoped collection references
+- a validated `DATABASE_URL` and `pg` connection-pool boundary
+- local migration coverage through an in-memory PostgreSQL adapter and real PostgreSQL 16 verification in CI
+- normalized email registration and bcrypt password hashing
+- short-lived HS256 access tokens with subject, email, issued-at, and expiry claims
+- opaque random refresh credentials stored only as SHA-256 hashes
+- atomic refresh rotation, replay-family containment, expiry rejection, and logout revocation
+- interchangeable in-memory and PostgreSQL authentication repositories with parity coverage
+- strict shared registration, login, public-user, and session response contracts
+- configurable register, login, refresh, logout, and current-user HTTP routes
+- scoped HTTP-only SameSite refresh cookies with production `Secure` mode
+- bearer authentication middleware with signature and expiry verification
+- normalized validation, conflict, and unauthorized responses without password or token leakage
+- shared runtime contracts for workspace, collection, and document metadata
+- membership-authorized workspace, collection, and document list/detail/create routes
+- transactional workspace creation with automatic owner membership
+- viewer read-only enforcement and non-member resource isolation
+- deterministic failed-document retry transitions with conflict protection
+- access-token-aware browser API client with one refresh-cookie retry
+- real email/password login and registration forms in API mode
+- secure session restoration and logout without browser token persistence
+- an HTTP `KnowledgeRepository` adapter mapping API contracts into the existing UI domain
+- explicitly configured fixture fallback through `VITE_DATA_MODE=fixture`
+- a server-controlled Google OAuth adapter with state validation and PKCE
+- verified Google-profile mapping into existing or newly created Keystone accounts
+- transient HTTP-only OAuth cookies and refresh-session issuance without browser token exposure
+- public capability discovery that enables the web Google control only when the API adapter is configured
+- normalized provider failures that do not expose response bodies or client secrets
+- in-memory and PostgreSQL external-identity parity coverage
+- production runtime composition with startup migrations and graceful pool shutdown
+- exact-origin credentialed CORS and HTTPS enforcement for public production origins
+- complete-or-disabled Google environment validation
+- a reproducible environment template without committed credentials
+- 125 automated tests across all three workspaces
+
+## Day 3 verification
+
+- clean `npm ci`
+- lint and strict type-check passed across all workspaces
+- 125 automated tests passed
+- API, contracts, and web production builds passed
+- production dependency audit reported zero vulnerabilities
+- final security review found no unresolved critical or important issues
+
 ## Next milestone
 
-Day 3 introduces the Express API, PostgreSQL schema, email/password authentication, a Google OAuth boundary, and durable workspace/document persistence. The existing `KnowledgeRepository` interface remains the frontend adapter seam.
+Day 4 is ready to start with document parsing, chunking, embeddings, pgvector storage, and workspace-scoped retrieval.

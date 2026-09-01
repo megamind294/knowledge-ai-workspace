@@ -11,9 +11,10 @@
   },
   "scripts": {
     "dev": "npm run dev --workspace @knowledge-ai/web",
-    "lint": "npm run lint --workspace @knowledge-ai/web",
-    "typecheck": "npm run typecheck --workspace @knowledge-ai/web",
-    "test": "npm run test --workspace @knowledge-ai/web --",
-    "build": "npm run build --workspace @knowledge-ai/web"
+    "dev:api": "npm run dev --workspace @knowledge-ai/api",
+    "lint": "npm run lint --workspace @knowledge-ai/contracts && npm run lint --workspace @knowledge-ai/api && npm run lint --workspace @knowledge-ai/web",
+    "typecheck": "npm run typecheck --workspace @knowledge-ai/contracts && npm run typecheck --workspace @knowledge-ai/api && npm run typecheck --workspace @knowledge-ai/web",
+    "test": "npm run test --workspace @knowledge-ai/contracts -- --run && npm run test --workspace @knowledge-ai/api -- --run && npm run test --workspace @knowledge-ai/web --",
+    "build": "npm run build --workspace @knowledge-ai/contracts && npm run build --workspace @knowledge-ai/api && npm run build --workspace @knowledge-ai/web"
   }
 }

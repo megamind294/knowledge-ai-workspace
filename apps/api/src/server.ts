@@ -1,9 +1,22 @@
-import { createApp } from "./app.js";
 import { loadApiConfig } from "./config.js";
+import { createApiRuntime } from "./runtime.js";
 
 const config = loadApiConfig();
-const app = createApp();
+const runtime = await createApiRuntime(config);
 
-app.listen(config.port, () => {
+const server = runtime.app.listen(config.port, () => {
   console.log(`Knowledge AI API listening on port ${config.port}`);
 });
+
+let closing = false;
+async function shutdown() {
+  if (closing) return;
+  closing = true;
+  server.close(async () => {
+    await runtime.close();
+    process.exitCode = 0;
+  });
+}
+
+process.once("SIGINT", () => void shutdown());
+process.once("SIGTERM", () => void shutdown());

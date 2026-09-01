@@ -1,4 +1,4 @@
-import { newDb } from "pg-mem";
+import { DataType, newDb } from "pg-mem";
 import { Pool } from "pg";
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
 import { runMigrations } from "../database/migrate.js";
@@ -24,6 +24,12 @@ const firstSession = {
 
 function createMemoryPool(): DatabasePool {
   const database = newDb({ noAstCoverageCheck: true });
+  database.public.registerFunction({
+    name: "pg_advisory_xact_lock",
+    args: [DataType.integer],
+    returns: DataType.integer,
+    implementation: () => 1,
+  });
   return new (database.adapters.createPg().Pool)() as DatabasePool;
 }
 

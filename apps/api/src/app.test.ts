@@ -54,4 +54,24 @@ describe("API application", () => {
     expect(parsed.error.message).toBe("Internal server error");
     expect(JSON.stringify(parsed)).not.toContain("password leaked");
   });
+
+  it("permits credentialed requests only from the configured web origin", async () => {
+    const app = createApp({ corsOrigin: "https://web.example.com" });
+
+    const allowed = await request(app)
+      .options("/api/auth/login")
+      .set("origin", "https://web.example.com")
+      .set("access-control-request-method", "POST")
+      .expect(204);
+    expect(allowed.headers["access-control-allow-origin"]).toBe(
+      "https://web.example.com",
+    );
+    expect(allowed.headers["access-control-allow-credentials"]).toBe("true");
+
+    const rejected = await request(app)
+      .get("/api/health")
+      .set("origin", "https://attacker.example.com")
+      .expect(200);
+    expect(rejected.headers).not.toHaveProperty("access-control-allow-origin");
+  });
 });

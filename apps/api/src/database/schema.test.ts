@@ -1,4 +1,4 @@
-import { newDb } from "pg-mem";
+import { DataType, newDb } from "pg-mem";
 import { Pool } from "pg";
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
 import { runMigrations } from "./migrate.js";
@@ -16,6 +16,12 @@ const ids = {
 
 function createMemoryPool(): DatabasePool {
   const database = newDb({ noAstCoverageCheck: true });
+  database.public.registerFunction({
+    name: "pg_advisory_xact_lock",
+    args: [DataType.integer],
+    returns: DataType.integer,
+    implementation: () => 1,
+  });
   const adapter = database.adapters.createPg();
   return new adapter.Pool() as DatabasePool;
 }
@@ -44,6 +50,15 @@ describe.sequential("Day 3 PostgreSQL schema", () => {
   it("applies the core migration exactly once", async () => {
     await runMigrations(pool);
     await runMigrations(pool);
+
+    const result = await pool.query<{ name: string }>(
+      "SELECT name FROM schema_migrations ORDER BY name",
+    );
+    expect(result.rows).toEqual([{ name: "001_day3_core.sql" }]);
+  });
+
+  it("serializes concurrent startup migration attempts", async () => {
+    await Promise.all([runMigrations(pool), runMigrations(pool)]);
 
     const result = await pool.query<{ name: string }>(
       "SELECT name FROM schema_migrations ORDER BY name",

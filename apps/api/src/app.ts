@@ -17,6 +17,7 @@ function resolveRequestId(value: string | undefined) {
 }
 
 interface CreateAppOptions {
+  corsOrigin?: string;
   auth?: {
     service: AuthService;
     accessTokenSecret: Uint8Array;
@@ -33,6 +34,23 @@ interface CreateAppOptions {
 export function createApp(options: CreateAppOptions = {}) {
   const app = express();
   app.disable("x-powered-by");
+  const corsOrigin = options.corsOrigin;
+  if (corsOrigin) {
+    app.use((request, response, next) => {
+      if (request.header("origin") === corsOrigin) {
+        response.setHeader("access-control-allow-origin", corsOrigin);
+        response.setHeader("access-control-allow-credentials", "true");
+        response.setHeader("vary", "Origin");
+      }
+      if (request.method === "OPTIONS") {
+        response.setHeader("access-control-allow-headers", "authorization, content-type");
+        response.setHeader("access-control-allow-methods", "GET, POST, OPTIONS");
+        response.status(204).send();
+        return;
+      }
+      next();
+    });
+  }
   app.use(express.json({ limit: "1mb" }));
   app.use((request, response, next) => {
     const requestId = resolveRequestId(request.header("x-request-id"));

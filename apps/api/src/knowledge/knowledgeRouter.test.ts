@@ -1,4 +1,4 @@
-import { newDb } from "pg-mem";
+import { DataType, newDb } from "pg-mem";
 import request from "supertest";
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
 import { createApp } from "../app.js";
@@ -9,7 +9,17 @@ import { PostgresKnowledgeRepository } from "./postgresKnowledgeRepository.js";
 
 const secret=new TextEncoder().encode("test-only-secret-that-is-at-least-thirty-two-bytes");
 const ids={owner:"00000000-0000-4000-8000-000000000001",viewer:"00000000-0000-4000-8000-000000000002",outsider:"00000000-0000-4000-8000-000000000003",workspace:"00000000-0000-4000-8000-000000000010",failed:"00000000-0000-4000-8000-000000000030"};
-function pool():DatabasePool { const adapter=newDb({noAstCoverageCheck:true}).adapters.createPg(); return new adapter.Pool() as DatabasePool; }
+function pool(): DatabasePool {
+  const database = newDb({ noAstCoverageCheck: true });
+  database.public.registerFunction({
+    name: "pg_advisory_xact_lock",
+    args: [DataType.integer],
+    returns: DataType.integer,
+    implementation: () => 1,
+  });
+  const adapter = database.adapters.createPg();
+  return new adapter.Pool() as DatabasePool;
+}
 async function token(userId:string,email:string){return issueAccessToken({user:{id:userId,email,displayName:email},secret,now:new Date("2026-08-31T00:00:00Z"),ttlSeconds:60*60*24*365});}
 
 describe.sequential("authorized knowledge API",()=>{

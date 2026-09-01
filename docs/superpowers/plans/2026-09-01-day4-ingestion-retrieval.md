@@ -10,7 +10,7 @@
 
 **Spec:** `docs/superpowers/specs/2026-08-27-ai-knowledge-workspace-design.md`
 
-**Progress:** Task 1 is complete on `feature/day4-ingestion-retrieval`; Task 2 format parsing is next.
+**Progress:** Task 1 is complete. Task 2 now has strict TXT/Markdown extraction and a tested binary-adapter boundary; concrete PDF/DOCX library adapters remain.
 
 ## Global Constraints
 
@@ -55,6 +55,8 @@
 **Interfaces:**
 - Produces: `DocumentParser.extract({ mediaType, bytes }) => Promise<ExtractedSection[]>`.
 - Consumes: Task 1 section contracts and the existing document media-type contract.
+
+**Current progress:** TXT and Markdown extraction, strict UTF-8 validation, heading/fence metadata handling, size/empty/media validation, binary adapter injection, and content-free parser failures are implemented. PDF/DOCX dependencies and concrete adapters are still pending, so this task is not marked complete.
 
 - [ ] **Step 1: Add fixture-backed failing tests for valid extraction, malformed bytes, empty documents, page/heading metadata, and unsupported media types**
 - [ ] **Step 2: Verify failures are caused by missing parser adapters**

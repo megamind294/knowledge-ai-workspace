@@ -127,9 +127,14 @@ Day 3 now includes:
 - deterministic overlapping word windows with stable global ordinals
 - page-number and section-heading provenance retained on every chunk draft
 - explicit rejection of invalid chunk-size and overlap options
-- 8 focused chunking tests, bringing the project total to 133 automated tests
+- strict UTF-8 decoding that rejects malformed text instead of inserting replacement characters
+- plain-text extraction and Markdown section extraction with heading provenance
+- fenced Markdown handling that prevents code headings from splitting source sections
+- binary-parser injection boundaries with normalized output and content-free failures
+- explicit unavailable-parser behavior for PDF and DOCX until their libraries are installed
+- 18 focused ingestion tests, bringing the project total to 143 automated tests
 - lint, strict type-check, all tests, and all production builds passing locally
 
 ## Next milestone
 
-Task 2 will add strict plain-text and Markdown parsers plus isolated PDF and DOCX adapters. Byte upload, persistence, embeddings, pgvector, and semantic retrieval remain later Day 4 tasks.
+Task 2 continues with concrete PDF and DOCX adapters. Byte upload, persistence, embeddings, pgvector, and semantic retrieval remain later Day 4 tasks.

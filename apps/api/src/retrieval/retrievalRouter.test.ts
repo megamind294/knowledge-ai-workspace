@@ -49,10 +49,12 @@ class ScopeRepository implements RetrievalRepository {
     userId: string,
     workspaceId: string,
     _embedding: readonly number[],
+    _embeddingModel: string,
     scope: RetrievalScope,
     _topK: number,
   ) {
     void _topK;
+    void _embeddingModel;
     if (userId === ids.outsider || workspaceId !== ids.workspace) return null;
     if (
       (scope.type === "collection" && scope.collectionId !== ids.collection) ||
@@ -156,17 +158,25 @@ describe("scoped semantic retrieval API", () => {
 
   it("rejects invalid limits and mismatched collection or document scopes", async () => {
     const authorization = auth(await token(ids.member));
-    await request(app())
+    let embeddingCalls = 0;
+    const countedProvider: EmbeddingProvider = {
+      ...provider,
+      embed: async () => {
+        embeddingCalls += 1;
+        return [vector];
+      },
+    };
+    await request(app(countedProvider))
       .post("/api/workspaces/not-a-uuid/retrieval")
       .set(authorization)
       .send({ query: "leave", scope: { type: "workspace" } })
       .expect(400);
-    await request(app())
+    await request(app(countedProvider))
       .post(`/api/workspaces/${ids.workspace}/retrieval`)
       .set(authorization)
       .send({ query: "leave", scope: { type: "workspace" }, topK: 21 })
       .expect(400);
-    await request(app())
+    await request(app(countedProvider))
       .post(`/api/workspaces/${ids.workspace}/retrieval`)
       .set(authorization)
       .send({
@@ -177,7 +187,7 @@ describe("scoped semantic retrieval API", () => {
         },
       })
       .expect(404);
-    await request(app())
+    await request(app(countedProvider))
       .post(`/api/workspaces/${ids.workspace}/retrieval`)
       .set(authorization)
       .send({
@@ -188,6 +198,7 @@ describe("scoped semantic retrieval API", () => {
         },
       })
       .expect(404);
+    expect(embeddingCalls).toBe(0);
   });
 
   it("returns an empty successful result when no indexed chunks match", async () => {

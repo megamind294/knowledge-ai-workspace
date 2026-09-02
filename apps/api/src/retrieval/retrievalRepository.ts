@@ -12,6 +12,7 @@ export interface RetrievalRepository {
     userId: string,
     workspaceId: string,
     embedding: readonly number[],
+    embeddingModel: string,
     scope: RetrievalScope,
     topK: number,
   ): Promise<RetrievalResult[] | null>;

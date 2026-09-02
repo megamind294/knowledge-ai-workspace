@@ -59,35 +59,48 @@ export class PostgresRetrievalRepository implements RetrievalRepository {
     userId: string,
     workspaceId: string,
     embedding: readonly number[],
+    embeddingModel: string,
     scope: RetrievalScope,
     topK: number,
   ) {
     if (!(await this.canAccessScope(userId, workspaceId, scope))) return null;
 
-    const values: unknown[] = [workspaceId, vectorLiteral(embedding), topK];
+    const values: unknown[] = [
+      workspaceId,
+      userId,
+      vectorLiteral(embedding),
+      embeddingModel,
+      topK,
+    ];
     let scopeClause = "";
     if (scope.type === "collection") {
       values.push(scope.collectionId);
-      scopeClause = "AND d.collection_id=$4";
+      scopeClause = "AND d.collection_id=$6";
     } else if (scope.type === "document") {
       values.push(scope.documentId);
-      scopeClause = "AND d.id=$4";
+      scopeClause = "AND d.id=$6";
     }
 
     const rows = await this.pool.query(
       `SELECT c.id AS chunk_id,c.document_id,d.collection_id,
               d.original_filename,c.ordinal,c.content,c.word_count,
               c.page_number,c.section_heading,
-              1 - (c.embedding <=> $2::public.vector) AS score
+              1 - (c.embedding <=> $3::public.vector) AS score
        FROM document_chunks c
        JOIN document_index_runs r
-         ON r.id=c.index_run_id AND r.status='active'
+         ON r.id=c.index_run_id
+        AND r.status='active'
+        AND r.embedding_model=$4
        JOIN documents d
          ON d.id=c.document_id AND d.workspace_id=c.workspace_id
        WHERE c.workspace_id=$1
+         AND EXISTS (
+           SELECT 1 FROM workspace_members m
+           WHERE m.workspace_id=c.workspace_id AND m.user_id=$2
+         )
        ${scopeClause}
-       ORDER BY c.embedding <=> $2::public.vector,c.id
-       LIMIT $3`,
+       ORDER BY c.embedding <=> $3::public.vector,c.id
+       LIMIT $5`,
       values,
     );
     return rows.rows.map(resultFromRow);

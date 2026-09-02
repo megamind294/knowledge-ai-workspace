@@ -102,6 +102,7 @@ export function createRetrievalRouter(options: RetrievalRouterOptions) {
           request.auth!.userId,
           workspaceId.data,
           embedding,
+          options.embeddingProvider.model,
           parsed.data.scope,
           parsed.data.topK,
         );

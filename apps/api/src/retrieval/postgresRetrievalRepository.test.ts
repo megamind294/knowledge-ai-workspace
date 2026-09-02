@@ -134,6 +134,7 @@ describePostgres("PostgresRetrievalRepository", () => {
       ids.member,
       ids.workspace,
       embedding(1, 0),
+      "test",
       { type: "workspace" },
       2,
     );
@@ -149,6 +150,16 @@ describePostgres("PostgresRetrievalRepository", () => {
       score: 1,
     });
     expect(results?.[1]?.score).toBeCloseTo(Math.SQRT1_2);
+    await expect(
+      repository.search(
+        ids.member,
+        ids.workspace,
+        embedding(1, 0),
+        "different-model",
+        { type: "workspace" },
+        5,
+      ),
+    ).resolves.toEqual([]);
   });
 
   it("enforces collection and document scopes", async () => {
@@ -156,6 +167,7 @@ describePostgres("PostgresRetrievalRepository", () => {
       ids.member,
       ids.workspace,
       embedding(1, 0),
+      "test",
       { type: "collection", collectionId: ids.otherCollection },
       5,
     );
@@ -163,6 +175,7 @@ describePostgres("PostgresRetrievalRepository", () => {
       ids.member,
       ids.workspace,
       embedding(1, 0),
+      "test",
       { type: "document", documentId: ids.document },
       5,
     );
@@ -182,6 +195,7 @@ describePostgres("PostgresRetrievalRepository", () => {
         ids.outsider,
         ids.workspace,
         embedding(1, 0),
+        "test",
         { type: "workspace" },
         5,
       ),
@@ -191,6 +205,7 @@ describePostgres("PostgresRetrievalRepository", () => {
         ids.member,
         ids.workspace,
         embedding(1, 0),
+        "test",
         { type: "collection", collectionId: ids.foreignCollection },
         5,
       ),
@@ -200,9 +215,37 @@ describePostgres("PostgresRetrievalRepository", () => {
         ids.member,
         ids.workspace,
         embedding(1, 0),
+        "test",
         { type: "document", documentId: ids.foreignDocument },
         5,
       ),
     ).resolves.toBeNull();
+  });
+
+  it("rechecks membership inside the vector query", async () => {
+    const revokingPool: DatabasePool = {
+      connect: () => pool.connect(),
+      end: () => pool.end(),
+      query: async (text, values) => {
+        if (text.includes("FROM document_chunks c")) {
+          await pool.query(
+            "DELETE FROM workspace_members WHERE workspace_id=$1 AND user_id=$2",
+            [ids.workspace, ids.member],
+          );
+        }
+        return pool.query(text, values);
+      },
+    };
+
+    await expect(
+      new PostgresRetrievalRepository(revokingPool).search(
+        ids.member,
+        ids.workspace,
+        embedding(1, 0),
+        "test",
+        { type: "workspace" },
+        5,
+      ),
+    ).resolves.toEqual([]);
   });
 });

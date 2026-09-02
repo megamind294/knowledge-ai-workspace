@@ -146,7 +146,8 @@ Day 3 now includes:
 - transactional active-index replacement coverage
 - 39 focused Day 4 tests, bringing the project total to 164 automated tests
 - lint, strict type-check, all tests, and all production builds passing locally
+- real pgvector-enabled PostgreSQL 16 verification passing in GitHub Actions
 
 ## Next milestone
 
-Task 4's pgvector persistence schema is implemented, with exact-head CI verification pending. Task 3's authorized upload boundary is complete with an explicitly non-durable in-memory adapter. Task 2 still needs concrete PDF/DOCX dependencies; durable storage, the ingestion/indexing service, provider embeddings, and scoped semantic retrieval remain.
+Tasks 1, 3, and 4 are complete. Task 3's authorized upload boundary uses an explicitly non-durable in-memory adapter. Task 2 still needs concrete PDF/DOCX dependencies; durable storage, the ingestion/indexing service, provider embeddings, and scoped semantic retrieval remain.

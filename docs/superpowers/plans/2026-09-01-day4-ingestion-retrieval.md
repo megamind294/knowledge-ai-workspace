@@ -10,7 +10,7 @@
 
 **Spec:** `docs/superpowers/specs/2026-08-27-ai-knowledge-workspace-design.md`
 
-**Progress:** Tasks 1 and 3 are complete. Task 4's schema implementation and local compatibility tests are complete, with real pgvector CI verification pending. Task 2 has strict TXT/Markdown extraction and a tested binary-adapter boundary; concrete PDF/DOCX library adapters remain unavailable until their dependencies can be installed.
+**Progress:** Tasks 1, 3, and 4 are complete. Task 2 has strict TXT/Markdown extraction and a tested binary-adapter boundary; concrete PDF/DOCX library adapters remain unavailable until their dependencies can be installed.
 
 ## Global Constraints
 
@@ -97,8 +97,8 @@
 - [x] **Step 1: Write failing PostgreSQL tests for pgvector availability, uniqueness, scope integrity, atomic replacement, and cascades**
 - [x] **Step 2: Verify failures are caused by missing Day 4 relations**
 - [x] **Step 3: Add the idempotent migration and indexes required for scoped vector search**
-- [ ] **Step 4: Run local compatibility tests and real PostgreSQL CI**
-- [ ] **Step 5: Commit `feat: add pgvector ingestion schema`**
+- [x] **Step 4: Run local compatibility tests and real PostgreSQL CI**
+- [x] **Step 5: Commit `feat: add pgvector ingestion schema`**
 
 ### Task 5: Embedding provider and idempotent ingestion service
 

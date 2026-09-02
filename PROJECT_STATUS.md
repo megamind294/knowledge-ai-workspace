@@ -157,4 +157,4 @@ Day 3 now includes:
 
 ## Next milestone
 
-Tasks 1, 3, and 4 are complete. Task 5's provider and ingestion implementation is complete locally with exact-head CI pending. Task 3's authorized upload boundary uses an explicitly non-durable in-memory adapter. Task 2 still needs concrete PDF/DOCX dependencies; durable storage, an ingestion HTTP trigger, scoped semantic retrieval, and frontend integration remain.
+Tasks 1, 3, 4, and 5 are complete, including all 187 tests on pgvector-enabled PostgreSQL 16 in [GitHub Actions run #64](https://github.com/megamind294/knowledge-ai-workspace/actions/runs/33658892635). Task 3's authorized upload boundary uses an explicitly non-durable in-memory adapter. Task 2 still needs concrete PDF/DOCX dependencies; durable storage, an ingestion HTTP trigger, scoped semantic retrieval, and frontend integration remain.

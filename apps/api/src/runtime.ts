@@ -6,6 +6,7 @@ import type { ApiConfig } from "./config.js";
 import { runMigrations } from "./database/migrate.js";
 import { createDatabasePool, type DatabasePool } from "./database/pool.js";
 import { PostgresKnowledgeRepository } from "./knowledge/postgresKnowledgeRepository.js";
+import { InMemoryObjectStore } from "./storage/inMemoryObjectStore.js";
 
 const GOOGLE_AUTHORIZATION_ENDPOINT = "https://accounts.google.com/o/oauth2/v2/auth";
 const GOOGLE_TOKEN_ENDPOINT = "https://oauth2.googleapis.com/token";
@@ -42,6 +43,8 @@ export async function createApiRuntime(
       : null,
   );
   const webAppUrl = new URL(config.webAppUrl);
+  const knowledgeRepository = new PostgresKnowledgeRepository(pool);
+  const objectStore = new InMemoryObjectStore();
 
   return {
     app: createApp({
@@ -58,7 +61,12 @@ export async function createApiRuntime(
       },
       corsOrigin: webAppUrl.origin,
       knowledge: {
-        repository: new PostgresKnowledgeRepository(pool),
+        repository: knowledgeRepository,
+        accessTokenSecret,
+      },
+      upload: {
+        repository: knowledgeRepository,
+        objectStore,
         accessTokenSecret,
       },
     }),

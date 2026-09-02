@@ -7,8 +7,10 @@ import express, {
 import { createAuthRouter } from "./auth/authRouter.js";
 import type { AuthService } from "./auth/authService.js";
 import type { GoogleOAuthAdapter } from "./auth/googleOAuth.js";
+import { createUploadRouter } from "./ingestion/uploadRouter.js";
 import { createKnowledgeRouter } from "./knowledge/knowledgeRouter.js";
 import type { KnowledgeRepository } from "./knowledge/knowledgeRepository.js";
+import type { ObjectStore } from "./storage/objectStore.js";
 
 const REQUEST_ID_PATTERN = /^[A-Za-z0-9._-]{1,128}$/;
 
@@ -27,6 +29,12 @@ interface CreateAppOptions {
   knowledge?: {
     repository: KnowledgeRepository;
     accessTokenSecret: Uint8Array;
+  };
+  upload?: {
+    repository: KnowledgeRepository;
+    objectStore: ObjectStore;
+    accessTokenSecret: Uint8Array;
+    maxBytes?: number;
   };
   registerRoutes?: (app: Express) => void;
 }
@@ -69,6 +77,9 @@ export function createApp(options: CreateAppOptions = {}) {
 
   if (options.auth) {
     app.use("/api/auth", createAuthRouter(options.auth));
+  }
+  if (options.upload) {
+    app.use("/api", createUploadRouter(options.upload));
   }
   if (options.knowledge) {
     app.use("/api", createKnowledgeRouter(options.knowledge));

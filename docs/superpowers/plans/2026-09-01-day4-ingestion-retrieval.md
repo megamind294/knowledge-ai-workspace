@@ -10,7 +10,7 @@
 
 **Spec:** `docs/superpowers/specs/2026-08-27-ai-knowledge-workspace-design.md`
 
-**Progress:** Task 1 is complete. Task 2 now has strict TXT/Markdown extraction and a tested binary-adapter boundary; concrete PDF/DOCX library adapters remain.
+**Progress:** Tasks 1 and 3 are complete. Task 2 has strict TXT/Markdown extraction and a tested binary-adapter boundary; concrete PDF/DOCX library adapters remain unavailable until their dependencies can be installed.
 
 ## Global Constraints
 
@@ -78,11 +78,11 @@
 - Produces: authenticated byte upload and an `ObjectStore` with put/get/delete operations keyed by server-generated paths.
 - Consumes: existing membership authorization, size/media validation, and document metadata.
 
-- [ ] **Step 1: Write failing tests for authentication, membership, write roles, byte limits, MIME mismatch, duplicate submission, and content-free errors**
-- [ ] **Step 2: Verify failures are caused by the absent upload route and store**
-- [ ] **Step 3: Implement streaming-safe validation and an injected object-store boundary**
-- [ ] **Step 4: Run focused integration and complete quality gates**
-- [ ] **Step 5: Commit `feat: add authorized document upload`**
+- [x] **Step 1: Write failing tests for authentication, membership, write roles, byte limits, MIME mismatch, duplicate submission, and content-free errors**
+- [x] **Step 2: Verify failures are caused by the absent upload route and store**
+- [x] **Step 3: Implement bounded raw-body validation and an injected object-store boundary**
+- [x] **Step 4: Run focused integration and complete quality gates**
+- [x] **Step 5: Commit `feat: add authorized document upload`**
 
 ### Task 4: pgvector chunk and indexing schema
 

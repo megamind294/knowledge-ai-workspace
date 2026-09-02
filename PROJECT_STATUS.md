@@ -46,7 +46,8 @@ No file bytes are uploaded, parsed, stored, embedded, or sent to an AI provider 
 
 ## Explicitly not implemented in the current Day 4 slice
 
-- document-byte upload, format parsing, persistent chunks, or object storage
+- durable object storage, persistent chunks, or connected ingestion processing
+- concrete PDF and DOCX parser adapters
 - pgvector
 - embeddings, retrieval, AI chat, or citations
 - production deployment
@@ -132,9 +133,16 @@ Day 3 now includes:
 - fenced Markdown handling that prevents code headings from splitting source sections
 - binary-parser injection boundaries with normalized output and content-free failures
 - explicit unavailable-parser behavior for PDF and DOCX until their libraries are installed
-- 18 focused ingestion tests, bringing the project total to 143 automated tests
+- membership-authorized document-byte upload with owner/admin/member write enforcement
+- non-member resource isolation before request-body acceptance
+- bounded raw-body parsing with MIME and metadata-size consistency checks
+- server-generated object keys with path-traversal rejection
+- duplicate-submission protection and immutable stored-byte snapshots
+- process-local in-memory put/get/delete behavior behind an injected `ObjectStore`
+- content-free upload and storage error responses
+- 34 focused Day 4 tests, bringing the project total to 159 automated tests
 - lint, strict type-check, all tests, and all production builds passing locally
 
 ## Next milestone
 
-Task 2 continues with concrete PDF and DOCX adapters. Byte upload, persistence, embeddings, pgvector, and semantic retrieval remain later Day 4 tasks.
+Task 3's authorized upload boundary is complete with an explicitly non-durable in-memory adapter. Task 2 still needs concrete PDF/DOCX dependencies; durable storage, persistent chunks, embeddings, pgvector, and semantic retrieval remain.

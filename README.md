@@ -46,7 +46,8 @@ Key boundaries:
 - `apps/web/src/components` — reusable navigation, layout, heading, and state components
 - `apps/api/src` — environment validation, Express composition, request correlation, and server startup
 - `apps/api/src/auth` — credential hashing, token issuance, refresh rotation, and interchangeable auth repositories
-- `apps/api/src/ingestion` — parser-neutral normalization and deterministic chunking foundations
+- `apps/api/src/ingestion` — parser-neutral normalization, deterministic chunking, parsing, and authorized byte-upload boundaries
+- `apps/api/src/storage` — provider-neutral object storage with an in-memory Day 4 development adapter
 - `apps/api/migrations` — versioned PostgreSQL schema migrations
 - `packages/contracts/src` — transport-neutral Zod schemas and inferred TypeScript types
 
@@ -80,6 +81,7 @@ The configurable API composition also exposes:
 | `GET /api/auth/google/start` | Begin the state- and PKCE-protected Google flow |
 | `GET /api/auth/google/callback` | Exchange a verified callback and create a Keystone session |
 | `/api/workspaces/*` | Membership-authorized workspace, collection, and document metadata APIs |
+| `POST /api/workspaces/:workspaceId/documents/:documentId/content` | Validate and retain authorized source bytes through the injected object store |
 
 Routes below `/app` require the selected session provider: a local marker in explicit fixture mode or the authenticated API session in default API mode. Unknown entities render recoverable not-found states, while unknown application URLs use the global 404 page.
 
@@ -127,18 +129,18 @@ npm test -- --run
 npm run build
 ```
 
-Verification covers fixture and API repositories, protected routing, session restoration, real credential forms, refresh retry, logout, responsive shell, dashboards, workspace/collection/document navigation, metadata validation, ingestion simulation, strict TXT/Markdown extraction, Markdown heading and fence handling, content-free parser errors, deterministic text normalization and chunk windows, retry behavior, scoped mock search, API contracts, HTTP error handling, migration idempotency, relational constraints, password hashing, signed bearer tokens, refresh-cookie rotation/replay handling, Google OAuth state and PKCE handling, provider-failure normalization, external-identity persistence, membership authorization, cross-workspace isolation, and recovery states. GitHub Actions runs a clean install and every command above against a real PostgreSQL 16 service for feature branches and pull requests; local tests use a PostgreSQL-compatible in-memory adapter when `TEST_DATABASE_URL` is absent.
+Verification covers fixture and API repositories, protected routing, session restoration, real credential forms, refresh retry, logout, responsive shell, dashboards, workspace/collection/document navigation, metadata validation, ingestion simulation, strict TXT/Markdown extraction, Markdown heading and fence handling, content-free parser errors, deterministic text normalization and chunk windows, authorized byte uploads, read-only and non-member isolation, byte/MIME limits, duplicate protection, immutable object snapshots, retry behavior, scoped mock search, API contracts, HTTP error handling, migration idempotency, relational constraints, password hashing, signed bearer tokens, refresh-cookie rotation/replay handling, Google OAuth state and PKCE handling, provider-failure normalization, external-identity persistence, membership authorization, cross-workspace isolation, and recovery states. GitHub Actions runs a clean install and every command above against a real PostgreSQL 16 service for feature branches and pull requests; local tests use a PostgreSQL-compatible in-memory adapter when `TEST_DATABASE_URL` is absent.
 
 ## Honest limitations
 
-The API stores document metadata only. Day 4 currently provides strict in-memory TXT/Markdown extraction, a tested injection boundary for binary parsers, normalization, and chunk-draft generation, but those utilities are not connected to uploads or persistence. Concrete PDF and DOCX libraries are not installed yet. The application does **not** yet transfer or retain file bytes, persist chunks or embeddings, use pgvector, retrieve sources, call an AI model, generate citations, persist conversations, or provide a deployment. Google OAuth code is complete but no live provider credentials are committed or claimed. Fixture mode stores only a fixed marker in browser LocalStorage; API mode keeps access tokens in memory and relies on the HTTP-only refresh cookie.
+Day 4 can now accept membership-authorized document bytes after bounded size, MIME, metadata-size, and duplicate validation. The composed runtime uses the injected in-memory object-store adapter, so bytes are process-local and lost on restart; this is not durable production storage. Parsing and chunking utilities are not yet connected to uploaded objects, and concrete PDF/DOCX libraries are not installed. The application does **not** yet persist chunks or embeddings, use pgvector, retrieve sources, call an AI model, generate citations, persist conversations, or provide a deployment. Google OAuth code is complete but no live provider credentials are committed or claimed. Fixture mode stores only a fixed marker in browser LocalStorage; API mode keeps access tokens in memory and relies on the HTTP-only refresh cookie.
 
 ## Roadmap
 
 1. **Day 1 — complete:** React/TypeScript shell, demo auth boundary, dashboard, workspaces, collections, tests, and CI
 2. **Day 2 — complete:** document library, validated local metadata preview, simulated ingestion states, retry flows, and scoped mock knowledge search
 3. **Day 3 — complete:** Express API, PostgreSQL, email/password authentication, optional Google OAuth boundary, authorized metadata persistence, and frontend API integration
-4. **Day 4 — in progress:** normalization/chunking and TXT/Markdown parsing foundations, followed by PDF/DOCX adapters, provider embeddings, pgvector storage, and scoped retrieval
+4. **Day 4 — in progress:** normalization/chunking, TXT/Markdown parsing, and authorized process-local byte storage, followed by PDF/DOCX adapters, durable storage, provider embeddings, pgvector indexing, and scoped retrieval
 5. **Day 5:** grounded chat, citations, conversation history, and low-confidence behavior
 6. **Day 6:** end-to-end coverage, Docker, deployment, operations documentation, and final polish
 

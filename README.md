@@ -48,7 +48,7 @@ Key boundaries:
 - `apps/api/src/auth` — credential hashing, token issuance, refresh rotation, and interchangeable auth repositories
 - `apps/api/src/ingestion` — parser-neutral normalization, deterministic chunking, parsing, and authorized byte-upload boundaries
 - `apps/api/src/storage` — provider-neutral object storage with an in-memory Day 4 development adapter
-- `apps/api/migrations` — versioned PostgreSQL schema migrations
+- `apps/api/migrations` — versioned PostgreSQL and pgvector schema migrations
 - `packages/contracts/src` — transport-neutral Zod schemas and inferred TypeScript types
 
 The approved architecture and milestone plan are in [`docs/superpowers/specs/2026-08-27-ai-knowledge-workspace-design.md`](docs/superpowers/specs/2026-08-27-ai-knowledge-workspace-design.md) and [`docs/superpowers/plans/2026-08-27-day1-product-shell.md`](docs/superpowers/plans/2026-08-27-day1-product-shell.md).
@@ -91,7 +91,7 @@ Requirements:
 
 - Node.js 20.19 or newer
 - npm 10 or newer
-- PostgreSQL 16 or newer
+- PostgreSQL 16 or newer with the pgvector extension available
 
 ```bash
 npm ci
@@ -129,18 +129,18 @@ npm test -- --run
 npm run build
 ```
 
-Verification covers fixture and API repositories, protected routing, session restoration, real credential forms, refresh retry, logout, responsive shell, dashboards, workspace/collection/document navigation, metadata validation, ingestion simulation, strict TXT/Markdown extraction, Markdown heading and fence handling, content-free parser errors, deterministic text normalization and chunk windows, authorized byte uploads, read-only and non-member isolation, byte/MIME limits, duplicate protection, immutable object snapshots, retry behavior, scoped mock search, API contracts, HTTP error handling, migration idempotency, relational constraints, password hashing, signed bearer tokens, refresh-cookie rotation/replay handling, Google OAuth state and PKCE handling, provider-failure normalization, external-identity persistence, membership authorization, cross-workspace isolation, and recovery states. GitHub Actions runs a clean install and every command above against a real PostgreSQL 16 service for feature branches and pull requests; local tests use a PostgreSQL-compatible in-memory adapter when `TEST_DATABASE_URL` is absent.
+Verification covers fixture and API repositories, protected routing, session restoration, real credential forms, refresh retry, logout, responsive shell, dashboards, workspace/collection/document navigation, metadata validation, ingestion simulation, strict TXT/Markdown extraction, Markdown heading and fence handling, content-free parser errors, deterministic text normalization and chunk windows, authorized byte uploads, read-only and non-member isolation, byte/MIME limits, duplicate protection, immutable object snapshots, retry behavior, scoped mock search, API contracts, HTTP error handling, migration idempotency, relational and vector-dimension constraints, active-index uniqueness, scoped chunk references, cascading deletion, password hashing, signed bearer tokens, refresh-cookie rotation/replay handling, Google OAuth state and PKCE handling, provider-failure normalization, external-identity persistence, membership authorization, cross-workspace isolation, and recovery states. GitHub Actions runs a clean install and every command above against a pgvector-enabled PostgreSQL 16 service for feature branches and pull requests; local tests use a PostgreSQL-compatible in-memory adapter when `TEST_DATABASE_URL` is absent.
 
 ## Honest limitations
 
-Day 4 can now accept membership-authorized document bytes after bounded size, MIME, metadata-size, and duplicate validation. The composed runtime uses the injected in-memory object-store adapter, so bytes are process-local and lost on restart; this is not durable production storage. Parsing and chunking utilities are not yet connected to uploaded objects, and concrete PDF/DOCX libraries are not installed. The application does **not** yet persist chunks or embeddings, use pgvector, retrieve sources, call an AI model, generate citations, persist conversations, or provide a deployment. Google OAuth code is complete but no live provider credentials are committed or claimed. Fixture mode stores only a fixed marker in browser LocalStorage; API mode keeps access tokens in memory and relies on the HTTP-only refresh cookie.
+Day 4 can now accept membership-authorized document bytes after bounded size, MIME, metadata-size, and duplicate validation. The composed runtime uses the injected in-memory object-store adapter, so bytes are process-local and lost on restart; this is not durable production storage. PostgreSQL now has pgvector-backed index-run and chunk relations with scope and lifecycle constraints, but no ingestion service writes chunks or embeddings yet and no vector search is executed. Parsing and chunking utilities are not yet connected to uploaded objects, and concrete PDF/DOCX libraries are not installed. The application does **not** yet retrieve sources, call an AI model, generate citations, persist conversations, or provide a deployment. Google OAuth code is complete but no live provider credentials are committed or claimed. Fixture mode stores only a fixed marker in browser LocalStorage; API mode keeps access tokens in memory and relies on the HTTP-only refresh cookie.
 
 ## Roadmap
 
 1. **Day 1 — complete:** React/TypeScript shell, demo auth boundary, dashboard, workspaces, collections, tests, and CI
 2. **Day 2 — complete:** document library, validated local metadata preview, simulated ingestion states, retry flows, and scoped mock knowledge search
 3. **Day 3 — complete:** Express API, PostgreSQL, email/password authentication, optional Google OAuth boundary, authorized metadata persistence, and frontend API integration
-4. **Day 4 — in progress:** normalization/chunking, TXT/Markdown parsing, and authorized process-local byte storage, followed by PDF/DOCX adapters, durable storage, provider embeddings, pgvector indexing, and scoped retrieval
+4. **Day 4 — in progress:** normalization/chunking, TXT/Markdown parsing, authorized process-local byte storage, and the pgvector index schema, followed by PDF/DOCX adapters, durable storage, provider embeddings, indexing services, and scoped retrieval
 5. **Day 5:** grounded chat, citations, conversation history, and low-confidence behavior
 6. **Day 6:** end-to-end coverage, Docker, deployment, operations documentation, and final polish
 

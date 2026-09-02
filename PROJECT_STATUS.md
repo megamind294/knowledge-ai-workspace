@@ -46,10 +46,10 @@ No file bytes are uploaded, parsed, stored, embedded, or sent to an AI provider 
 
 ## Explicitly not implemented in the current Day 4 slice
 
-- durable object storage, persistent chunks, or connected ingestion processing
+- durable object storage or connected ingestion processing
 - concrete PDF and DOCX parser adapters
-- pgvector
-- embeddings, retrieval, AI chat, or citations
+- persisted embedding data or executed pgvector retrieval
+- embeddings from a provider, retrieval, AI chat, or citations
 - production deployment
 
 These are planned milestones, not hidden or partially implemented features.
@@ -140,9 +140,13 @@ Day 3 now includes:
 - duplicate-submission protection and immutable stored-byte snapshots
 - process-local in-memory put/get/delete behavior behind an injected `ObjectStore`
 - content-free upload and storage error responses
-- 34 focused Day 4 tests, bringing the project total to 159 automated tests
+- a pgvector-enabled migration with document index-run and chunk relations
+- one-active-run enforcement, fixed vector dimensions, stable chunk ordinals, and workspace-scoped foreign keys
+- cascading chunk cleanup and an HNSW cosine-distance index prepared for scoped retrieval
+- transactional active-index replacement coverage
+- 39 focused Day 4 tests, bringing the project total to 164 automated tests
 - lint, strict type-check, all tests, and all production builds passing locally
 
 ## Next milestone
 
-Task 3's authorized upload boundary is complete with an explicitly non-durable in-memory adapter. Task 2 still needs concrete PDF/DOCX dependencies; durable storage, persistent chunks, embeddings, pgvector, and semantic retrieval remain.
+Task 4's pgvector persistence schema is implemented, with exact-head CI verification pending. Task 3's authorized upload boundary is complete with an explicitly non-durable in-memory adapter. Task 2 still needs concrete PDF/DOCX dependencies; durable storage, the ingestion/indexing service, provider embeddings, and scoped semantic retrieval remain.

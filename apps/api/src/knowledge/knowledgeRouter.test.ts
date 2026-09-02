@@ -1,31 +1,20 @@
-import { DataType, newDb } from "pg-mem";
 import request from "supertest";
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
 import { createApp } from "../app.js";
 import { issueAccessToken } from "../auth/tokens.js";
 import { runMigrations } from "../database/migrate.js";
 import type { DatabasePool } from "../database/pool.js";
+import { createPgMemPool } from "../testSupport/pgMem.js";
 import { PostgresKnowledgeRepository } from "./postgresKnowledgeRepository.js";
 
 const secret=new TextEncoder().encode("test-only-secret-that-is-at-least-thirty-two-bytes");
 const ids={owner:"00000000-0000-4000-8000-000000000001",viewer:"00000000-0000-4000-8000-000000000002",outsider:"00000000-0000-4000-8000-000000000003",workspace:"00000000-0000-4000-8000-000000000010",failed:"00000000-0000-4000-8000-000000000030"};
-function pool(): DatabasePool {
-  const database = newDb({ noAstCoverageCheck: true });
-  database.public.registerFunction({
-    name: "pg_advisory_xact_lock",
-    args: [DataType.integer],
-    returns: DataType.integer,
-    implementation: () => 1,
-  });
-  const adapter = database.adapters.createPg();
-  return new adapter.Pool() as DatabasePool;
-}
 async function token(userId:string,email:string){return issueAccessToken({user:{id:userId,email,displayName:email},secret,now:new Date("2026-08-31T00:00:00Z"),ttlSeconds:60*60*24*365});}
 
 describe.sequential("authorized knowledge API",()=>{
   let database:DatabasePool; let ownerToken:string; let viewerToken:string; let outsiderToken:string; let sequence=100;
   beforeEach(async()=>{
-    database=pool(); await runMigrations(database);
+    database=createPgMemPool(); await runMigrations(database);
     await database.query("INSERT INTO users (id,email,display_name) VALUES ($1,'owner@example.com','Owner'),($2,'viewer@example.com','Viewer'),($3,'outsider@example.com','Outsider')",[ids.owner,ids.viewer,ids.outsider]);
     await database.query("INSERT INTO workspaces (id,owner_id,name,slug) VALUES ($1,$2,'Research','research')",[ids.workspace,ids.owner]);
     await database.query("INSERT INTO workspace_members (workspace_id,user_id,role) VALUES ($1,$2,'owner'),($1,$3,'viewer')",[ids.workspace,ids.owner,ids.viewer]);

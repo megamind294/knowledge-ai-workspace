@@ -1,4 +1,3 @@
-import { DataType, newDb } from "pg-mem";
 import request from "supertest";
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
 import { createApp } from "../app.js";
@@ -8,6 +7,7 @@ import type { DatabasePool } from "../database/pool.js";
 import { PostgresKnowledgeRepository } from "../knowledge/postgresKnowledgeRepository.js";
 import { InMemoryObjectStore } from "../storage/inMemoryObjectStore.js";
 import { createDocumentObjectKey } from "../storage/objectStore.js";
+import { createPgMemPool } from "../testSupport/pgMem.js";
 
 const secret = new TextEncoder().encode(
   "test-only-secret-that-is-at-least-thirty-two-bytes",
@@ -19,18 +19,6 @@ const ids = {
   workspace: "00000000-0000-4000-8000-000000000010",
   document: "00000000-0000-4000-8000-000000000030",
 };
-
-function createPool(): DatabasePool {
-  const database = newDb({ noAstCoverageCheck: true });
-  database.public.registerFunction({
-    name: "pg_advisory_xact_lock",
-    args: [DataType.integer],
-    returns: DataType.integer,
-    implementation: () => 1,
-  });
-  const adapter = database.adapters.createPg();
-  return new adapter.Pool() as DatabasePool;
-}
 
 async function token(userId: string, email: string) {
   return issueAccessToken({
@@ -49,7 +37,7 @@ describe.sequential("authorized document-byte upload", () => {
   let outsiderToken: string;
 
   beforeEach(async () => {
-    database = createPool();
+    database = createPgMemPool();
     await runMigrations(database);
     await database.query(
       "INSERT INTO users (id,email,display_name) VALUES ($1,'owner@example.com','Owner'),($2,'viewer@example.com','Viewer'),($3,'outsider@example.com','Outsider')",

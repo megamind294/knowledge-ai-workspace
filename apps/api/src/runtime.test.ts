@@ -1,20 +1,8 @@
-import { DataType, newDb } from "pg-mem";
 import request from "supertest";
 import { describe, expect, it } from "vitest";
 import type { ApiConfig } from "./config.js";
-import type { DatabasePool } from "./database/pool.js";
 import { createApiRuntime } from "./runtime.js";
-
-function memoryPool(): DatabasePool {
-  const database = newDb({ noAstCoverageCheck: true });
-  database.public.registerFunction({
-    name: "pg_advisory_xact_lock",
-    args: [DataType.integer],
-    returns: DataType.integer,
-    implementation: () => 1,
-  });
-  return new (database.adapters.createPg().Pool)() as DatabasePool;
-}
+import { createPgMemPool } from "./testSupport/pgMem.js";
 
 const config: ApiConfig = {
   accessTokenSecret: "a-production-length-access-token-secret",
@@ -27,7 +15,7 @@ const config: ApiConfig = {
 
 describe("production API runtime", () => {
   it("migrates PostgreSQL and composes authenticated application routes", async () => {
-    const runtime = await createApiRuntime(config, { pool: memoryPool() });
+    const runtime = await createApiRuntime(config, { pool: createPgMemPool() });
 
     const registration = await request(runtime.app)
       .post("/api/auth/register")
@@ -58,7 +46,7 @@ describe("production API runtime", () => {
     await expect(
       createApiRuntime(
         { ...config, accessTokenSecret: null, databaseUrl: null },
-        { pool: memoryPool() },
+        { pool: createPgMemPool() },
       ),
     ).rejects.toThrowError(/database_url and access_token_secret are required/i);
   });

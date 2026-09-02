@@ -1,8 +1,8 @@
-import { DataType, newDb } from "pg-mem";
 import { Pool } from "pg";
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
 import { runMigrations } from "../database/migrate.js";
 import type { DatabasePool } from "../database/pool.js";
+import { createPgMemPool } from "../testSupport/pgMem.js";
 import type { AuthRepository } from "./authTypes.js";
 import { InMemoryAuthRepository } from "./inMemoryAuthRepository.js";
 import { PostgresAuthRepository } from "./postgresAuthRepository.js";
@@ -22,17 +22,6 @@ const firstSession = {
   revokedAt: null,
 };
 
-function createMemoryPool(): DatabasePool {
-  const database = newDb({ noAstCoverageCheck: true });
-  database.public.registerFunction({
-    name: "pg_advisory_xact_lock",
-    args: [DataType.integer],
-    returns: DataType.integer,
-    implementation: () => 1,
-  });
-  return new (database.adapters.createPg().Pool)() as DatabasePool;
-}
-
 describe.sequential("AuthRepository parity", () => {
   let pool: DatabasePool;
 
@@ -47,7 +36,7 @@ describe.sequential("AuthRepository parity", () => {
         options: "-c search_path=auth_repository_test",
       });
     } else {
-      pool = createMemoryPool();
+      pool = createPgMemPool();
     }
     await runMigrations(pool);
   });

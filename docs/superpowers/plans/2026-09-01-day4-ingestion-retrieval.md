@@ -10,7 +10,7 @@
 
 **Spec:** `docs/superpowers/specs/2026-08-27-ai-knowledge-workspace-design.md`
 
-**Progress:** Tasks 1, 3, 4, and 5 are complete. Task 5's provider-neutral embedding and bounded, staged ingestion implementation passed repository-wide and real pgvector CI verification. Task 2 has strict TXT/Markdown extraction and a tested binary-adapter boundary; concrete PDF/DOCX library adapters remain unavailable until their dependencies can be installed.
+**Progress:** Tasks 1, 3, 4, 5, and 6 are complete. Membership-scoped semantic retrieval passed repository-wide and real pgvector CI verification, including active-index ordering, embedding-model compatibility, and authorization at query time. Task 2 has strict TXT/Markdown extraction and a tested binary-adapter boundary; concrete PDF/DOCX library adapters remain unavailable until their dependencies can be installed.
 
 ## Global Constraints
 
@@ -138,11 +138,11 @@
 - Produces: workspace-, collection-, and document-scoped top-k retrieval returning stored chunk metadata and scores.
 - Consumes: authenticated identity, embedding provider, active chunks, and membership predicates.
 
-- [ ] **Step 1: Write failing contract and API tests for all scopes, non-members, mismatched scope IDs, top-k limits, empty results, and score ordering**
-- [ ] **Step 2: Verify failures are caused by missing contracts and route**
-- [ ] **Step 3: Implement authorized query embedding and pgvector similarity search**
-- [ ] **Step 4: Run contract, API, PostgreSQL, and root gates**
-- [ ] **Step 5: Commit `feat: add scoped semantic retrieval`**
+- [x] **Step 1: Write failing contract and API tests for all scopes, non-members, mismatched scope IDs, top-k limits, empty results, and score ordering**
+- [x] **Step 2: Verify failures are caused by missing contracts and route**
+- [x] **Step 3: Implement authorized query embedding and pgvector similarity search**
+- [x] **Step 4: Run contract, API, PostgreSQL, and root gates**
+- [x] **Step 5: Commit `feat: add scoped semantic retrieval`**
 
 ### Task 7: Real ingestion and search frontend states
 

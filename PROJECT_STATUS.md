@@ -48,7 +48,7 @@ No file bytes are uploaded, parsed, stored, embedded, or sent to an AI provider 
 
 - durable object storage or externally triggered ingestion processing
 - concrete PDF and DOCX parser adapters
-- scoped pgvector retrieval, AI chat, or citations
+- AI chat or citations
 - production deployment
 
 These are planned milestones, not hidden or partially implemented features.
@@ -153,8 +153,15 @@ Day 3 now includes:
 - membership authorization before index-run creation
 - safe failed-run recording, staged-chunk cleanup, and preservation of a prior active index
 - document-locked activation and failure recovery with rollback and concurrency coverage on PostgreSQL
-- 58 focused Day 4 tests, bringing the CI project total to 187 automated tests
+- strict shared contracts for workspace, collection, and document retrieval scopes
+- membership and scope authorization before embedding-provider calls
+- query-time membership enforcement that prevents revocation races from returning chunks
+- active-index and configured-embedding-model filtering
+- top-k pgvector cosine ordering with stable tie-breaking
+- citation-ready source metadata without claiming generated answers or citations
+- normalized, content-free provider failures and explicit empty-result behavior
+- 79 focused Day 4 tests, bringing the CI project total to 208 automated tests
 
 ## Next milestone
 
-Tasks 1, 3, 4, and 5 are complete, including all 187 tests on pgvector-enabled PostgreSQL 16 in [GitHub Actions run #64](https://github.com/megamind294/knowledge-ai-workspace/actions/runs/33658892635). Task 3's authorized upload boundary uses an explicitly non-durable in-memory adapter. Task 2 still needs concrete PDF/DOCX dependencies; durable storage, an ingestion HTTP trigger, scoped semantic retrieval, and frontend integration remain.
+Tasks 1, 3, 4, 5, and 6 are complete, including all 208 tests on pgvector-enabled PostgreSQL 16 in [GitHub Actions run #69](https://github.com/megamind294/knowledge-ai-workspace/actions/runs/33691797641). Task 3's authorized upload boundary uses an explicitly non-durable in-memory adapter. Task 2 still needs concrete PDF/DOCX dependencies; durable storage, an ingestion HTTP trigger, and frontend integration remain. AI answers and citations remain outside Day 4.

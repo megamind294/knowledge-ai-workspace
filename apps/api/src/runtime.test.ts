@@ -41,6 +41,11 @@ describe("production API runtime", () => {
       .get("/api/auth/capabilities")
       .expect(200, { googleOAuth: false });
     expect(runtime.ingestionService).toBeNull();
+    await request(runtime.app)
+      .post(`/api/workspaces/${workspace.body.workspace.id}/retrieval`)
+      .set("authorization", `Bearer ${registration.body.accessToken}`)
+      .send({ query: "portfolio", scope: { type: "workspace" } })
+      .expect(404);
 
     await runtime.close();
   });
@@ -52,7 +57,7 @@ describe("production API runtime", () => {
         embedding: {
           apiKey: "private-embedding-key",
           dimensions: 1536,
-          endpoint: "https://api.openai.com/v1/embeddings",
+          endpoint: "http://127.0.0.1:1/v1/embeddings",
           model: "text-embedding-3-small",
           timeoutMs: 15000,
         },
@@ -61,6 +66,24 @@ describe("production API runtime", () => {
     );
 
     expect(runtime.ingestionService).toBeInstanceOf(IngestionService);
+    const registration = await request(runtime.app)
+      .post("/api/auth/register")
+      .send({
+        displayName: "Rinkle Sharma",
+        email: "retrieval@example.com",
+        password: "Strong-password-42!",
+      })
+      .expect(201);
+    const workspace = await request(runtime.app)
+      .post("/api/workspaces")
+      .set("authorization", `Bearer ${registration.body.accessToken}`)
+      .send({ name: "Retrieval", slug: "retrieval", description: "Search" })
+      .expect(201);
+    await request(runtime.app)
+      .post(`/api/workspaces/${workspace.body.workspace.id}/retrieval`)
+      .set("authorization", `Bearer ${registration.body.accessToken}`)
+      .send({ query: "portfolio", scope: { type: "workspace" } })
+      .expect(503);
     await runtime.close();
   });
 

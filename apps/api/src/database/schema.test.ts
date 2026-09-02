@@ -20,9 +20,17 @@ const ids = {
 
 const embedding = `[${Array.from({ length: 1536 }, () => "0").join(",")}]`;
 
-async function resetPostgres(pool: DatabasePool) {
-  await pool.query("DROP SCHEMA public CASCADE");
-  await pool.query("CREATE SCHEMA public");
+const TEST_SCHEMA = "keystone_schema_test";
+
+async function createPostgresTestPool(databaseUrl: string) {
+  const admin = new Pool({ connectionString: databaseUrl });
+  await admin.query(`DROP SCHEMA IF EXISTS ${TEST_SCHEMA} CASCADE`);
+  await admin.query(`CREATE SCHEMA ${TEST_SCHEMA}`);
+  await admin.end();
+  return new Pool({
+    connectionString: databaseUrl,
+    options: `-c search_path=${TEST_SCHEMA},public`,
+  });
 }
 
 describe.sequential("PostgreSQL schema", () => {
@@ -30,8 +38,7 @@ describe.sequential("PostgreSQL schema", () => {
 
   beforeEach(async () => {
     if (process.env.TEST_DATABASE_URL) {
-      pool = new Pool({ connectionString: process.env.TEST_DATABASE_URL });
-      await resetPostgres(pool);
+      pool = await createPostgresTestPool(process.env.TEST_DATABASE_URL);
     } else {
       pool = createPgMemPool();
     }
@@ -211,9 +218,10 @@ describe.sequential("PostgreSQL schema", () => {
 
     const tables = await pool.query<{ table_name: string }>(
       `SELECT table_name FROM information_schema.tables
-       WHERE table_schema = 'public'
+       WHERE table_schema = $1
          AND table_name IN ('document_index_runs', 'document_chunks')
        ORDER BY table_name`,
+      [process.env.TEST_DATABASE_URL ? TEST_SCHEMA : "public"],
     );
     expect(tables.rows).toEqual([
       { table_name: "document_chunks" },

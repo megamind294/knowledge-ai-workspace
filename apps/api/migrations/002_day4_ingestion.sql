@@ -1,4 +1,4 @@
-CREATE EXTENSION IF NOT EXISTS vector;
+CREATE EXTENSION IF NOT EXISTS vector WITH SCHEMA public;
 
 ALTER TABLE documents
   ADD CONSTRAINT documents_id_workspace_id_key UNIQUE (id, workspace_id);
@@ -40,7 +40,7 @@ CREATE TABLE document_chunks (
   word_count INTEGER NOT NULL CHECK (word_count > 0),
   page_number INTEGER CHECK (page_number > 0),
   section_heading TEXT,
-  embedding VECTOR(1536) NOT NULL,
+  embedding public.vector(1536) NOT NULL,
   created_at TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP,
   UNIQUE (index_run_id, ordinal),
   FOREIGN KEY (index_run_id, workspace_id, document_id)
@@ -55,4 +55,4 @@ CREATE INDEX document_chunks_document_id_idx
   ON document_chunks(document_id);
 
 CREATE INDEX document_chunks_embedding_hnsw_idx
-  ON document_chunks USING HNSW (embedding vector_cosine_ops);
+  ON document_chunks USING HNSW (embedding public.vector_cosine_ops);

@@ -46,6 +46,7 @@ describePostgres("PostgresIngestionRepository transactions", () => {
   });
 
   async function resetDocument() {
+    await pool.query("DELETE FROM workspaces");
     await pool.query("DELETE FROM users");
     await pool.query(
       "INSERT INTO users (id,email,display_name) VALUES ($1,'owner@example.com','Owner')",

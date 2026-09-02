@@ -6,11 +6,56 @@ describe("API configuration", () => {
     expect(loadApiConfig({ NODE_ENV: "test" })).toEqual({
       accessTokenSecret: null,
       databaseUrl: null,
+      embedding: null,
       googleOAuth: null,
       nodeEnv: "test",
       port: 4000,
       webAppUrl: "http://localhost:5173",
     });
+  });
+
+  it("loads complete embedding-provider configuration", () => {
+    expect(
+      loadApiConfig({
+        NODE_ENV: "production",
+        EMBEDDING_API_KEY: "private-embedding-key",
+      }).embedding,
+    ).toEqual({
+      apiKey: "private-embedding-key",
+      dimensions: 1536,
+      endpoint: "https://api.openai.com/v1/embeddings",
+      model: "text-embedding-3-small",
+      timeoutMs: 15000,
+    });
+  });
+
+  it("loads a bounded embedding-provider timeout", () => {
+    expect(
+      loadApiConfig({
+        NODE_ENV: "test",
+        EMBEDDING_API_KEY: "private-embedding-key",
+        EMBEDDING_TIMEOUT_MS: "2500",
+      }).embedding,
+    ).toMatchObject({ timeoutMs: 2500 });
+  });
+
+  it("rejects partial embedding configuration without an API key", () => {
+    expect(() =>
+      loadApiConfig({
+        NODE_ENV: "production",
+        EMBEDDING_MODEL: "text-embedding-3-small",
+      }),
+    ).toThrowError(/invalid api configuration/i);
+  });
+
+  it("rejects an insecure public embedding endpoint in production", () => {
+    expect(() =>
+      loadApiConfig({
+        NODE_ENV: "production",
+        EMBEDDING_API_KEY: "private-embedding-key",
+        EMBEDDING_ENDPOINT: "http://embeddings.example.com/v1/embeddings",
+      }),
+    ).toThrowError(/invalid api configuration/i);
   });
 
   it("accepts a PostgreSQL connection URL", () => {

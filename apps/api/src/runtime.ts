@@ -1,10 +1,14 @@
 import { createApp } from "./app.js";
+import { OpenAiEmbeddingProvider } from "./ai/openAiEmbeddingProvider.js";
 import { AuthService } from "./auth/authService.js";
 import { GoogleOAuthAdapter } from "./auth/googleOAuth.js";
 import { PostgresAuthRepository } from "./auth/postgresAuthRepository.js";
 import type { ApiConfig } from "./config.js";
 import { runMigrations } from "./database/migrate.js";
 import { createDatabasePool, type DatabasePool } from "./database/pool.js";
+import { DocumentParser } from "./ingestion/documentParser.js";
+import { IngestionService } from "./ingestion/ingestionService.js";
+import { PostgresIngestionRepository } from "./ingestion/postgresIngestionRepository.js";
 import { PostgresKnowledgeRepository } from "./knowledge/postgresKnowledgeRepository.js";
 import { InMemoryObjectStore } from "./storage/inMemoryObjectStore.js";
 
@@ -45,6 +49,14 @@ export async function createApiRuntime(
   const webAppUrl = new URL(config.webAppUrl);
   const knowledgeRepository = new PostgresKnowledgeRepository(pool);
   const objectStore = new InMemoryObjectStore();
+  const ingestionService = config.embedding
+    ? new IngestionService({
+        repository: new PostgresIngestionRepository(pool),
+        objectStore,
+        parser: new DocumentParser(),
+        embeddingProvider: new OpenAiEmbeddingProvider(config.embedding),
+      })
+    : null;
 
   return {
     app: createApp({
@@ -71,6 +83,7 @@ export async function createApiRuntime(
       },
     }),
     close: () => pool.end(),
+    ingestionService,
     pool,
   };
 }

@@ -1,12 +1,14 @@
 import request from "supertest";
 import { describe, expect, it } from "vitest";
 import type { ApiConfig } from "./config.js";
+import { IngestionService } from "./ingestion/ingestionService.js";
 import { createApiRuntime } from "./runtime.js";
 import { createPgMemPool } from "./testSupport/pgMem.js";
 
 const config: ApiConfig = {
   accessTokenSecret: "a-production-length-access-token-secret",
   databaseUrl: "postgresql://keystone:secret@localhost:5432/keystone",
+  embedding: null,
   googleOAuth: null,
   nodeEnv: "test",
   port: 4000,
@@ -38,7 +40,27 @@ describe("production API runtime", () => {
     await request(runtime.app)
       .get("/api/auth/capabilities")
       .expect(200, { googleOAuth: false });
+    expect(runtime.ingestionService).toBeNull();
 
+    await runtime.close();
+  });
+
+  it("composes the ingestion service only when embeddings are configured", async () => {
+    const runtime = await createApiRuntime(
+      {
+        ...config,
+        embedding: {
+          apiKey: "private-embedding-key",
+          dimensions: 1536,
+          endpoint: "https://api.openai.com/v1/embeddings",
+          model: "text-embedding-3-small",
+          timeoutMs: 15000,
+        },
+      },
+      { pool: createPgMemPool() },
+    );
+
+    expect(runtime.ingestionService).toBeInstanceOf(IngestionService);
     await runtime.close();
   });
 

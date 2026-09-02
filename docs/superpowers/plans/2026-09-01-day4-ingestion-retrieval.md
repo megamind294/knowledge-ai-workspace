@@ -10,7 +10,7 @@
 
 **Spec:** `docs/superpowers/specs/2026-08-27-ai-knowledge-workspace-design.md`
 
-**Progress:** Tasks 1, 3, and 4 are complete. Task 2 has strict TXT/Markdown extraction and a tested binary-adapter boundary; concrete PDF/DOCX library adapters remain unavailable until their dependencies can be installed.
+**Progress:** Tasks 1, 3, and 4 are complete. Task 5's provider-neutral embedding and bounded, staged ingestion implementation passes focused tests, with repository-wide and real pgvector CI verification pending. Task 2 has strict TXT/Markdown extraction and a tested binary-adapter boundary; concrete PDF/DOCX library adapters remain unavailable until their dependencies can be installed.
 
 ## Global Constraints
 
@@ -116,9 +116,9 @@
 - Produces: `EmbeddingProvider.embed(texts)` and `IngestionService.indexDocument(userId, workspaceId, documentId)`.
 - Consumes: Tasks 1–4 parsing, chunking, object storage, and database boundaries.
 
-- [ ] **Step 1: Write failing tests for lifecycle transitions, batching, retryable provider failures, safe errors, old-index preservation, and idempotent replacement**
-- [ ] **Step 2: Confirm failures are caused by missing service/provider boundaries**
-- [ ] **Step 3: Implement provider-neutral batching and transactional activation of successful index runs**
+- [x] **Step 1: Write failing tests for lifecycle transitions, batching, retryable provider failures, safe errors, old-index preservation, and idempotent replacement**
+- [x] **Step 2: Confirm failures are caused by missing service/provider boundaries**
+- [x] **Step 3: Implement provider-neutral batching, incremental chunk staging, and transactional activation of successful index runs**
 - [ ] **Step 4: Run service, PostgreSQL, configuration, and complete quality suites**
 - [ ] **Step 5: Commit `feat: index documents with provider embeddings`**
 

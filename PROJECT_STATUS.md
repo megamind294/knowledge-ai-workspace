@@ -46,10 +46,9 @@ No file bytes are uploaded, parsed, stored, embedded, or sent to an AI provider 
 
 ## Explicitly not implemented in the current Day 4 slice
 
-- durable object storage or connected ingestion processing
+- durable object storage or externally triggered ingestion processing
 - concrete PDF and DOCX parser adapters
-- persisted embedding data or executed pgvector retrieval
-- embeddings from a provider, retrieval, AI chat, or citations
+- scoped pgvector retrieval, AI chat, or citations
 - production deployment
 
 These are planned milestones, not hidden or partially implemented features.
@@ -144,10 +143,18 @@ Day 3 now includes:
 - one-active-run enforcement, fixed vector dimensions, stable chunk ordinals, and workspace-scoped foreign keys
 - cascading chunk cleanup and an HNSW cosine-distance index prepared for scoped retrieval
 - transactional active-index replacement coverage
-- 39 focused Day 4 tests, bringing the project total to 164 automated tests
 - lint, strict type-check, all tests, and all production builds passing locally
 - real pgvector-enabled PostgreSQL 16 verification passing in GitHub Actions
+- provider-neutral embedding contracts and an OpenAI-compatible HTTP adapter
+- validated embedding counts, dimensions, finite values, non-zero cosine vectors, and response ordering
+- normalized provider failures without upstream response-body or credential leakage
+- configurable embedding endpoint, model, timeout, and fixed 1,536-dimension schema contract
+- bounded embedding batches staged incrementally before a short activation transaction
+- membership authorization before index-run creation
+- safe failed-run recording, staged-chunk cleanup, and preservation of a prior active index
+- document-locked activation and failure recovery with rollback and concurrency coverage on PostgreSQL
+- 58 focused Day 4 tests, bringing the CI project total to 187 automated tests
 
 ## Next milestone
 
-Tasks 1, 3, and 4 are complete. Task 3's authorized upload boundary uses an explicitly non-durable in-memory adapter. Task 2 still needs concrete PDF/DOCX dependencies; durable storage, the ingestion/indexing service, provider embeddings, and scoped semantic retrieval remain.
+Tasks 1, 3, and 4 are complete. Task 5's provider and ingestion implementation is complete locally with exact-head CI pending. Task 3's authorized upload boundary uses an explicitly non-durable in-memory adapter. Task 2 still needs concrete PDF/DOCX dependencies; durable storage, an ingestion HTTP trigger, scoped semantic retrieval, and frontend integration remain.

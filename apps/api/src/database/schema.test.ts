@@ -18,7 +18,7 @@ const ids = {
   chunk: "00000000-0000-4000-8000-000000000050",
 };
 
-const embedding = `[${Array.from({ length: 1536 }, () => "0").join(",")}]`;
+const embedding = `[${Array.from({ length: 1536 }, () => "1").join(",")}]`;
 
 const TEST_SCHEMA = "keystone_schema_test";
 
@@ -254,8 +254,16 @@ describe.sequential("PostgreSQL schema", () => {
       pool.query(
         `INSERT INTO document_chunks
           (id, index_run_id, document_id, workspace_id, ordinal, content, word_count, embedding)
+         VALUES ($1, $2, $3, $4, 0, 'valid source', 2, $5)`,
+        [ids.chunk, ids.run, ids.document, ids.workspace, embedding],
+      ),
+    ).resolves.toBeDefined();
+    await expect(
+      pool.query(
+        `INSERT INTO document_chunks
+          (id, index_run_id, document_id, workspace_id, ordinal, content, word_count, embedding)
          VALUES ($1, $2, $3, $4, 0, 'private source', 2, $5)`,
-        [ids.chunk, ids.run, ids.documentTwo, ids.workspaceTwo, embedding],
+        [ids.runTwo, ids.run, ids.documentTwo, ids.workspaceTwo, embedding],
       ),
     ).rejects.toThrow();
   });

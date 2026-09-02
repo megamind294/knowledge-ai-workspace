@@ -20,10 +20,6 @@ CREATE TABLE document_index_runs (
     ON DELETE CASCADE
 );
 
-CREATE UNIQUE INDEX document_index_runs_one_active_per_document_idx
-  ON document_index_runs(document_id)
-  WHERE status = 'active';
-
 CREATE INDEX document_index_runs_workspace_id_idx
   ON document_index_runs(workspace_id);
 
@@ -47,6 +43,10 @@ CREATE TABLE document_chunks (
     REFERENCES document_index_runs(id, workspace_id, document_id)
     ON DELETE CASCADE
 );
+
+CREATE UNIQUE INDEX document_index_runs_one_active_per_document_idx
+  ON document_index_runs(document_id)
+  WHERE status = 'active';
 
 CREATE INDEX document_chunks_workspace_id_idx
   ON document_chunks(workspace_id);

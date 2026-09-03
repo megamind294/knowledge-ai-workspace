@@ -10,7 +10,7 @@
 
 **Spec:** `docs/superpowers/specs/2026-08-27-ai-knowledge-workspace-design.md`
 
-**Progress:** Tasks 1, 3, 4, 5, 6, and 7 are complete. API mode now connects real byte upload to an authenticated synchronous indexing trigger, durable metadata refresh/retry, and scoped semantic source search; fixture mode remains local and mock. The Task 7 implementation head passed all 220 tests and complete pgvector-enabled quality gates in [GitHub Actions run #73](https://github.com/megamind294/knowledge-ai-workspace/actions/runs/33716451371) at `da4fbd8dd74e4fd0d912c2926af4f869fa902543`. Task 2 has strict TXT/Markdown extraction and a tested binary-adapter boundary; concrete PDF/DOCX library adapters remain unavailable. Runtime object storage remains process-local, no live embedding call is claimed, and retrieval returns chunks and scores rather than generated answers or citations.
+**Progress:** Tasks 1–7 are complete. API mode now connects real byte upload, PDF/TXT/Markdown/DOCX textual extraction, an authenticated synchronous indexing trigger, durable metadata refresh/retry, and scoped semantic source search; PDF page and DOCX heading provenance are preserved where available. The binary-parser implementation head passed all 225 runnable tests and complete pgvector-enabled quality gates in [GitHub Actions run #77](https://github.com/megamind294/knowledge-ai-workspace/actions/runs/33746802747) at `8065f0ddc5d5a61293438ab1070f2e801df1808a`. Scanned or image-only PDFs require OCR and return empty. Fixture mode remains local and mock, runtime object storage remains process-local, no live embedding-provider call is claimed, and retrieval returns chunks and scores rather than generated AI answers or citations.
 
 ## Global Constraints
 
@@ -56,13 +56,13 @@
 - Produces: `DocumentParser.extract({ mediaType, bytes }) => Promise<ExtractedSection[]>`.
 - Consumes: Task 1 section contracts and the existing document media-type contract.
 
-**Current progress:** TXT and Markdown extraction, strict UTF-8 validation, heading/fence metadata handling, size/empty/media validation, binary adapter injection, and content-free parser failures are implemented. PDF/DOCX dependencies and concrete adapters are still pending, so this task is not marked complete.
+**Completed verification:** PDF/TXT/Markdown/DOCX textual extraction, strict UTF-8 validation, Markdown heading/fence metadata, PDF page provenance, DOCX heading provenance, size/empty/media validation, binary-adapter injection, and content-free parser failures are implemented. Scanned or image-only PDFs require OCR and return empty. The Node-20-compatible PDF.js line is pinned outside the affected 5.6 advisory range. All 225 runnable tests and complete quality gates passed on the implementation head in [GitHub Actions run #77](https://github.com/megamind294/knowledge-ai-workspace/actions/runs/33746802747) at `8065f0ddc5d5a61293438ab1070f2e801df1808a`.
 
-- [ ] **Step 1: Add fixture-backed failing tests for valid extraction, malformed bytes, empty documents, page/heading metadata, and unsupported media types**
-- [ ] **Step 2: Verify failures are caused by missing parser adapters**
-- [ ] **Step 3: Implement strict UTF-8 text/Markdown extraction and isolated PDF/DOCX library adapters**
-- [ ] **Step 4: Run parser, API, lint, type-check, and build gates**
-- [ ] **Step 5: Commit `feat: parse supported document formats`**
+- [x] **Step 1: Add fixture-backed failing tests for valid extraction, malformed bytes, empty documents, page/heading metadata, and unsupported media types**
+- [x] **Step 2: Verify failures are caused by missing parser adapters**
+- [x] **Step 3: Implement strict UTF-8 text/Markdown extraction and isolated PDF/DOCX library adapters**
+- [x] **Step 4: Run parser, API, lint, type-check, and build gates**
+- [x] **Step 5: Commit `feat: parse supported document formats`**
 
 ### Task 3: Authorized object upload boundary
 
@@ -157,7 +157,7 @@
 - Produces: byte upload progress, durable ingestion status/retry, and API-backed scoped source retrieval explicitly labelled as search rather than AI chat.
 - Consumes: Tasks 3, 5, and 6 HTTP APIs.
 
-**Completed verification:** API mode performs metadata creation → byte upload → synchronous indexing → durable document refresh, retries through indexing, and performs authenticated scoped source retrieval. Fixture mode retains local preview and deterministic mock-search behavior. All 220 tests and complete quality gates passed on the Task 7 implementation head in [GitHub Actions run #73](https://github.com/megamind294/knowledge-ai-workspace/actions/runs/33716451371) at `da4fbd8dd74e4fd0d912c2926af4f869fa902543`.
+**Completed verification:** API mode performs metadata creation → byte upload → synchronous indexing → durable document refresh, retries through indexing, and performs authenticated scoped source retrieval. Fixture mode retains local preview and deterministic mock-search behavior. All 225 runnable tests and complete quality gates passed on the later binary-parser implementation head in [GitHub Actions run #77](https://github.com/megamind294/knowledge-ai-workspace/actions/runs/33746802747) at `8065f0ddc5d5a61293438ab1070f2e801df1808a`.
 
 - [x] **Step 1: Write failing frontend tests for upload, processing, indexed/failed states, retry, scoped search, empty context, and source navigation**
 - [x] **Step 2: Confirm failures are caused by metadata-only upload and mock search**

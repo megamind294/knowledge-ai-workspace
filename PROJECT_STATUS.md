@@ -47,7 +47,7 @@ No file bytes are uploaded, parsed, stored, embedded, or sent to an AI provider 
 ## Explicitly not implemented in the current Day 4 slice
 
 - durable object storage; runtime source bytes remain process-local
-- concrete PDF and DOCX parser adapters
+- OCR for scanned or image-only PDFs; those files currently return the safe empty-document result
 - generated AI answers or citations
 - production deployment
 
@@ -131,7 +131,9 @@ Day 3 now includes:
 - plain-text extraction and Markdown section extraction with heading provenance
 - fenced Markdown handling that prevents code headings from splitting source sections
 - binary-parser injection boundaries with normalized output and content-free failures
-- explicit unavailable-parser behavior for PDF and DOCX until their libraries are installed
+- concrete PDF/TXT/Markdown/DOCX textual extraction behind the parser boundary
+- one-based PDF page provenance and DOCX heading provenance where available
+- safe malformed-binary and empty-document behavior; scanned or image-only PDFs require OCR and return empty
 - membership-authorized document-byte upload with owner/admin/member write enforcement
 - non-member resource isolation before request-body acceptance
 - bounded raw-body parsing with MIME and metadata-size consistency checks
@@ -167,9 +169,9 @@ Day 3 now includes:
 - explicit retrieval loading, empty, failure, source-passage, score, and document-navigation states
 - fixture mode preserved as a local metadata simulation with deterministic mock search
 - source chunks and similarity scores presented without generated-answer or citation claims
-- 91 focused Day 4 tests, bringing the CI project total to 220 automated tests
-- all 220 tests and complete quality gates passed on the Task 7 implementation head in [GitHub Actions run #73](https://github.com/megamind294/knowledge-ai-workspace/actions/runs/33716451371) at `da4fbd8dd74e4fd0d912c2926af4f869fa902543`
+- 96 focused Day 4 tests, bringing the CI project total to 225 runnable automated tests
+- all 225 runnable tests and complete quality gates passed on the binary-parser implementation head in [GitHub Actions run #77](https://github.com/megamind294/knowledge-ai-workspace/actions/runs/33746802747) at `8065f0ddc5d5a61293438ab1070f2e801df1808a`
 
 ## Next milestone
 
-Tasks 1, 3, 4, 5, 6, and 7 are complete. The Task 7 implementation head passed all 220 tests on pgvector-enabled PostgreSQL 16 in [GitHub Actions run #73](https://github.com/megamind294/knowledge-ai-workspace/actions/runs/33716451371) at `da4fbd8dd74e4fd0d912c2926af4f869fa902543`. API mode now supports real byte upload, a synchronous indexing trigger, durable metadata refresh/retry, and scoped semantic source search; fixture mode remains local and mock. Runtime object storage is still process-local, Task 2 still needs concrete PDF/DOCX dependencies, and no live embedding call is claimed. Retrieval returns source chunks and scores rather than generated answers or citations.
+Tasks 1–7 are complete. The binary-parser implementation head passed all 225 runnable tests on pgvector-enabled PostgreSQL 16 in [GitHub Actions run #77](https://github.com/megamind294/knowledge-ai-workspace/actions/runs/33746802747) at `8065f0ddc5d5a61293438ab1070f2e801df1808a`. API mode now supports real byte upload, PDF/TXT/Markdown/DOCX textual extraction, a synchronous indexing trigger, durable metadata refresh/retry, and scoped semantic source search; PDF page and DOCX heading provenance are preserved where available, while scanned or image-only PDFs require OCR and return empty. Fixture mode remains local and mock. Runtime object storage is still process-local, and no live embedding-provider call is claimed. Retrieval returns source chunks and scores rather than generated AI answers or citations.

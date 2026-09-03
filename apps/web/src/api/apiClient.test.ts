@@ -44,4 +44,30 @@ describe("ApiClient", () => {
     await client.logout();
     expect(window.localStorage.length).toBe(0);
   });
+
+  it("preserves an explicit content type for byte uploads", async () => {
+    const fetchMock = vi.fn().mockResolvedValue(
+      new Response(JSON.stringify({ upload: {} }), {
+        status: 201,
+        headers: { "content-type": "application/json" },
+      }),
+    );
+    vi.stubGlobal("fetch", fetchMock);
+    const client = new ApiClient({ baseUrl: "" });
+    const file = new File(["hello"], "notes.txt", { type: "text/plain" });
+
+    await client.request("/api/content", {
+      method: "POST",
+      body: file,
+      headers: { "Content-Type": "text/plain" },
+    });
+
+    expect(fetchMock).toHaveBeenCalledWith(
+      "/api/content",
+      expect.objectContaining({
+        body: file,
+        headers: { "Content-Type": "text/plain" },
+      }),
+    );
+  });
 });

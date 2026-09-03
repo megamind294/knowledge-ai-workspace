@@ -22,6 +22,7 @@ export function DocumentDetailPage() {
   const { documentId = "" } = useParams();
   const repository = useKnowledgeRepository();
   const queryClient = useQueryClient();
+  const isApi = repository.mode === "api";
   const documentQuery = useQuery({
     queryKey: knowledgeQueryKeys.document(documentId),
     queryFn: () => repository.getDocument(documentId),
@@ -82,7 +83,11 @@ export function DocumentDetailPage() {
         {document ? (
           <>
             <PageHeader
-              description="Metadata and ingestion state from the local Day 2 repository."
+              description={
+                isApi
+                  ? "Metadata and current ingestion status from the authenticated workspace API."
+                  : "Metadata and ingestion state from the local Day 2 repository."
+              }
               eyebrow={document.mediaType}
               title={document.name}
             />
@@ -96,8 +101,9 @@ export function DocumentDetailPage() {
                   <DocumentStatusBadge status={document.status} />
                 </div>
                 <p className="mt-4 leading-7 text-slate-300">
-                  This is a local ingestion simulation. No file bytes are uploaded,
-                  parsed, stored, or sent to an AI provider.
+                  {isApi
+                    ? "This durable ingestion state is refreshed after byte upload and indexing. Indexed documents are available to semantic source search."
+                    : "This is a local ingestion simulation. No file bytes are uploaded, parsed, stored, or sent to an AI provider."}
                 </p>
                 {document.failureReason ? (
                   <div className="mt-5 rounded-xl border border-rose-400/20 bg-rose-400/10 p-4 text-sm text-rose-100">
@@ -112,9 +118,18 @@ export function DocumentDetailPage() {
                     type="button"
                   >
                     {retryMutation.isPending
-                      ? "Retrying simulation…"
-                      : "Retry simulated ingestion"}
+                      ? isApi
+                        ? "Retrying ingestion…"
+                        : "Retrying simulation…"
+                      : isApi
+                        ? "Retry ingestion"
+                        : "Retry simulated ingestion"}
                   </button>
+                ) : null}
+                {retryMutation.isError ? (
+                  <p className="mt-4 text-sm text-rose-200" role="alert">
+                    Ingestion could not be retried. Try again.
+                  </p>
                 ) : null}
               </section>
 

@@ -168,4 +168,44 @@ describe("validated local document upload preview", () => {
       expect(created).toHaveLength(1);
     });
   });
+
+  it("uploads the selected bytes in API mode and reports indexing progress", async () => {
+    const user = userEvent.setup();
+    const baseRepository = createFixtureKnowledgeRepository();
+    const ingestDocument = vi.fn(async (
+      candidate: DocumentUploadCandidate,
+      file: File,
+      onProgress: (stage: string) => void,
+    ) => {
+      for (const stage of ["metadata", "upload", "index", "refresh"]) {
+        onProgress(stage);
+      }
+      return {
+        ...(await baseRepository.createDocument(candidate)),
+        status: "indexed" as const,
+      };
+    });
+    const repository = {
+      ...baseRepository,
+      mode: "api",
+      ingestDocument,
+    } as unknown as KnowledgeRepository;
+    renderDocumentLibrary(repository);
+    await chooseTarget(user);
+    const file = new File(["durable source bytes"], "source.txt", {
+      type: "text/plain",
+    });
+    await user.upload(screen.getByLabelText(/document file/i), file);
+
+    await user.click(screen.getByRole("button", { name: /upload and index/i }));
+
+    expect(await screen.findByText(/source.txt is indexed and ready to search/i)).toBeVisible();
+    expect(ingestDocument).toHaveBeenCalledWith(
+      expect.objectContaining({ name: "source.txt", sizeBytes: file.size }),
+      file,
+      expect.any(Function),
+    );
+    expect(screen.getByText(/txt and markdown files can be indexed/i)).toBeVisible();
+    expect(screen.queryByText(/pdf, txt, markdown, or docx up to 10 mib/i)).not.toBeInTheDocument();
+  });
 });

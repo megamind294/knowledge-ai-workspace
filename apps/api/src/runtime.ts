@@ -85,6 +85,9 @@ export async function createApiRuntime(
         objectStore,
         accessTokenSecret,
       },
+      indexing: ingestionService
+        ? { service: ingestionService, accessTokenSecret }
+        : undefined,
       retrieval: embeddingProvider
         ? {
             repository: new PostgresRetrievalRepository(pool),

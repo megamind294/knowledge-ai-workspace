@@ -46,6 +46,12 @@ describe("production API runtime", () => {
       .set("authorization", `Bearer ${registration.body.accessToken}`)
       .send({ query: "portfolio", scope: { type: "workspace" } })
       .expect(404);
+    await request(runtime.app)
+      .post(
+        `/api/workspaces/${workspace.body.workspace.id}/documents/00000000-0000-4000-8000-000000000030/index`,
+      )
+      .set("authorization", `Bearer ${registration.body.accessToken}`)
+      .expect(404);
 
     await runtime.close();
   });
@@ -84,6 +90,10 @@ describe("production API runtime", () => {
       .set("authorization", `Bearer ${registration.body.accessToken}`)
       .send({ query: "portfolio", scope: { type: "workspace" } })
       .expect(503);
+    await request(runtime.app)
+      .post("/api/workspaces/not-a-uuid/documents/not-a-uuid/index")
+      .set("authorization", `Bearer ${registration.body.accessToken}`)
+      .expect(400);
     await runtime.close();
   });
 

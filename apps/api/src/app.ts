@@ -8,6 +8,8 @@ import { createAuthRouter } from "./auth/authRouter.js";
 import type { AuthService } from "./auth/authService.js";
 import type { GoogleOAuthAdapter } from "./auth/googleOAuth.js";
 import { createUploadRouter } from "./ingestion/uploadRouter.js";
+import { createIndexingRouter } from "./ingestion/indexingRouter.js";
+import type { IngestionService } from "./ingestion/ingestionService.js";
 import { createKnowledgeRouter } from "./knowledge/knowledgeRouter.js";
 import type { KnowledgeRepository } from "./knowledge/knowledgeRepository.js";
 import type { ObjectStore } from "./storage/objectStore.js";
@@ -38,6 +40,10 @@ interface CreateAppOptions {
     objectStore: ObjectStore;
     accessTokenSecret: Uint8Array;
     maxBytes?: number;
+  };
+  indexing?: {
+    service: Pick<IngestionService, "indexDocument">;
+    accessTokenSecret: Uint8Array;
   };
   retrieval?: {
     repository: RetrievalRepository;
@@ -88,6 +94,9 @@ export function createApp(options: CreateAppOptions = {}) {
   }
   if (options.upload) {
     app.use("/api", createUploadRouter(options.upload));
+  }
+  if (options.indexing) {
+    app.use("/api", createIndexingRouter(options.indexing));
   }
   if (options.knowledge) {
     app.use("/api", createKnowledgeRouter(options.knowledge));

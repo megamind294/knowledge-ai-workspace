@@ -13,7 +13,10 @@ export class ApiClient {
 
   private async raw<T>(path: string, init: RequestInit = {}): Promise<T> {
     const headers: Record<string,string> = { ...(init.headers as Record<string,string> | undefined) };
-    if (init.body) headers["Content-Type"] = "application/json";
+    const hasContentType = Object.keys(headers).some(
+      (name) => name.toLowerCase() === "content-type",
+    );
+    if (init.body && !hasContentType) headers["Content-Type"] = "application/json";
     if (this.accessToken) headers.Authorization = `Bearer ${this.accessToken}`;
     const response = await fetch(`${this.options.baseUrl}${path}`, { ...init, credentials: "include", headers });
     if (response.status === 204) return undefined as T;

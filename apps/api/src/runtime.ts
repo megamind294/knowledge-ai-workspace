@@ -11,7 +11,7 @@ import { IngestionService } from "./ingestion/ingestionService.js";
 import { PostgresIngestionRepository } from "./ingestion/postgresIngestionRepository.js";
 import { PostgresKnowledgeRepository } from "./knowledge/postgresKnowledgeRepository.js";
 import { PostgresRetrievalRepository } from "./retrieval/postgresRetrievalRepository.js";
-import { InMemoryObjectStore } from "./storage/inMemoryObjectStore.js";
+import { FileSystemObjectStore } from "./storage/fileSystemObjectStore.js";
 
 const GOOGLE_AUTHORIZATION_ENDPOINT = "https://accounts.google.com/o/oauth2/v2/auth";
 const GOOGLE_TOKEN_ENDPOINT = "https://oauth2.googleapis.com/token";
@@ -49,7 +49,7 @@ export async function createApiRuntime(
   );
   const webAppUrl = new URL(config.webAppUrl);
   const knowledgeRepository = new PostgresKnowledgeRepository(pool);
-  const objectStore = new InMemoryObjectStore();
+  const objectStore = new FileSystemObjectStore(config.objectStorageDirectory);
   const embeddingProvider = config.embedding
     ? new OpenAiEmbeddingProvider(config.embedding)
     : null;
@@ -98,6 +98,7 @@ export async function createApiRuntime(
     }),
     close: () => pool.end(),
     ingestionService,
+    objectStore,
     pool,
   };
 }

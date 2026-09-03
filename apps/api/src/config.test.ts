@@ -9,9 +9,25 @@ describe("API configuration", () => {
       embedding: null,
       googleOAuth: null,
       nodeEnv: "test",
+      objectStorageDirectory: ".data/objects",
       port: 4000,
       webAppUrl: "http://localhost:5173",
     });
+  });
+
+  it("loads an explicit durable object-storage directory", () => {
+    expect(
+      loadApiConfig({
+        NODE_ENV: "production",
+        OBJECT_STORAGE_DIRECTORY: "/var/lib/keystone/objects",
+      }).objectStorageDirectory,
+    ).toBe("/var/lib/keystone/objects");
+  });
+
+  it("rejects an empty object-storage directory", () => {
+    expect(() =>
+      loadApiConfig({ NODE_ENV: "production", OBJECT_STORAGE_DIRECTORY: "  " }),
+    ).toThrowError(/invalid api configuration/i);
   });
 
   it("loads complete embedding-provider configuration", () => {

@@ -20,6 +20,7 @@ const ApiEnvironmentSchema = z.object({
   GOOGLE_OAUTH_CLIENT_SECRET: z.string().min(1).optional(),
   GOOGLE_OAUTH_REDIRECT_URI: z.url().optional(),
   NODE_ENV: z.enum(["development", "test", "production"]).default("development"),
+  OBJECT_STORAGE_DIRECTORY: z.string().trim().min(1).default(".data/objects"),
   PORT: z.coerce.number().int().min(1).max(65_535).default(4_000),
   WEB_APP_URL: z.url().default("http://localhost:5173"),
 }).superRefine((value, context) => {
@@ -115,6 +116,7 @@ export interface ApiConfig {
   embedding: EmbeddingEnvironment | null;
   googleOAuth: GoogleOAuthEnvironment | null;
   nodeEnv: "development" | "test" | "production";
+  objectStorageDirectory: string;
   port: number;
   webAppUrl: string;
 }
@@ -150,6 +152,7 @@ export function loadApiConfig(
         }
       : null,
     nodeEnv: result.data.NODE_ENV,
+    objectStorageDirectory: result.data.OBJECT_STORAGE_DIRECTORY,
     port: result.data.PORT,
     webAppUrl: result.data.WEB_APP_URL,
   };

@@ -3,6 +3,7 @@ import { describe, expect, it } from "vitest";
 import type { ApiConfig } from "./config.js";
 import { IngestionService } from "./ingestion/ingestionService.js";
 import { createApiRuntime } from "./runtime.js";
+import { FileSystemObjectStore } from "./storage/fileSystemObjectStore.js";
 import { createPgMemPool } from "./testSupport/pgMem.js";
 
 const config: ApiConfig = {
@@ -11,11 +12,19 @@ const config: ApiConfig = {
   embedding: null,
   googleOAuth: null,
   nodeEnv: "test",
+  objectStorageDirectory: ".data/test-objects",
   port: 4000,
   webAppUrl: "https://web.example.com",
 };
 
 describe("production API runtime", () => {
+  it("composes the durable filesystem object store", async () => {
+    const runtime = await createApiRuntime(config, { pool: createPgMemPool() });
+
+    expect(runtime.objectStore).toBeInstanceOf(FileSystemObjectStore);
+    await runtime.close();
+  });
+
   it("migrates PostgreSQL and composes authenticated application routes", async () => {
     const runtime = await createApiRuntime(config, { pool: createPgMemPool() });
 

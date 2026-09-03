@@ -119,6 +119,29 @@ describe("document library and detail routes", () => {
     ).not.toBeInTheDocument();
   });
 
+  it("uses real indexing for API-mode retry and refreshes the durable result", async () => {
+    const user = userEvent.setup();
+    const baseRepository = createFixtureKnowledgeRepository();
+    const retryDocument = vi.fn(async (id: string) => {
+      const document = await baseRepository.getDocument(id);
+      return document ? { ...document, status: "indexed" as const, failureReason: null } : null;
+    });
+    const repository = {
+      ...baseRepository,
+      mode: "api",
+      retryDocument,
+    } as unknown as KnowledgeRepository;
+    renderAuthenticatedRoute("/app/documents/delivery-checklist", repository);
+
+    expect(await screen.findByText("Failed", { selector: "span" })).toBeVisible();
+    expect(screen.getByText(/durable ingestion state/i)).toBeVisible();
+    await user.click(screen.getByRole("button", { name: /^retry ingestion$/i }));
+
+    expect(retryDocument).toHaveBeenCalledWith("delivery-checklist");
+    expect(await screen.findByText("Indexed", { selector: "span" })).toBeVisible();
+    expect(screen.queryByText(/local ingestion simulation/i)).not.toBeInTheDocument();
+  });
+
   it("renders a recoverable state for an unknown document", async () => {
     renderAuthenticatedRoute("/app/documents/missing-document");
 

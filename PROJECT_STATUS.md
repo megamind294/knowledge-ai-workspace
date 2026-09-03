@@ -2,7 +2,7 @@
 
 ## Current milestone
 
-**Day 3 — API, authentication, and persistence: complete**
+**Day 4 — document ingestion and retrieval: in progress**
 
 Day 1 was merged into `main` through [pull request #2](https://github.com/megamind294/knowledge-ai-workspace/pull/2). Day 2 was merged through [pull request #4](https://github.com/megamind294/knowledge-ai-workspace/pull/4) after clean local acceptance and GitHub Actions verification.
 
@@ -44,11 +44,11 @@ No file bytes are uploaded, parsed, stored, embedded, or sent to an AI provider 
 - 23 automated tests covering repository and critical view/routing contracts
 - clean lint, strict type-check, test, and production-build commands
 
-## Explicitly not implemented after Day 3
+## Explicitly not implemented in the current Day 4 slice
 
-- document-byte upload, parsing, chunking, or object storage
-- pgvector
-- embeddings, retrieval, AI chat, or citations
+- shared cloud object storage for horizontally scaled API instances; the current durable adapter targets one persistent filesystem
+- OCR for scanned or image-only PDFs; those files currently return the safe empty-document result
+- generated AI answers or citations
 - production deployment
 
 These are planned milestones, not hidden or partially implemented features.
@@ -119,6 +119,63 @@ Day 3 now includes:
 - production dependency audit reported zero vulnerabilities
 - final security review found no unresolved critical or important issues
 
+## Day 4 completed scope
+
+- parser-neutral extracted-section, normalized-section, and chunk-draft contracts
+- Unicode NFC and line-ending normalization
+- horizontal-whitespace cleanup with paragraph boundary preservation
+- deterministic overlapping word windows with stable global ordinals
+- page-number and section-heading provenance retained on every chunk draft
+- explicit rejection of invalid chunk-size and overlap options
+- strict UTF-8 decoding that rejects malformed text instead of inserting replacement characters
+- plain-text extraction and Markdown section extraction with heading provenance
+- fenced Markdown handling that prevents code headings from splitting source sections
+- binary-parser injection boundaries with normalized output and content-free failures
+- concrete PDF/TXT/Markdown/DOCX textual extraction behind the parser boundary
+- one-based PDF page provenance and DOCX heading provenance where available
+- safe malformed-binary and empty-document behavior; scanned or image-only PDFs require OCR and return empty
+- membership-authorized document-byte upload with owner/admin/member write enforcement
+- non-member resource isolation before request-body acceptance
+- bounded raw-body parsing with MIME and metadata-size consistency checks
+- server-generated object keys with path-traversal rejection
+- duplicate-submission protection and immutable stored-byte snapshots
+- durable filesystem put/get/delete behavior behind an injected `ObjectStore`, with the in-memory adapter retained for isolated tests
+- restart-persistent bytes and content types, defensive read copies, exclusive immutable writes, and temporary-artifact cleanup
+- symlink rejection at the configured storage root and every existing object-key component; deployments must keep that root writable only by the API operating-system account
+- content-free upload and storage error responses
+- a pgvector-enabled migration with document index-run and chunk relations
+- one-active-run enforcement, fixed vector dimensions, stable chunk ordinals, and workspace-scoped foreign keys
+- cascading chunk cleanup and an HNSW cosine-distance index prepared for scoped retrieval
+- transactional active-index replacement coverage
+- lint, strict type-check, all tests, and all production builds passing locally
+- real pgvector-enabled PostgreSQL 16 verification passing in GitHub Actions
+- provider-neutral embedding contracts and an OpenAI-compatible HTTP adapter
+- validated embedding counts, dimensions, finite values, non-zero cosine vectors, and response ordering
+- normalized provider failures without upstream response-body or credential leakage
+- configurable embedding endpoint, model, timeout, and fixed 1,536-dimension schema contract
+- bounded embedding batches staged incrementally before a short activation transaction
+- membership authorization before index-run creation
+- safe failed-run recording, staged-chunk cleanup, and preservation of a prior active index
+- document-locked activation and failure recovery with rollback and concurrency coverage on PostgreSQL
+- strict shared contracts for workspace, collection, and document retrieval scopes
+- membership and scope authorization before embedding-provider calls
+- query-time membership enforcement that prevents revocation races from returning chunks
+- active-index and configured-embedding-model filtering
+- top-k pgvector cosine ordering with stable tie-breaking
+- citation-ready source metadata without claiming generated answers or citations
+- normalized, content-free provider failures and explicit empty-result behavior
+- an authenticated, identifier-validated synchronous HTTP indexing trigger composed only when ingestion is configured
+- API-mode metadata creation, actual byte upload with the validated content type, indexing trigger, and durable document-state refresh
+- API-mode failed-ingestion retry through real indexing rather than a metadata-only transition
+- authenticated workspace-, collection-, and document-scoped semantic source search in the frontend
+- explicit retrieval loading, empty, failure, source-passage, score, and document-navigation states
+- fixture mode preserved as a local metadata simulation with deterministic mock search
+- source chunks and similarity scores presented without generated-answer or citation claims
+- 109 focused Day 4 tests, bringing the current local project total to 241 runnable automated tests
+- all 241 runnable tests, lint, strict type-checking, production builds, dependency validation, and a zero-vulnerability production audit passing after the durable-storage hardening
+- exact implementation-head GitHub Actions verification passed in [run #81](https://github.com/megamind294/knowledge-ai-workspace/actions/runs/33779803133) at `45b69202dcb88d8a4a99ad208251efa89424ff46`
+- all 225 runnable tests and complete quality gates passed on the binary-parser implementation head in [GitHub Actions run #77](https://github.com/megamind294/knowledge-ai-workspace/actions/runs/33746802747) at `8065f0ddc5d5a61293438ab1070f2e801df1808a`
+
 ## Next milestone
 
-Day 4 is ready to start with document parsing, chunking, embeddings, pgvector storage, and workspace-scoped retrieval.
+Tasks 1–7 and the durable single-filesystem storage follow-up are complete. All 241 runnable tests and complete pgvector-enabled quality gates passed on the implementation head in [GitHub Actions run #81](https://github.com/megamind294/knowledge-ai-workspace/actions/runs/33779803133) at `45b69202dcb88d8a4a99ad208251efa89424ff46`. API mode now supports real byte upload, restart-persistent filesystem storage, PDF/TXT/Markdown/DOCX textual extraction, a synchronous indexing trigger, durable metadata refresh/retry, and scoped semantic source search; PDF page and DOCX heading provenance are preserved where available, while scanned or image-only PDFs require OCR and return empty. Fixture mode remains local and mock. No live embedding-provider call is claimed. Retrieval returns source chunks and scores rather than generated AI answers or citations. Final clean-install acceptance, deferred-minor cleanup, documentation review, and merge remain.

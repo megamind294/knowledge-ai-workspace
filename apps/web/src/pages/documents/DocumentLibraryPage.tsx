@@ -42,8 +42,12 @@ export function DocumentLibraryPage() {
   return (
     <section className="mx-auto max-w-7xl">
       <PageHeader
-        description="Review document metadata and simulated ingestion progress across your workspaces."
-        eyebrow="Day 2"
+        description={
+          repository.mode === "api"
+            ? "Review uploaded documents and durable ingestion progress across your workspaces."
+            : "Review document metadata and simulated ingestion progress across your workspaces."
+        }
+        eyebrow={repository.mode === "api" ? "Ingestion" : "Day 2"}
         title="Document library"
       />
 
@@ -70,7 +74,11 @@ export function DocumentLibraryPage() {
         ) : null}
         {documentsQuery.isSuccess && documents.length === 0 ? (
           <StatePanel
-            description="Validated local document previews will appear here after you add them."
+            description={
+              repository.mode === "api"
+                ? "Uploaded documents will appear here with their durable ingestion state."
+                : "Validated local document previews will appear here after you add them."
+            }
             title="No documents yet"
           />
         ) : null}

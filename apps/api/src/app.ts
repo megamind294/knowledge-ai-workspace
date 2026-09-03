@@ -7,8 +7,15 @@ import express, {
 import { createAuthRouter } from "./auth/authRouter.js";
 import type { AuthService } from "./auth/authService.js";
 import type { GoogleOAuthAdapter } from "./auth/googleOAuth.js";
+import { createUploadRouter } from "./ingestion/uploadRouter.js";
+import { createIndexingRouter } from "./ingestion/indexingRouter.js";
+import type { IngestionService } from "./ingestion/ingestionService.js";
 import { createKnowledgeRouter } from "./knowledge/knowledgeRouter.js";
 import type { KnowledgeRepository } from "./knowledge/knowledgeRepository.js";
+import type { ObjectStore } from "./storage/objectStore.js";
+import type { EmbeddingProvider } from "./ai/embeddingProvider.js";
+import { createRetrievalRouter } from "./retrieval/retrievalRouter.js";
+import type { RetrievalRepository } from "./retrieval/retrievalRepository.js";
 
 const REQUEST_ID_PATTERN = /^[A-Za-z0-9._-]{1,128}$/;
 
@@ -26,6 +33,21 @@ interface CreateAppOptions {
   };
   knowledge?: {
     repository: KnowledgeRepository;
+    accessTokenSecret: Uint8Array;
+  };
+  upload?: {
+    repository: KnowledgeRepository;
+    objectStore: ObjectStore;
+    accessTokenSecret: Uint8Array;
+    maxBytes?: number;
+  };
+  indexing?: {
+    service: Pick<IngestionService, "indexDocument">;
+    accessTokenSecret: Uint8Array;
+  };
+  retrieval?: {
+    repository: RetrievalRepository;
+    embeddingProvider: EmbeddingProvider;
     accessTokenSecret: Uint8Array;
   };
   registerRoutes?: (app: Express) => void;
@@ -70,8 +92,17 @@ export function createApp(options: CreateAppOptions = {}) {
   if (options.auth) {
     app.use("/api/auth", createAuthRouter(options.auth));
   }
+  if (options.upload) {
+    app.use("/api", createUploadRouter(options.upload));
+  }
+  if (options.indexing) {
+    app.use("/api", createIndexingRouter(options.indexing));
+  }
   if (options.knowledge) {
     app.use("/api", createKnowledgeRouter(options.knowledge));
+  }
+  if (options.retrieval) {
+    app.use("/api", createRetrievalRouter(options.retrieval));
   }
 
   options.registerRoutes?.(app);

@@ -15,5 +15,6 @@ export interface KnowledgeRepository {
   listDocuments(userId: string, workspaceId: string): Promise<KnowledgeDocument[] | null>;
   createDocument(userId: string, workspaceId: string, input: CreateDocumentRequest): Promise<KnowledgeDocument>;
   getDocument(userId: string, workspaceId: string, documentId: string): Promise<KnowledgeDocument | null>;
+  authorizeDocumentUpload(userId: string, workspaceId: string, documentId: string): Promise<KnowledgeDocument>;
   retryDocument(userId: string, workspaceId: string, documentId: string): Promise<KnowledgeDocument>;
 }

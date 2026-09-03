@@ -11,6 +11,10 @@ const migrations: readonly Migration[] = [
     name: "001_day3_core.sql",
     fileUrl: new URL("../../migrations/001_day3_core.sql", import.meta.url),
   },
+  {
+    name: "002_day4_ingestion.sql",
+    fileUrl: new URL("../../migrations/002_day4_ingestion.sql", import.meta.url),
+  },
 ];
 
 let migrationQueue = Promise.resolve();

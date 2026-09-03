@@ -56,6 +56,12 @@ export interface DocumentUploadCandidate extends DocumentUploadInput {
   mediaType: DocumentMediaType;
 }
 
+export type IngestionProgressStage =
+  | "metadata"
+  | "upload"
+  | "index"
+  | "refresh";
+
 export type DocumentUploadErrorCode =
   | "unsupported-format"
   | "media-type-mismatch"

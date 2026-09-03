@@ -8,6 +8,8 @@ import {
   InvalidDocumentEncodingError,
   parsePlainText,
 } from "./parsers/plainTextParser.js";
+import { parseDocx } from "./parsers/docxParser.js";
+import { parsePdf } from "./parsers/pdfParser.js";
 
 const DEFAULT_MAX_BYTES = 10 * 1024 * 1024;
 const DOCX_MEDIA_TYPE =
@@ -46,7 +48,10 @@ export interface ParseDocumentInput {
 
 export class DocumentParser {
   constructor(
-    private readonly binaryParsers: BinaryDocumentParsers = {},
+    private readonly binaryParsers: BinaryDocumentParsers = {
+      pdf: parsePdf,
+      docx: parseDocx,
+    },
     private readonly maxBytes = DEFAULT_MAX_BYTES,
   ) {
     if (!Number.isInteger(maxBytes) || maxBytes <= 0) {

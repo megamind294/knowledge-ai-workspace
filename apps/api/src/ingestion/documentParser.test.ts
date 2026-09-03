@@ -1,3 +1,4 @@
+import { readFile } from "node:fs/promises";
 import { describe, expect, it } from "vitest";
 import {
   DocumentParser,
@@ -6,6 +7,8 @@ import {
 } from "./documentParser.js";
 
 const bytes = (value: string) => new TextEncoder().encode(value);
+const fixture = (name: string) =>
+  readFile(new URL(`./__fixtures__/${name}`, import.meta.url));
 
 async function expectParserError(
   operation: Promise<unknown>,
@@ -90,6 +93,67 @@ describe("DocumentParser", () => {
     ]);
   });
 
+  it("extracts and normalizes PDF text as page-aware sections", async () => {
+    await expect(
+      new DocumentParser().extract({
+        mediaType: "application/pdf",
+        bytes: await fixture("binary-document.pdf"),
+      }),
+    ).resolves.toEqual([
+      {
+        text: "Quarterly Review\nCafé policy overview",
+        pageNumber: 1,
+      },
+      { text: "Next Steps\nShip the follow-up.", pageNumber: 2 },
+    ]);
+  });
+
+  it("extracts and normalizes DOCX sections under their document headings", async () => {
+    await expect(
+      new DocumentParser().extract({
+        mediaType:
+          "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+        bytes: await fixture("binary-document.docx"),
+      }),
+    ).resolves.toEqual([
+      { text: "Café policy overview", sectionHeading: "Quarterly Review" },
+      { text: "Ship the follow-up.", sectionHeading: "Next Steps" },
+    ]);
+  });
+
+  it.each([
+    ["PDF", "application/pdf"],
+    [
+      "DOCX",
+      "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+    ],
+  ])("turns malformed %s bytes into a content-free parser failure", async (_, mediaType) => {
+    const operation = new DocumentParser().extract({
+      mediaType,
+      bytes: bytes("private source text in malformed bytes"),
+    });
+
+    await expectParserError(operation, "PARSER_FAILED");
+    await expect(operation).rejects.not.toThrow(/private source|pdfjs|mammoth/i);
+  });
+
+  it.each([
+    ["PDF", "application/pdf", "empty-document.pdf"],
+    [
+      "DOCX",
+      "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+      "empty-document.docx",
+    ],
+  ])("rejects a valid empty %s document", async (_, mediaType, filename) => {
+    await expectParserError(
+      new DocumentParser().extract({
+        mediaType,
+        bytes: await fixture(filename),
+      }),
+      "EMPTY_DOCUMENT",
+    );
+  });
+
   it("converts binary parser failures into content-free errors", async () => {
     const docx: BinaryDocumentParser = async () => {
       throw new Error("private document text and provider details");
@@ -103,16 +167,6 @@ describe("DocumentParser", () => {
 
     await expectParserError(operation, "PARSER_FAILED");
     await expect(operation).rejects.not.toThrow(/private document|provider/i);
-  });
-
-  it("reports unavailable binary formats without pretending to parse them", async () => {
-    await expectParserError(
-      new DocumentParser().extract({
-        mediaType: "application/pdf",
-        bytes: new Uint8Array([1, 2, 3]),
-      }),
-      "PARSER_UNAVAILABLE",
-    );
   });
 
   it("rejects unsupported media types", async () => {

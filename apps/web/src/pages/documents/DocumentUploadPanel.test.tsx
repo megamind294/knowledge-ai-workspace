@@ -205,7 +205,12 @@ describe("validated local document upload preview", () => {
       file,
       expect.any(Function),
     );
-    expect(screen.getByText(/txt and markdown files can be indexed/i)).toBeVisible();
+    expect(
+      screen.getByText(
+        /pdf, txt, markdown, and docx files can be indexed up to 10 mib/i,
+      ),
+    ).toBeVisible();
+    expect(screen.queryByText(/parsing (?:is|are) not available/i)).not.toBeInTheDocument();
     expect(screen.queryByText(/pdf, txt, markdown, or docx up to 10 mib/i)).not.toBeInTheDocument();
   });
 });

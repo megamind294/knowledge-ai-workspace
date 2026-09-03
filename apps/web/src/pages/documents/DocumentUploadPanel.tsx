@@ -156,9 +156,8 @@ export function DocumentUploadPanel() {
         <p className="mt-2 text-sm leading-6 text-slate-300">
           {isApi ? (
             <>
-              TXT and Markdown files can be indexed up to 10 MiB. PDF and DOCX
-              parsing are not available yet; those uploads will retain a safe,
-              retryable ingestion state.
+              PDF, TXT, Markdown, and DOCX files can be indexed up to 10 MiB
+              when provider-backed indexing is configured.
             </>
           ) : (
             <>

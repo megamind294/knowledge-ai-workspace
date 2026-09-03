@@ -46,7 +46,7 @@ No file bytes are uploaded, parsed, stored, embedded, or sent to an AI provider 
 
 ## Explicitly not implemented in the current Day 4 slice
 
-- durable object storage; runtime source bytes remain process-local
+- shared cloud object storage for horizontally scaled API instances; the current durable adapter targets one persistent filesystem
 - OCR for scanned or image-only PDFs; those files currently return the safe empty-document result
 - generated AI answers or citations
 - production deployment
@@ -139,7 +139,9 @@ Day 3 now includes:
 - bounded raw-body parsing with MIME and metadata-size consistency checks
 - server-generated object keys with path-traversal rejection
 - duplicate-submission protection and immutable stored-byte snapshots
-- process-local in-memory put/get/delete behavior behind an injected `ObjectStore`
+- durable filesystem put/get/delete behavior behind an injected `ObjectStore`, with the in-memory adapter retained for isolated tests
+- restart-persistent bytes and content types, defensive read copies, exclusive immutable writes, and temporary-artifact cleanup
+- symlink rejection at the configured storage root and every existing object-key component; deployments must keep that root writable only by the API operating-system account
 - content-free upload and storage error responses
 - a pgvector-enabled migration with document index-run and chunk relations
 - one-active-run enforcement, fixed vector dimensions, stable chunk ordinals, and workspace-scoped foreign keys
@@ -169,9 +171,11 @@ Day 3 now includes:
 - explicit retrieval loading, empty, failure, source-passage, score, and document-navigation states
 - fixture mode preserved as a local metadata simulation with deterministic mock search
 - source chunks and similarity scores presented without generated-answer or citation claims
-- 96 focused Day 4 tests, bringing the CI project total to 225 runnable automated tests
+- 109 focused Day 4 tests, bringing the current local project total to 241 runnable automated tests
+- all 241 runnable tests, lint, strict type-checking, production builds, dependency validation, and a zero-vulnerability production audit passing after the durable-storage hardening
+- exact implementation-head GitHub Actions verification passed in [run #81](https://github.com/megamind294/knowledge-ai-workspace/actions/runs/33779803133) at `45b69202dcb88d8a4a99ad208251efa89424ff46`
 - all 225 runnable tests and complete quality gates passed on the binary-parser implementation head in [GitHub Actions run #77](https://github.com/megamind294/knowledge-ai-workspace/actions/runs/33746802747) at `8065f0ddc5d5a61293438ab1070f2e801df1808a`
 
 ## Next milestone
 
-Tasks 1–7 are complete. The binary-parser implementation head passed all 225 runnable tests on pgvector-enabled PostgreSQL 16 in [GitHub Actions run #77](https://github.com/megamind294/knowledge-ai-workspace/actions/runs/33746802747) at `8065f0ddc5d5a61293438ab1070f2e801df1808a`. API mode now supports real byte upload, PDF/TXT/Markdown/DOCX textual extraction, a synchronous indexing trigger, durable metadata refresh/retry, and scoped semantic source search; PDF page and DOCX heading provenance are preserved where available, while scanned or image-only PDFs require OCR and return empty. Fixture mode remains local and mock. Runtime object storage is still process-local, and no live embedding-provider call is claimed. Retrieval returns source chunks and scores rather than generated AI answers or citations.
+Tasks 1–7 and the durable single-filesystem storage follow-up are complete. All 241 runnable tests and complete pgvector-enabled quality gates passed on the implementation head in [GitHub Actions run #81](https://github.com/megamind294/knowledge-ai-workspace/actions/runs/33779803133) at `45b69202dcb88d8a4a99ad208251efa89424ff46`. API mode now supports real byte upload, restart-persistent filesystem storage, PDF/TXT/Markdown/DOCX textual extraction, a synchronous indexing trigger, durable metadata refresh/retry, and scoped semantic source search; PDF page and DOCX heading provenance are preserved where available, while scanned or image-only PDFs require OCR and return empty. Fixture mode remains local and mock. No live embedding-provider call is claimed. Retrieval returns source chunks and scores rather than generated AI answers or citations. Final clean-install acceptance, deferred-minor cleanup, documentation review, and merge remain.

@@ -10,7 +10,7 @@
 
 **Spec:** `docs/superpowers/specs/2026-08-27-ai-knowledge-workspace-design.md`
 
-**Progress:** Tasks 1–7 are complete. API mode now connects real byte upload, PDF/TXT/Markdown/DOCX textual extraction, an authenticated synchronous indexing trigger, durable metadata refresh/retry, and scoped semantic source search; PDF page and DOCX heading provenance are preserved where available. The binary-parser implementation head passed all 225 runnable tests and complete pgvector-enabled quality gates in [GitHub Actions run #77](https://github.com/megamind294/knowledge-ai-workspace/actions/runs/33746802747) at `8065f0ddc5d5a61293438ab1070f2e801df1808a`. Scanned or image-only PDFs require OCR and return empty. Fixture mode remains local and mock, runtime object storage remains process-local, no live embedding-provider call is claimed, and retrieval returns chunks and scores rather than generated AI answers or citations.
+**Progress:** Tasks 1–7 and the durable single-filesystem storage follow-up are complete. API mode now connects real byte upload, restart-persistent filesystem storage, PDF/TXT/Markdown/DOCX textual extraction, an authenticated synchronous indexing trigger, durable metadata refresh/retry, and scoped semantic source search; PDF page and DOCX heading provenance are preserved where available. The durable-storage implementation head passed all 241 runnable tests and complete pgvector-enabled quality gates in [GitHub Actions run #81](https://github.com/megamind294/knowledge-ai-workspace/actions/runs/33779803133) at `45b69202dcb88d8a4a99ad208251efa89424ff46`. Scanned or image-only PDFs require OCR and return empty. Fixture mode remains local and mock, no live embedding-provider call is claimed, and retrieval returns chunks and scores rather than generated AI answers or citations. Final clean-install acceptance, deferred-minor cleanup, documentation review, and merge remain.
 
 ## Global Constraints
 
@@ -83,6 +83,8 @@
 - [x] **Step 3: Implement bounded raw-body validation and an injected object-store boundary**
 - [x] **Step 4: Run focused integration and complete quality gates**
 - [x] **Step 5: Commit `feat: add authorized document upload`**
+
+**Durable-storage follow-up:** The production runtime now selects a validated `OBJECT_STORAGE_DIRECTORY` and uses an atomic filesystem adapter. Object directories are staged under the same filesystem and renamed into place, concurrent replacement is rejected, temporary artifacts are removed, bytes plus content type survive a new store instance, and symlinked root/key components are rejected. The in-memory implementation remains available for isolated tests. A production deployment must mount the configured directory on persistent storage and restrict it to the API operating-system account because portable Node.js operations cannot eliminate a symlink-swap race under a concurrently attacker-writable root; horizontally scaled API instances still require shared object storage.
 
 ### Task 4: pgvector chunk and indexing schema
 

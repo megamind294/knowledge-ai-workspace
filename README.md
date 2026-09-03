@@ -1,6 +1,6 @@
 # Keystone — AI Knowledge Workspace
 
-Keystone is a portfolio-oriented knowledge workspace for organizing source documents and, in later milestones, asking grounded questions with citations. Days 1–3 provide a tested React application, Express API, PostgreSQL persistence, secure sessions, and an optional Google OAuth boundary. Day 4 ingestion and retrieval work is now underway.
+Keystone is a portfolio-oriented knowledge workspace for organizing source documents and, in later milestones, asking grounded questions with citations. Days 1–3 provide a tested React application, Express API, PostgreSQL persistence, secure sessions, and an optional Google OAuth boundary. Day 4 now connects authenticated byte upload, synchronous indexing, durable metadata-state refresh, and scoped source retrieval to the API-mode frontend while the remaining storage and parser work continues.
 
 ## Day 1 capabilities
 
@@ -34,7 +34,7 @@ This npm workspace currently hosts:
 - `apps/api` — the Express and TypeScript HTTP service foundation
 - `packages/contracts` — runtime-validated request, response, and error contracts
 
-The page layer consumes an asynchronous `KnowledgeRepository` through a provider. It can use immutable typed fixtures or the Day 3 HTTP adapter without coupling pages to transport details. TanStack Query manages repository state, React Router owns direct URLs and browser navigation, and Tailwind provides the responsive visual system.
+The page layer consumes an asynchronous `KnowledgeRepository` through a provider. It can use immutable typed fixtures or the HTTP adapter without coupling pages to transport details. In API mode, the adapter creates document metadata, uploads the selected bytes, triggers indexing, refreshes durable document status, and performs scoped retrieval. Fixture mode retains its local metadata preview and deterministic mock search. TanStack Query manages repository state, React Router owns direct URLs and browser navigation, and Tailwind provides the responsive visual system.
 
 Key boundaries:
 
@@ -42,7 +42,7 @@ Key boundaries:
 - `apps/web/src/api` — access-token-aware HTTP client and refresh retry
 - `apps/web/src/data` — fixture/API repositories, provider, and query keys
 - `apps/web/src/auth` — clearly labelled local demo-session boundary
-- `apps/web/src/pages` — route-level dashboard, authentication, workspace, collection, document, and mock knowledge views
+- `apps/web/src/pages` — route-level dashboard, authentication, workspace, collection, document, and fixture/API source-search views
 - `apps/web/src/components` — reusable navigation, layout, heading, and state components
 - `apps/api/src` — environment validation, Express composition, request correlation, and server startup
 - `apps/api/src/auth` — credential hashing, token issuance, refresh rotation, and interchangeable auth repositories
@@ -66,9 +66,9 @@ The approved architecture and milestone plan are in [`docs/superpowers/specs/202
 | `/app/workspaces` | Workspace directory |
 | `/app/workspaces/:workspaceId` | Workspace collections |
 | `/app/workspaces/:workspaceId/collections/:collectionId` | Collection documents |
-| `/app/documents` | Filterable document library and local metadata preview |
-| `/app/documents/:documentId` | Document metadata, ingestion state, and retry controls |
-| `/app/knowledge` | Deterministic scoped mock search and answer preview |
+| `/app/documents` | Filterable document library with local metadata preview in fixture mode or byte upload and indexing in API mode |
+| `/app/documents/:documentId` | Document metadata, ingestion state, and local/API retry controls |
+| `/app/knowledge` | Deterministic mock search in fixture mode or scoped semantic source search in API mode |
 
 The configurable API composition also exposes:
 
@@ -84,6 +84,7 @@ The configurable API composition also exposes:
 | `GET /api/auth/google/callback` | Exchange a verified callback and create a Keystone session |
 | `/api/workspaces/*` | Membership-authorized workspace, collection, and document metadata APIs |
 | `POST /api/workspaces/:workspaceId/documents/:documentId/content` | Validate and retain authorized source bytes through the injected object store |
+| `POST /api/workspaces/:workspaceId/documents/:documentId/index` | Authorize and synchronously trigger document indexing when ingestion is configured |
 | `POST /api/workspaces/:workspaceId/retrieval` | Retrieve active source chunks within a validated workspace, collection, or document scope |
 
 Routes below `/app` require the selected session provider: a local marker in explicit fixture mode or the authenticated API session in default API mode. Unknown entities render recoverable not-found states, while unknown application URLs use the global 404 page.
@@ -123,7 +124,7 @@ The web build uses API mode by default. Set `VITE_API_URL` when the API is hoste
 
 Google OAuth remains disabled unless `GOOGLE_OAUTH_CLIENT_ID`, `GOOGLE_OAUTH_CLIENT_SECRET`, and `GOOGLE_OAUTH_REDIRECT_URI` are all present. Configure the callback URI in Google to match exactly. The client control is enabled only after API capability discovery confirms complete configuration.
 
-Document embedding and semantic retrieval remain disabled unless `EMBEDDING_API_KEY` is present. The optional `EMBEDDING_ENDPOINT`, `EMBEDDING_MODEL`, `EMBEDDING_DIMENSIONS`, and `EMBEDDING_TIMEOUT_MS` values default to the OpenAI-compatible endpoint, `text-embedding-3-small`, the schema's required 1,536 dimensions, and a 15-second request timeout. Retrieval compares only active indexes produced by the configured model. Public production endpoints must use HTTPS. No provider credential is committed, and the indexing service is not exposed through an HTTP route yet.
+Document indexing and semantic retrieval remain disabled unless `EMBEDDING_API_KEY` is present. When configured, the runtime exposes the synchronous indexing trigger and scoped retrieval route. The optional `EMBEDDING_ENDPOINT`, `EMBEDDING_MODEL`, `EMBEDDING_DIMENSIONS`, and `EMBEDDING_TIMEOUT_MS` values default to the OpenAI-compatible endpoint, `text-embedding-3-small`, the schema's required 1,536 dimensions, and a 15-second request timeout. Retrieval compares only active indexes produced by the configured model. Public production endpoints must use HTTPS. No provider credential is committed, and no live embedding-provider call is claimed.
 
 ## Quality commands
 
@@ -134,18 +135,18 @@ npm test -- --run
 npm run build
 ```
 
-Verification covers fixture and API repositories, protected routing, session restoration, real credential forms, refresh retry, logout, responsive shell, dashboards, workspace/collection/document navigation, metadata validation, ingestion simulation, strict TXT/Markdown extraction, Markdown heading and fence handling, content-free parser errors, deterministic text normalization and chunk windows, authorized byte uploads, read-only and non-member isolation, byte/MIME limits, duplicate protection, immutable object snapshots, embedding request/response validation, zero-vector rejection, bounded request-and-body timeouts, safe provider failures, streamed batch staging, atomic index activation and replacement, prior-index preservation, activation rollback, overlapping activation serialization, concurrent failure recovery, workspace/collection/document semantic scopes, authorization before embedding and inside vector queries, active-index and embedding-model filtering, top-k cosine ordering, retry behavior, scoped mock search, API contracts, HTTP error handling, migration idempotency, relational and vector-dimension constraints, active-index uniqueness, scoped chunk references, cascading deletion, password hashing, signed bearer tokens, refresh-cookie rotation/replay handling, Google OAuth state and PKCE handling, provider-failure normalization, external-identity persistence, membership authorization, cross-workspace isolation, and recovery states. GitHub Actions runs a clean install and every command above against a pgvector-enabled PostgreSQL 16 service for feature branches and pull requests; local tests use a PostgreSQL-compatible in-memory adapter when `TEST_DATABASE_URL` is absent.
+Verification covers fixture and API repositories, protected routing, session restoration, real credential forms, refresh retry, logout, responsive shell, dashboards, workspace/collection/document navigation, metadata validation, ingestion simulation, strict TXT/Markdown extraction, Markdown heading and fence handling, content-free parser errors, deterministic text normalization and chunk windows, authorized byte uploads, authenticated indexing triggers, read-only and non-member isolation, byte/MIME limits, duplicate protection, immutable object snapshots, embedding request/response validation, zero-vector rejection, bounded request-and-body timeouts, safe provider failures, streamed batch staging, atomic index activation and replacement, prior-index preservation, activation rollback, overlapping activation serialization, concurrent failure recovery, workspace/collection/document semantic scopes, authorization before embedding and inside vector queries, active-index and embedding-model filtering, top-k cosine ordering, API-mode ingestion refresh/retry, scoped semantic source navigation, fixture-mode mock search, API contracts, HTTP error handling, migration idempotency, relational and vector-dimension constraints, active-index uniqueness, scoped chunk references, cascading deletion, password hashing, signed bearer tokens, refresh-cookie rotation/replay handling, Google OAuth state and PKCE handling, provider-failure normalization, external-identity persistence, membership authorization, cross-workspace isolation, and recovery states. The Task 7 implementation head passed all 220 tests and the complete quality workflow against pgvector-enabled PostgreSQL 16 in [GitHub Actions run #73](https://github.com/megamind294/knowledge-ai-workspace/actions/runs/33716451371) at commit `da4fbd8dd74e4fd0d912c2926af4f869fa902543`. Local tests use a PostgreSQL-compatible in-memory adapter when `TEST_DATABASE_URL` is absent.
 
 ## Honest limitations
 
-Day 4 can accept membership-authorized document bytes, internally index supported stored text, and retrieve active source chunks within authenticated workspace, collection, or document scopes through a configured embedding provider. The composed runtime still uses the injected in-memory object-store adapter, so bytes are process-local and lost on restart; this is not durable production storage. The ingestion service is an internal boundary only—no HTTP route or frontend workflow triggers it yet—and concrete PDF/DOCX libraries are not installed. No embedding credential or live provider call is claimed. Retrieval returns source chunks and similarity scores; it does **not** generate AI answers or citations. The application does not yet persist conversations or provide a deployment. Google OAuth code is complete but no live provider credentials are committed or claimed. Fixture mode stores only a fixed marker in browser LocalStorage; API mode keeps access tokens in memory and relies on the HTTP-only refresh cookie.
+In API mode, Day 4 creates document metadata, uploads the actual selected bytes with the validated media type, synchronously triggers indexing, refreshes durable ingestion metadata, and retries failed ingestion through the same indexing path. It also performs authenticated workspace-, collection-, or document-scoped semantic source search. The composed runtime still uses the injected in-memory object-store adapter, so source bytes are process-local and lost on restart; this is not durable production storage. Concrete PDF/DOCX parser adapters are not installed; only TXT and Markdown have concrete extraction support. No embedding credential or live provider call is claimed. Retrieval returns source chunks and similarity scores; it does **not** generate AI answers or citations. Fixture mode remains a local metadata simulation with deterministic mock answers and non-citation labels. The application does not yet persist conversations or provide a deployment. Google OAuth code is complete but no live provider credentials are committed or claimed. API mode keeps access tokens in memory and relies on the HTTP-only refresh cookie.
 
 ## Roadmap
 
 1. **Day 1 — complete:** React/TypeScript shell, demo auth boundary, dashboard, workspaces, collections, tests, and CI
 2. **Day 2 — complete:** document library, validated local metadata preview, simulated ingestion states, retry flows, and scoped mock knowledge search
 3. **Day 3 — complete:** Express API, PostgreSQL, email/password authentication, optional Google OAuth boundary, authorized metadata persistence, and frontend API integration
-4. **Day 4 — in progress:** normalization/chunking, TXT/Markdown parsing, authorized process-local byte storage, pgvector schema, provider-neutral transactional indexing, and scoped semantic retrieval, followed by PDF/DOCX adapters, durable storage, ingestion triggers, and frontend integration
+4. **Day 4 — in progress:** normalization/chunking, TXT/Markdown parsing, authorized process-local byte storage, pgvector schema, provider-neutral transactional indexing, authenticated indexing/retry UI, and scoped semantic source search; concrete PDF/DOCX adapters, durable storage, and final acceptance remain
 5. **Day 5:** grounded chat, citations, conversation history, and low-confidence behavior
 6. **Day 6:** end-to-end coverage, Docker, deployment, operations documentation, and final polish
 

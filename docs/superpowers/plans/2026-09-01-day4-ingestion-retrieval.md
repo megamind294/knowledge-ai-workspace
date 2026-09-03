@@ -10,7 +10,7 @@
 
 **Spec:** `docs/superpowers/specs/2026-08-27-ai-knowledge-workspace-design.md`
 
-**Progress:** Tasks 1, 3, 4, 5, and 6 are complete. Membership-scoped semantic retrieval passed repository-wide and real pgvector CI verification, including active-index ordering, embedding-model compatibility, and authorization at query time. Task 2 has strict TXT/Markdown extraction and a tested binary-adapter boundary; concrete PDF/DOCX library adapters remain unavailable until their dependencies can be installed.
+**Progress:** Tasks 1, 3, 4, 5, 6, and 7 are complete. API mode now connects real byte upload to an authenticated synchronous indexing trigger, durable metadata refresh/retry, and scoped semantic source search; fixture mode remains local and mock. The Task 7 implementation head passed all 220 tests and complete pgvector-enabled quality gates in [GitHub Actions run #73](https://github.com/megamind294/knowledge-ai-workspace/actions/runs/33716451371) at `da4fbd8dd74e4fd0d912c2926af4f869fa902543`. Task 2 has strict TXT/Markdown extraction and a tested binary-adapter boundary; concrete PDF/DOCX library adapters remain unavailable. Runtime object storage remains process-local, no live embedding call is claimed, and retrieval returns chunks and scores rather than generated answers or citations.
 
 ## Global Constraints
 
@@ -157,11 +157,13 @@
 - Produces: byte upload progress, durable ingestion status/retry, and API-backed scoped source retrieval explicitly labelled as search rather than AI chat.
 - Consumes: Tasks 3, 5, and 6 HTTP APIs.
 
-- [ ] **Step 1: Write failing frontend tests for upload, processing, indexed/failed states, retry, scoped search, empty context, and source navigation**
-- [ ] **Step 2: Confirm failures are caused by metadata-only upload and mock search**
-- [ ] **Step 3: Connect existing views to Day 4 APIs while retaining explicit fixture mode**
-- [ ] **Step 4: Run frontend accessibility, root quality, and production-build gates**
-- [ ] **Step 5: Commit `feat: connect ingestion and semantic search UI`**
+**Completed verification:** API mode performs metadata creation → byte upload → synchronous indexing → durable document refresh, retries through indexing, and performs authenticated scoped source retrieval. Fixture mode retains local preview and deterministic mock-search behavior. All 220 tests and complete quality gates passed on the Task 7 implementation head in [GitHub Actions run #73](https://github.com/megamind294/knowledge-ai-workspace/actions/runs/33716451371) at `da4fbd8dd74e4fd0d912c2926af4f869fa902543`.
+
+- [x] **Step 1: Write failing frontend tests for upload, processing, indexed/failed states, retry, scoped search, empty context, and source navigation**
+- [x] **Step 2: Confirm failures are caused by metadata-only upload and mock search**
+- [x] **Step 3: Connect existing views to Day 4 APIs while retaining explicit fixture mode**
+- [x] **Step 4: Run frontend accessibility, root quality, and production-build gates**
+- [x] **Step 5: Commit `feat: connect ingestion and semantic search UI`**
 
 ### Task 8: Day 4 acceptance and documentation
 

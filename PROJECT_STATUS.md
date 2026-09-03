@@ -46,9 +46,9 @@ No file bytes are uploaded, parsed, stored, embedded, or sent to an AI provider 
 
 ## Explicitly not implemented in the current Day 4 slice
 
-- durable object storage or externally triggered ingestion processing
+- durable object storage; runtime source bytes remain process-local
 - concrete PDF and DOCX parser adapters
-- AI chat or citations
+- generated AI answers or citations
 - production deployment
 
 These are planned milestones, not hidden or partially implemented features.
@@ -160,8 +160,16 @@ Day 3 now includes:
 - top-k pgvector cosine ordering with stable tie-breaking
 - citation-ready source metadata without claiming generated answers or citations
 - normalized, content-free provider failures and explicit empty-result behavior
-- 79 focused Day 4 tests, bringing the CI project total to 208 automated tests
+- an authenticated, identifier-validated synchronous HTTP indexing trigger composed only when ingestion is configured
+- API-mode metadata creation, actual byte upload with the validated content type, indexing trigger, and durable document-state refresh
+- API-mode failed-ingestion retry through real indexing rather than a metadata-only transition
+- authenticated workspace-, collection-, and document-scoped semantic source search in the frontend
+- explicit retrieval loading, empty, failure, source-passage, score, and document-navigation states
+- fixture mode preserved as a local metadata simulation with deterministic mock search
+- source chunks and similarity scores presented without generated-answer or citation claims
+- 91 focused Day 4 tests, bringing the CI project total to 220 automated tests
+- all 220 tests and complete quality gates passed on the Task 7 implementation head in [GitHub Actions run #73](https://github.com/megamind294/knowledge-ai-workspace/actions/runs/33716451371) at `da4fbd8dd74e4fd0d912c2926af4f869fa902543`
 
 ## Next milestone
 
-Tasks 1, 3, 4, 5, and 6 are complete, including all 208 tests on pgvector-enabled PostgreSQL 16 in [GitHub Actions run #69](https://github.com/megamind294/knowledge-ai-workspace/actions/runs/33691797641). Task 3's authorized upload boundary uses an explicitly non-durable in-memory adapter. Task 2 still needs concrete PDF/DOCX dependencies; durable storage, an ingestion HTTP trigger, and frontend integration remain. AI answers and citations remain outside Day 4.
+Tasks 1, 3, 4, 5, 6, and 7 are complete. The Task 7 implementation head passed all 220 tests on pgvector-enabled PostgreSQL 16 in [GitHub Actions run #73](https://github.com/megamind294/knowledge-ai-workspace/actions/runs/33716451371) at `da4fbd8dd74e4fd0d912c2926af4f869fa902543`. API mode now supports real byte upload, a synchronous indexing trigger, durable metadata refresh/retry, and scoped semantic source search; fixture mode remains local and mock. Runtime object storage is still process-local, Task 2 still needs concrete PDF/DOCX dependencies, and no live embedding call is claimed. Retrieval returns source chunks and scores rather than generated answers or citations.

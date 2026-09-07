@@ -16,6 +16,10 @@ const ids = {
   run: "00000000-0000-4000-8000-000000000040",
   runTwo: "00000000-0000-4000-8000-000000000041",
   chunk: "00000000-0000-4000-8000-000000000050",
+  chunkTwo: "00000000-0000-4000-8000-000000000051",
+  conversation: "00000000-0000-4000-8000-000000000060",
+  message: "00000000-0000-4000-8000-000000000070",
+  messageTwo: "00000000-0000-4000-8000-000000000071",
 };
 
 const embedding = `[${Array.from({ length: 1536 }, () => "1").join(",")}]`;
@@ -58,6 +62,7 @@ describe.sequential("PostgreSQL schema", () => {
     expect(result.rows).toEqual([
       { name: "001_day3_core.sql" },
       { name: "002_day4_ingestion.sql" },
+      { name: "003_day5_conversations.sql" },
     ]);
   });
 
@@ -70,6 +75,7 @@ describe.sequential("PostgreSQL schema", () => {
     expect(result.rows).toEqual([
       { name: "001_day3_core.sql" },
       { name: "002_day4_ingestion.sql" },
+      { name: "003_day5_conversations.sql" },
     ]);
   });
 
@@ -333,5 +339,184 @@ describe.sequential("PostgreSQL schema", () => {
       [ids.document],
     );
     expect(active.rows).toEqual([{ id: ids.runTwo }]);
+  });
+
+  async function seedConversationSources() {
+    await seedIndexableDocuments();
+    await pool.query(
+      "INSERT INTO workspace_members (workspace_id, user_id, role) VALUES ($1, $3, 'owner'), ($2, $3, 'owner')",
+      [ids.workspace, ids.workspaceTwo, ids.owner],
+    );
+    await pool.query(
+      "INSERT INTO collections (id, workspace_id, name) VALUES ($1, $3, 'One'), ($2, $4, 'Two')",
+      [ids.collection, ids.collectionTwo, ids.workspace, ids.workspaceTwo],
+    );
+    await insertRun(ids.run, ids.document, ids.workspace, "active");
+    await insertRun(ids.runTwo, ids.documentTwo, ids.workspaceTwo, "active");
+    await pool.query(
+      `INSERT INTO document_chunks
+        (id, index_run_id, document_id, workspace_id, ordinal, content, word_count, embedding)
+       VALUES ($1, $2, $3, $4, 0, 'workspace one source', 3, $9),
+              ($5, $6, $7, $8, 0, 'workspace two source', 3, $9)`,
+      [
+        ids.chunk,
+        ids.run,
+        ids.document,
+        ids.workspace,
+        ids.chunkTwo,
+        ids.runTwo,
+        ids.documentTwo,
+        ids.workspaceTwo,
+        embedding,
+      ],
+    );
+  }
+
+  it("installs conversation, message, and exact source-mapping relations", async () => {
+    await runMigrations(pool);
+
+    const tables = await pool.query<{ table_name: string }>(
+      `SELECT table_name FROM information_schema.tables
+       WHERE table_schema = $1
+         AND table_name IN ('conversations', 'conversation_messages', 'message_sources')
+       ORDER BY table_name`,
+      [process.env.TEST_DATABASE_URL ? TEST_SCHEMA : "public"],
+    );
+    expect(tables.rows).toEqual([
+      { table_name: "conversation_messages" },
+      { table_name: "conversations" },
+      { table_name: "message_sources" },
+    ]);
+  });
+
+  it("enforces workspace-consistent conversation scopes", async () => {
+    await runMigrations(pool);
+    await seedConversationSources();
+
+    await expect(
+      pool.query(
+        `INSERT INTO conversations
+          (id, workspace_id, created_by_user_id, scope_type, title)
+         VALUES ($1, $2, $3, 'workspace', 'Workspace chat')`,
+        [ids.conversation, ids.workspace, ids.owner],
+      ),
+    ).resolves.toBeDefined();
+    await expect(
+      pool.query(
+        `INSERT INTO conversations
+          (id, workspace_id, scope_type, collection_id, title)
+         VALUES ($1, $2, 'collection', $3, 'Cross-workspace chat')`,
+        [ids.message, ids.workspace, ids.collectionTwo],
+      ),
+    ).rejects.toThrow();
+    await expect(
+      pool.query(
+        `INSERT INTO conversations
+          (id, workspace_id, scope_type, document_id, title)
+         VALUES ($1, $2, 'document', $3, 'Cross-workspace document')`,
+        [ids.message, ids.workspace, ids.documentTwo],
+      ),
+    ).rejects.toThrow();
+    await expect(
+      pool.query(
+        `INSERT INTO conversations (id, workspace_id, scope_type, title)
+         VALUES ($1, $2, 'collection', 'Missing collection')`,
+        [ids.message, ids.workspace],
+      ),
+    ).rejects.toThrow();
+  });
+
+  it("enforces message ordering and assistant-only exact chunk citations", async () => {
+    await runMigrations(pool);
+    await seedConversationSources();
+    await pool.query(
+      `INSERT INTO conversations (id, workspace_id, scope_type, title)
+       VALUES ($1, $2, 'workspace', 'Policy')`,
+      [ids.conversation, ids.workspace],
+    );
+    await pool.query(
+      `INSERT INTO conversation_messages
+        (id, conversation_id, workspace_id, role, position, content)
+       VALUES ($1, $3, $4, 'user', 1, 'Question'),
+              ($2, $3, $4, 'assistant', 2, 'Answer')`,
+      [ids.message, ids.messageTwo, ids.conversation, ids.workspace],
+    );
+
+    await expect(
+      pool.query(
+        `INSERT INTO conversation_messages
+          (id, conversation_id, workspace_id, role, position, content)
+         VALUES ($1, $2, $3, 'assistant', 2, 'Duplicate position')`,
+        [ids.chunkTwo, ids.conversation, ids.workspace],
+      ),
+    ).rejects.toThrow();
+    await expect(
+      pool.query(
+        `INSERT INTO message_sources
+          (message_id, conversation_id, workspace_id, message_role, chunk_id, document_id, citation_ordinal)
+         VALUES ($1, $2, $3, 'assistant', $4, $5, 0)`,
+        [ids.message, ids.conversation, ids.workspace, ids.chunk, ids.document],
+      ),
+    ).rejects.toThrow();
+    await expect(
+      pool.query(
+        `INSERT INTO message_sources
+          (message_id, conversation_id, workspace_id, message_role, chunk_id, document_id, citation_ordinal)
+         VALUES ($1, $2, $3, 'assistant', $4, $5, 0)`,
+        [
+          ids.messageTwo,
+          ids.conversation,
+          ids.workspace,
+          ids.chunkTwo,
+          ids.documentTwo,
+        ],
+      ),
+    ).rejects.toThrow();
+    await expect(
+      pool.query(
+        `INSERT INTO message_sources
+          (message_id, conversation_id, workspace_id, message_role, chunk_id, document_id, citation_ordinal)
+         VALUES ($1, $2, $3, 'assistant', $4, $5, 0)`,
+        [ids.messageTwo, ids.conversation, ids.workspace, ids.chunk, ids.document],
+      ),
+    ).resolves.toBeDefined();
+    await expect(
+      pool.query(
+        `INSERT INTO message_sources
+          (message_id, conversation_id, workspace_id, message_role, chunk_id, document_id, citation_ordinal)
+         VALUES ($1, $2, $3, 'assistant', $4, $5, 1)`,
+        [ids.messageTwo, ids.conversation, ids.workspace, ids.chunk, ids.document],
+      ),
+    ).rejects.toThrow();
+  });
+
+  it("cascades messages and source mappings with their conversation", async () => {
+    await runMigrations(pool);
+    await seedConversationSources();
+    await pool.query(
+      `INSERT INTO conversations (id, workspace_id, scope_type, title)
+       VALUES ($1, $2, 'workspace', 'Policy')`,
+      [ids.conversation, ids.workspace],
+    );
+    await pool.query(
+      `INSERT INTO conversation_messages
+        (id, conversation_id, workspace_id, role, position, content, model)
+       VALUES ($1, $2, $3, 'assistant', 1, 'Answer', 'test-model')`,
+      [ids.message, ids.conversation, ids.workspace],
+    );
+    await pool.query(
+      `INSERT INTO message_sources
+        (message_id, conversation_id, workspace_id, message_role, chunk_id, document_id, citation_ordinal)
+       VALUES ($1, $2, $3, 'assistant', $4, $5, 0)`,
+      [ids.message, ids.conversation, ids.workspace, ids.chunk, ids.document],
+    );
+
+    await pool.query("DELETE FROM conversations WHERE id=$1", [ids.conversation]);
+    const [messages, sources] = await Promise.all([
+      pool.query("SELECT 1 FROM conversation_messages"),
+      pool.query("SELECT 1 FROM message_sources"),
+    ]);
+    expect(messages.rowCount).toBe(0);
+    expect(sources.rowCount).toBe(0);
   });
 });

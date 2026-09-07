@@ -119,3 +119,6 @@ CREATE INDEX conversations_document_id_idx
 
 CREATE INDEX message_sources_chunk_id_idx
   ON message_sources(chunk_id);
+
+CREATE INDEX message_sources_conversation_id_idx
+  ON message_sources(conversation_id);

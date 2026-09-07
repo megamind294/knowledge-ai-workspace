@@ -414,7 +414,7 @@ describe.sequential("PostgreSQL schema", () => {
       pool.query(
         `INSERT INTO conversations
           (id, workspace_id, scope_type, scope_key, collection_id, title)
-         VALUES ($1, $2, 'collection', $3, $3, 'Cross-workspace chat')`,
+         VALUES ($1, $2, 'collection', $3::text, $3::uuid, 'Cross-workspace chat')`,
         [ids.message, ids.workspace, ids.collectionTwo],
       ),
     ).rejects.toThrow();
@@ -422,7 +422,7 @@ describe.sequential("PostgreSQL schema", () => {
       pool.query(
         `INSERT INTO conversations
           (id, workspace_id, scope_type, scope_key, document_id, title)
-         VALUES ($1, $2, 'document', $3, $3, 'Cross-workspace document')`,
+         VALUES ($1, $2, 'document', $3::text, $3::uuid, 'Cross-workspace document')`,
         [ids.message, ids.workspace, ids.documentTwo],
       ),
     ).rejects.toThrow();
@@ -524,7 +524,7 @@ describe.sequential("PostgreSQL schema", () => {
     await pool.query(
       `INSERT INTO conversations
         (id, workspace_id, scope_type, scope_key, collection_id, title)
-       VALUES ($1, $2, 'collection', $3, $3, 'Collection chat')`,
+       VALUES ($1, $2, 'collection', $3::text, $3::uuid, 'Collection chat')`,
       [ids.conversation, ids.workspace, ids.collection],
     );
     await pool.query(
@@ -554,7 +554,7 @@ describe.sequential("PostgreSQL schema", () => {
     await pool.query(
       `INSERT INTO conversations
         (id, workspace_id, scope_type, scope_key, document_id, title)
-       VALUES ($1, $2, 'document', $3, $3, 'Document chat')`,
+       VALUES ($1, $2, 'document', $3::text, $3::uuid, 'Document chat')`,
       [ids.conversation, ids.workspace, ids.document],
     );
     await pool.query(
@@ -636,7 +636,7 @@ describe.sequential("PostgreSQL schema", () => {
     await pool.query(
       `INSERT INTO conversations
         (id, workspace_id, created_by_user_id, scope_type, scope_key, document_id, title)
-       VALUES ($1, $2, $3, 'document', $4, $4, 'Document chat')`,
+       VALUES ($1, $2, $3, 'document', $4::text, $4::uuid, 'Document chat')`,
       [ids.conversation, ids.workspace, ids.member, ids.document],
     );
     await pool.query("DELETE FROM users WHERE id = $1", [ids.member]);

@@ -69,6 +69,7 @@ describe("OpenAiGenerationProvider", () => {
     { answer: "Supported answer", citationIds: [] },
     { answer: "Unsupported answer", citationIds: ["source-99"] },
     { answer: "Malformed citations", citationIds: "source-1" },
+    { answer: "Repeated citations", citationIds: ["source-1", "source-1"] },
   ])("rejects invalid or ungrounded structured output %#", async (content) => {
     const request = vi
       .fn<typeof fetch>()

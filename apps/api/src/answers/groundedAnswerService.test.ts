@@ -62,6 +62,26 @@ describe("GroundedAnswerService", () => {
     ]);
   });
 
+  it("deduplicates repeated retrieval rows by stored chunk identity", async () => {
+    let suppliedSourceCount = 0;
+    const provider: GenerationProvider = {
+      model: "test-chat-model",
+      generate: async ({ sources }) => {
+        suppliedSourceCount = sources.length;
+        return { answer: "Grounded.", citationIds: [sources[0]!.id] };
+      },
+    };
+
+    const result = await new GroundedAnswerService({ provider }).answer(
+      "Question",
+      [source(), source({ content: "Duplicate database row." })],
+    );
+
+    expect(suppliedSourceCount).toBe(1);
+    expect(result.citations).toHaveLength(1);
+    expect(result.citations[0]!.content).toBe(source().content);
+  });
+
   it.each([
     { results: [] },
     { results: [source({ score: 0.69 })] },
@@ -132,5 +152,21 @@ describe("GroundedAnswerService", () => {
     await expect(
       new GroundedAnswerService({ provider }).answer("Question", [source()]),
     ).rejects.toMatchObject({ code: "INVALID_CITATIONS" });
+  });
+
+  it.each([
+    { answer: "", citationIds: ["source-1"] },
+    { answer: "x".repeat(12_001), citationIds: ["source-1"] },
+    { answer: "Grounded", citationIds: [] },
+    { answer: "Grounded", citationIds: null },
+  ])("runtime-validates every provider implementation %#", async (generated) => {
+    const provider: GenerationProvider = {
+      model: "test-chat-model",
+      generate: async () => generated as never,
+    };
+
+    await expect(
+      new GroundedAnswerService({ provider }).answer("Question", [source()]),
+    ).rejects.toMatchObject({ code: "INVALID_PROVIDER_RESPONSE" });
   });
 });

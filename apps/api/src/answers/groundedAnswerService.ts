@@ -13,11 +13,17 @@ export interface GroundedAnswer {
   citations: RetrievalResult[];
 }
 
-export class GroundedAnswerServiceError extends Error {
-  readonly code = "INVALID_CITATIONS";
+export type GroundedAnswerServiceErrorCode =
+  | "INVALID_PROVIDER_RESPONSE"
+  | "INVALID_CITATIONS";
 
-  constructor() {
-    super("Generation provider returned invalid citations");
+export class GroundedAnswerServiceError extends Error {
+  constructor(public readonly code: GroundedAnswerServiceErrorCode) {
+    super(
+      code === "INVALID_CITATIONS"
+        ? "Generation provider returned invalid citations"
+        : "Generation provider returned an invalid answer",
+    );
     this.name = "GroundedAnswerServiceError";
   }
 }
@@ -66,10 +72,12 @@ export class GroundedAnswerService {
 
   private prepare(results: readonly RetrievalResult[]) {
     const prepared: PreparedSource[] = [];
+    const seenChunkIds = new Set<string>();
     let remaining = this.maxContextCharacters;
     for (const result of results) {
       if (
         result.score < this.minimumSimilarity ||
+        seenChunkIds.has(result.chunkId) ||
         prepared.length >= this.maxSources ||
         remaining === 0
       ) {
@@ -79,6 +87,7 @@ export class GroundedAnswerService {
       if (!content) continue;
       const id = `source-${prepared.length + 1}`;
       prepared.push({ prompt: { id, content }, result });
+      seenChunkIds.add(result.chunkId);
       remaining -= content.length;
     }
     return prepared;
@@ -101,26 +110,43 @@ export class GroundedAnswerService {
       };
     }
 
-    const generated = await this.options.provider.generate({
+    const generatedValue: unknown = await this.options.provider.generate({
       question: normalizedQuestion,
       sources: prepared.map((source) => source.prompt),
     });
+    if (!generatedValue || typeof generatedValue !== "object") {
+      throw new GroundedAnswerServiceError("INVALID_PROVIDER_RESPONSE");
+    }
+    const candidate = generatedValue as Record<string, unknown>;
+    const answer = typeof candidate.answer === "string" ? candidate.answer.trim() : "";
+    if (
+      !answer ||
+      answer.length > 12_000 ||
+      !Array.isArray(candidate.citationIds) ||
+      candidate.citationIds.length === 0 ||
+      !candidate.citationIds.every((id) => typeof id === "string")
+    ) {
+      throw new GroundedAnswerServiceError("INVALID_PROVIDER_RESPONSE");
+    }
+    const citationIds = candidate.citationIds as string[];
     const byId = new Map(prepared.map((source) => [source.prompt.id, source.result]));
     const citations: RetrievalResult[] = [];
-    const seen = new Set<string>();
-    for (const id of generated.citationIds) {
+    const seenChunkIds = new Set<string>();
+    for (const id of citationIds) {
       const source = byId.get(id);
-      if (!source) throw new GroundedAnswerServiceError();
-      if (!seen.has(id)) {
+      if (!source) throw new GroundedAnswerServiceError("INVALID_CITATIONS");
+      if (!seenChunkIds.has(source.chunkId)) {
         citations.push(source);
-        seen.add(id);
+        seenChunkIds.add(source.chunkId);
       }
     }
-    if (citations.length === 0) throw new GroundedAnswerServiceError();
+    if (citations.length === 0) {
+      throw new GroundedAnswerServiceError("INVALID_CITATIONS");
+    }
 
     return {
       status: "answered",
-      answer: generated.answer,
+      answer,
       model: this.options.provider.model,
       citations,
     };

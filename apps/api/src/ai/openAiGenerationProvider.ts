@@ -33,9 +33,11 @@ function parseAnswer(value: unknown, allowedIds: ReadonlySet<string>): Generated
     answer.length > 12_000 ||
     !Array.isArray(citationIds) ||
     citationIds.length === 0 ||
+    citationIds.length > allowedIds.size ||
     !citationIds.every(
       (id) => typeof id === "string" && allowedIds.has(id),
-    )
+    ) ||
+    new Set(citationIds).size !== citationIds.length
   ) {
     throw new GenerationProviderError("INVALID_RESPONSE");
   }
@@ -103,6 +105,8 @@ export class OpenAiGenerationProvider implements GenerationProvider {
                       citationIds: {
                         type: "array",
                         minItems: 1,
+                        maxItems: allowedIds.size,
+                        uniqueItems: true,
                         items: { type: "string", enum: [...allowedIds] },
                       },
                     },

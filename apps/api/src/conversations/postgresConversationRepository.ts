@@ -172,8 +172,16 @@ export class PostgresConversationRepository {
     private readonly createId = randomUUID,
   ) {}
 
+  private async connect() {
+    try {
+      return await this.pool.connect();
+    } catch {
+      throw storageError();
+    }
+  }
+
   async createConversation(userId: string, input: CreateConversationInput) {
-    const client = await this.pool.connect();
+    const client = await this.connect();
     try {
       await client.query("BEGIN");
       const membership = await client.query(
@@ -285,7 +293,7 @@ export class PostgresConversationRepository {
   }
 
   async appendTurn(userId: string, input: AppendTurnInput) {
-    const client = await this.pool.connect();
+    const client = await this.connect();
     try {
       await client.query("BEGIN");
       const conversation = await client.query(
@@ -435,7 +443,7 @@ export class PostgresConversationRepository {
         "Conversation pagination is invalid",
       );
     }
-    const client = await this.pool.connect();
+    const client = await this.connect();
     try {
       await client.query("BEGIN");
       const access = await client.query(

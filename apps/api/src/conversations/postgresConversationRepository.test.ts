@@ -443,4 +443,42 @@ describe.sequential("PostgresConversationRepository", () => {
       new ConversationRepositoryError("STORAGE", "Conversation storage failed"),
     );
   });
+
+  it("normalizes connection acquisition failures for every operation", async () => {
+    const failingPool: DatabasePool = {
+      ...pool,
+      async connect() {
+        throw new Error("postgres://operator:secret@internal-host/database");
+      },
+    };
+    const failingRepository = new PostgresConversationRepository(failingPool);
+    const expected = new ConversationRepositoryError(
+      "STORAGE",
+      "Conversation storage failed",
+    );
+
+    await expect(
+      failingRepository.createConversation(ids.owner, {
+        workspaceId: ids.workspace,
+        scope: { type: "workspace" },
+        title: "Policy review",
+      }),
+    ).rejects.toEqual(expected);
+    await expect(
+      failingRepository.appendTurn(ids.owner, {
+        workspaceId: ids.workspace,
+        conversationId: ids.conversation,
+        submissionId: ids.submission,
+        userContent: "Question",
+        assistantContent: "Answer",
+        model: "test-generation",
+        sources: [],
+      }),
+    ).rejects.toEqual(expected);
+    await expect(
+      failingRepository.listMessages(ids.owner, ids.workspace, ids.conversation, {
+        limit: 10,
+      }),
+    ).rejects.toEqual(expected);
+  });
 });

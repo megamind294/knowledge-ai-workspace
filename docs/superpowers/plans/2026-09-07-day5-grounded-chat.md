@@ -10,7 +10,7 @@
 
 **Spec:** `docs/superpowers/specs/2026-08-27-ai-knowledge-workspace-design.md`
 
-**Progress:** Task 1 is complete. The provider-neutral generation boundary, validated OpenAI-compatible adapter, confidence filter, bounded prompt assembly, and exact citation mapping passed all 269 tests plus the complete PostgreSQL 16 + pgvector quality workflow in [GitHub Actions run #91](https://github.com/megamind294/knowledge-ai-workspace/actions/runs/34144142739) at `ea03dd3ad58cb46d10ca884e95c90a9fbe36c45a`. No live provider call or application-facing generated answer is claimed.
+**Progress:** Task 1 is complete. The provider-neutral generation boundary, validated OpenAI-compatible adapter, confidence filter, bounded prompt assembly, service-level answer validation, stored-chunk deduplication, and exact citation mapping passed all 275 tests plus the complete PostgreSQL 16 + pgvector quality workflow in [GitHub Actions run #95](https://github.com/megamind294/knowledge-ai-workspace/actions/runs/34145214136) at `ec22be0d013fa04c1b035e212c02883c64317bc6`. Independent review findings were resolved. No live provider call or application-facing generated answer is claimed.
 
 ## Global constraints
 

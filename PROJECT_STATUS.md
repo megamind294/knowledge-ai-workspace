@@ -188,9 +188,12 @@ Day 3 now includes:
 - configurable cosine-similarity rejection with no generation call for missing or low-confidence context
 - bounded source count and aggregate source characters
 - deterministic source identifiers and exact mapping back to retrieved chunk metadata
-- duplicate citation removal in first-mention order
-- 16 focused Day 5 tests, bringing the CI total to 269 automated tests
-- clean install, lint, strict type-checking, PostgreSQL 16 + pgvector tests, production builds, dependency validation, and zero-vulnerability audit passing in [GitHub Actions run #91](https://github.com/megamind294/knowledge-ai-workspace/actions/runs/34144142739) at `ea03dd3ad58cb46d10ca884e95c90a9fbe36c45a`
+- provider-neutral runtime validation for non-empty, bounded answers and well-formed citation lists
+- duplicate citation and retrieval-row removal by stored chunk identity
+- provider response schemas with unique, source-count-bounded citation identifiers
+- 22 focused Day 5 tests, bringing the CI total to 275 automated tests
+- clean install, lint, strict type-checking, PostgreSQL 16 + pgvector tests, production builds, dependency validation, and zero-vulnerability audit passing in [GitHub Actions run #95](https://github.com/megamind294/knowledge-ai-workspace/actions/runs/34145214136) at `ec22be0d013fa04c1b035e212c02883c64317bc6`
+- independent review completed with all important and minor findings resolved before handoff
 
 ## Next milestone
 

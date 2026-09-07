@@ -2,7 +2,7 @@
 
 ## Current milestone
 
-**Day 4 — document ingestion and retrieval: in progress**
+**Day 4 — document ingestion and retrieval: implementation and acceptance complete; merge pending**
 
 Day 1 was merged into `main` through [pull request #2](https://github.com/megamind294/knowledge-ai-workspace/pull/2). Day 2 was merged through [pull request #4](https://github.com/megamind294/knowledge-ai-workspace/pull/4) after clean local acceptance and GitHub Actions verification.
 
@@ -147,7 +147,7 @@ Day 3 now includes:
 - one-active-run enforcement, fixed vector dimensions, stable chunk ordinals, and workspace-scoped foreign keys
 - cascading chunk cleanup and an HNSW cosine-distance index prepared for scoped retrieval
 - transactional active-index replacement coverage
-- lint, strict type-check, all tests, and all production builds passing locally
+- lint, strict type-check, all 246 runnable tests, and all production builds passing locally; 7 PostgreSQL integration tests run in CI
 - real pgvector-enabled PostgreSQL 16 verification passing in GitHub Actions
 - provider-neutral embedding contracts and an OpenAI-compatible HTTP adapter
 - validated embedding counts, dimensions, finite values, non-zero cosine vectors, and response ordering
@@ -171,11 +171,11 @@ Day 3 now includes:
 - explicit retrieval loading, empty, failure, source-passage, score, and document-navigation states
 - fixture mode preserved as a local metadata simulation with deterministic mock search
 - source chunks and similarity scores presented without generated-answer or citation claims
-- 109 focused Day 4 tests, bringing the current local project total to 241 runnable automated tests
-- all 241 runnable tests, lint, strict type-checking, production builds, dependency validation, and a zero-vulnerability production audit passing after the durable-storage hardening
-- exact implementation-head GitHub Actions verification passed in [run #81](https://github.com/megamind294/knowledge-ai-workspace/actions/runs/33779803133) at `45b69202dcb88d8a4a99ad208251efa89424ff46`
+- 114 focused Day 4 tests, bringing the current local project total to 246 runnable automated tests
+- clean-install acceptance, all 246 runnable tests, lint, strict type-checking, production builds, dependency validation, and a zero-vulnerability production audit passing
+- exact final implementation-head GitHub Actions verification passed in [run #85](https://github.com/megamind294/knowledge-ai-workspace/actions/runs/34111536239) at `56acbe74ed3ab0b96c65ae9f8704c062ae4995cf`
 - all 225 runnable tests and complete quality gates passed on the binary-parser implementation head in [GitHub Actions run #77](https://github.com/megamind294/knowledge-ai-workspace/actions/runs/33746802747) at `8065f0ddc5d5a61293438ab1070f2e801df1808a`
 
 ## Next milestone
 
-Tasks 1–7 and the durable single-filesystem storage follow-up are complete. All 241 runnable tests and complete pgvector-enabled quality gates passed on the implementation head in [GitHub Actions run #81](https://github.com/megamind294/knowledge-ai-workspace/actions/runs/33779803133) at `45b69202dcb88d8a4a99ad208251efa89424ff46`. API mode now supports real byte upload, restart-persistent filesystem storage, PDF/TXT/Markdown/DOCX textual extraction, a synchronous indexing trigger, durable metadata refresh/retry, and scoped semantic source search; PDF page and DOCX heading provenance are preserved where available, while scanned or image-only PDFs require OCR and return empty. Fixture mode remains local and mock. No live embedding-provider call is claimed. Retrieval returns source chunks and scores rather than generated AI answers or citations. Final clean-install acceptance, deferred-minor cleanup, documentation review, and merge remain.
+Day 4 implementation and acceptance are complete. A clean install passed all 246 runnable tests locally, and the complete PostgreSQL 16 + pgvector workflow passed on the final implementation head in [GitHub Actions run #85](https://github.com/megamind294/knowledge-ai-workspace/actions/runs/34111536239) at `56acbe74ed3ab0b96c65ae9f8704c062ae4995cf`. API mode supports real byte upload, restart-persistent filesystem storage, PDF/TXT/Markdown/DOCX textual extraction, synchronous indexing and retry, and scoped semantic source search. Scanned PDFs still require OCR, no live provider call is claimed, and retrieval returns source chunks and scores rather than generated answers or citations. Merge is the remaining integration step; Day 5 grounded answers, citations, and conversation history follow afterward.

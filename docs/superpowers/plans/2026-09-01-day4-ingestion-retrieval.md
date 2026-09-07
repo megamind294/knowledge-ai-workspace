@@ -10,7 +10,7 @@
 
 **Spec:** `docs/superpowers/specs/2026-08-27-ai-knowledge-workspace-design.md`
 
-**Progress:** Tasks 1–7 and the durable single-filesystem storage follow-up are complete. API mode now connects real byte upload, restart-persistent filesystem storage, PDF/TXT/Markdown/DOCX textual extraction, an authenticated synchronous indexing trigger, durable metadata refresh/retry, and scoped semantic source search; PDF page and DOCX heading provenance are preserved where available. The durable-storage implementation head passed all 241 runnable tests and complete pgvector-enabled quality gates in [GitHub Actions run #81](https://github.com/megamind294/knowledge-ai-workspace/actions/runs/33779803133) at `45b69202dcb88d8a4a99ad208251efa89424ff46`. Scanned or image-only PDFs require OCR and return empty. Fixture mode remains local and mock, no live embedding-provider call is claimed, and retrieval returns chunks and scores rather than generated AI answers or citations. Final clean-install acceptance, deferred-minor cleanup, documentation review, and merge remain.
+**Progress:** Day 4 implementation and acceptance are complete. API mode connects real byte upload, restart-persistent filesystem storage, PDF/TXT/Markdown/DOCX textual extraction, authenticated synchronous indexing and retry, and scoped semantic source search. A clean install passed all 246 runnable tests locally, and the final implementation head passed complete PostgreSQL 16 + pgvector quality gates in [GitHub Actions run #85](https://github.com/megamind294/knowledge-ai-workspace/actions/runs/34111536239) at `56acbe74ed3ab0b96c65ae9f8704c062ae4995cf`. Scanned PDFs require OCR, fixture mode remains local and mock, no live embedding-provider call is claimed, and retrieval returns chunks and scores rather than generated answers or citations. Merge remains before Day 5 begins.
 
 ## Global Constraints
 
@@ -179,10 +179,10 @@
 - Consumes: all Day 4 deliverables.
 - Produces: reproducible setup, provider, migration, data-sensitivity, limitation, and verification documentation.
 
-- [ ] **Step 1: Document only implemented behavior, operational requirements, provider configuration, and Day 5 exclusions**
-- [ ] **Step 2: Run clean install, lint, strict type-check, all tests, all builds, real PostgreSQL/pgvector integration, audit, and `git diff --check`**
-- [ ] **Step 3: Review for secret leakage, authorization gaps, unsafe uploads, duplicate vectors, generated files, placeholders, and unsupported claims**
-- [ ] **Step 4: Commit `docs: complete Day 4 ingestion milestone`**
+- [x] **Step 1: Document only implemented behavior, operational requirements, provider configuration, and Day 5 exclusions**
+- [x] **Step 2: Run clean install, lint, strict type-check, all tests, all builds, real PostgreSQL/pgvector integration, audit, and `git diff --check`**
+- [x] **Step 3: Review for secret leakage, authorization gaps, unsafe uploads, duplicate vectors, generated files, placeholders, and unsupported claims**
+- [x] **Step 4: Commit `docs: complete Day 4 ingestion milestone`**
 - [ ] **Step 5: Require exact-head GitHub Actions success and merge the Day 4 pull request**
 
 ## Plan self-review

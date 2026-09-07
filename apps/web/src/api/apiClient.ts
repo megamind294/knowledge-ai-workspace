@@ -12,9 +12,13 @@ export class ApiClient {
   constructor(private readonly options: ApiClientOptions) {}
 
   private async raw<T>(path: string, init: RequestInit = {}): Promise<T> {
-    const headers: Record<string,string> = { ...(init.headers as Record<string,string> | undefined) };
-    if (init.body) headers["Content-Type"] = "application/json";
-    if (this.accessToken) headers.Authorization = `Bearer ${this.accessToken}`;
+    const headers = new Headers(init.headers);
+    if (init.body && !headers.has("content-type")) {
+      headers.set("Content-Type", "application/json");
+    }
+    if (this.accessToken) {
+      headers.set("Authorization", `Bearer ${this.accessToken}`);
+    }
     const response = await fetch(`${this.options.baseUrl}${path}`, { ...init, credentials: "include", headers });
     if (response.status === 204) return undefined as T;
     const body = await response.json() as {error?:{code:string;message:string}} | T;

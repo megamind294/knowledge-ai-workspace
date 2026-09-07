@@ -3,8 +3,13 @@ import { type FormEvent, useRef, useState } from "react";
 import { knowledgeQueryKeys } from "../../data/queryKeys";
 import { useKnowledgeRepository } from "../../data/useKnowledgeRepository";
 import { validateDocumentUpload } from "../../domain/documentUpload";
+import type {
+  DocumentUploadCandidate,
+  IngestionProgressStage,
+} from "../../domain/knowledge";
 
 interface SelectedFileMetadata {
+  file: File;
   name: string;
   mimeType: string;
   sizeBytes: number;
@@ -21,6 +26,9 @@ export function DocumentUploadPanel() {
   const [collectionId, setCollectionId] = useState("");
   const [validationErrors, setValidationErrors] = useState<string[]>([]);
   const [successMessage, setSuccessMessage] = useState("");
+  const [progressStage, setProgressStage] =
+    useState<IngestionProgressStage | null>(null);
+  const isApi = repository.mode === "api";
 
   const workspacesQuery = useQuery({
     queryKey: knowledgeQueryKeys.workspaces,
@@ -34,13 +42,35 @@ export function DocumentUploadPanel() {
   const collections = collectionsQuery.data ?? [];
 
   const createDocument = useMutation({
-    mutationFn: repository.createDocument,
+    mutationFn: ({
+      candidate,
+      file,
+    }: {
+      candidate: DocumentUploadCandidate;
+      file: File;
+    }) =>
+      isApi
+        ? repository.ingestDocument(candidate, file, setProgressStage)
+        : repository.createDocument(candidate),
     onSuccess: async (document) => {
       setSelectedFile(null);
       setValidationErrors([]);
-      setSuccessMessage(
-        `${document.name} was added as a local preview. Simulated ingestion status: uploaded.`,
-      );
+      setProgressStage(null);
+      if (!isApi) {
+        setSuccessMessage(
+          `${document.name} was added as a local preview. Simulated ingestion status: uploaded.`,
+        );
+      } else if (document.status === "indexed") {
+        setSuccessMessage(`${document.name} is indexed and ready to search.`);
+      } else if (document.status === "failed") {
+        setSuccessMessage(
+          `${document.name} was uploaded, but indexing failed. ${document.failureReason ?? "Retry ingestion from the document page."}`,
+        );
+      } else {
+        setSuccessMessage(
+          `${document.name} was uploaded. Current ingestion status: ${document.status}.`,
+        );
+      }
       if (fileInputRef.current) {
         fileInputRef.current.value = "";
       }
@@ -69,9 +99,12 @@ export function DocumentUploadPanel() {
       await Promise.all(invalidations);
     },
     onError: () => {
+      setProgressStage(null);
       setSuccessMessage("");
       setValidationErrors([
-        "The local preview could not be created. Try again.",
+        isApi
+          ? "The document could not be uploaded and indexed. Try again."
+          : "The local preview could not be created. Try again.",
       ]);
     },
     onSettled: () => {
@@ -105,22 +138,34 @@ export function DocumentUploadPanel() {
     setValidationErrors([]);
     setSuccessMessage("");
     submissionPendingRef.current = true;
-    createDocument.mutate(validation.candidate);
+    createDocument.mutate({
+      candidate: validation.candidate,
+      file: selectedFile.file,
+    });
   }
 
   return (
     <section className="rounded-2xl border border-indigo-300/20 bg-indigo-950/30 p-6">
       <div className="max-w-3xl">
         <p className="text-xs font-semibold uppercase tracking-[0.2em] text-indigo-300">
-          Local simulation
+          {isApi ? "Authenticated ingestion" : "Local simulation"}
         </p>
         <h2 className="mt-2 text-xl font-semibold text-white">
-          Add a document preview
+          {isApi ? "Upload and index a document" : "Add a document preview"}
         </h2>
         <p className="mt-2 text-sm leading-6 text-slate-300">
-          PDF, TXT, Markdown, or DOCX up to 10 MiB. Only local metadata is
-          used; no file bytes are uploaded, read, parsed, stored, or sent to
-          AI in Day 2.
+          {isApi ? (
+            <>
+              PDF, TXT, Markdown, and DOCX files can be indexed up to 10 MiB
+              when provider-backed indexing is configured.
+            </>
+          ) : (
+            <>
+              PDF, TXT, Markdown, or DOCX up to 10 MiB. Only local metadata is
+              used; no file bytes are uploaded, read, parsed, stored, or sent
+              to AI in Day 2.
+            </>
+          )}
         </p>
       </div>
 
@@ -135,6 +180,7 @@ export function DocumentUploadPanel() {
               setSelectedFile(
                 file
                   ? {
+                      file,
                       name: file.name,
                       mimeType: file.type,
                       sizeBytes: file.size,
@@ -219,8 +265,18 @@ export function DocumentUploadPanel() {
             type="submit"
           >
             {createDocument.isPending
-              ? "Creating local preview…"
-              : "Create local preview"}
+              ? isApi
+                ? progressStage === "metadata"
+                  ? "Creating metadata…"
+                  : progressStage === "upload"
+                    ? "Uploading bytes…"
+                    : progressStage === "index"
+                      ? "Indexing document…"
+                      : "Refreshing document status…"
+                : "Creating local preview…"
+              : isApi
+                ? "Upload and index"
+                : "Create local preview"}
           </button>
         </div>
       </form>

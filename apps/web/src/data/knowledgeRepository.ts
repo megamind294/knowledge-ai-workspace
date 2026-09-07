@@ -1,8 +1,10 @@
+import type { RetrievalRequest, RetrievalResult } from "@knowledge-ai/contracts";
 import type {
   CollectionSummary,
   DashboardSnapshot,
   DocumentDetail,
   DocumentUploadCandidate,
+  IngestionProgressStage,
   RecentDocument,
   WorkspaceSummary,
 } from "../domain/knowledge";
@@ -13,6 +15,7 @@ import {
 } from "./fixtures";
 
 export interface KnowledgeRepository {
+  readonly mode: "fixture" | "api";
   getDashboard(): Promise<DashboardSnapshot>;
   getWorkspaces(): Promise<WorkspaceSummary[]>;
   getWorkspace(id: string): Promise<WorkspaceSummary | null>;
@@ -29,7 +32,16 @@ export interface KnowledgeRepository {
   createDocument(
     candidate: DocumentUploadCandidate,
   ): Promise<DocumentDetail>;
+  ingestDocument(
+    candidate: DocumentUploadCandidate,
+    file: File,
+    onProgress?: (stage: IngestionProgressStage) => void,
+  ): Promise<DocumentDetail>;
   retryDocument(id: string): Promise<DocumentDetail | null>;
+  searchKnowledge(
+    workspaceId: string,
+    request: RetrievalRequest,
+  ): Promise<RetrievalResult[]>;
 }
 
 interface FixtureRepositoryOptions {
@@ -68,7 +80,46 @@ export function createFixtureKnowledgeRepository(
   const documents = initialDocumentDetails();
   let nextDocumentId = 1;
 
+  async function createDocument(candidate: DocumentUploadCandidate) {
+    const timestamp = now().toISOString();
+    const document: DocumentDetail = {
+      id: `local-document-${nextDocumentId}`,
+      workspaceId: candidate.workspaceId,
+      collectionId: candidate.collectionId,
+      name: candidate.name,
+      mediaType: candidate.mediaType,
+      status: "uploaded",
+      sizeBytes: candidate.sizeBytes,
+      failureReason: null,
+      createdAt: timestamp,
+      updatedAt: timestamp,
+    };
+    nextDocumentId += 1;
+    documents.push(document);
+
+    const workspace = workspaces.find(
+      (item) => item.id === candidate.workspaceId,
+    );
+    if (workspace) {
+      workspace.documentCount += 1;
+      workspace.updatedAt = timestamp;
+    }
+
+    const collection = collections.find(
+      (item) =>
+        item.workspaceId === candidate.workspaceId &&
+        item.id === candidate.collectionId,
+    );
+    if (collection) {
+      collection.documentCount += 1;
+      collection.updatedAt = timestamp;
+    }
+
+    return copyDocument(document);
+  }
+
   return {
+    mode: "fixture",
     async getDashboard() {
       return {
         metrics: {
@@ -130,42 +181,10 @@ export function createFixtureKnowledgeRepository(
       return document ? copyDocument(document) : null;
     },
 
-    async createDocument(candidate) {
-      const timestamp = now().toISOString();
-      const document: DocumentDetail = {
-        id: `local-document-${nextDocumentId}`,
-        workspaceId: candidate.workspaceId,
-        collectionId: candidate.collectionId,
-        name: candidate.name,
-        mediaType: candidate.mediaType,
-        status: "uploaded",
-        sizeBytes: candidate.sizeBytes,
-        failureReason: null,
-        createdAt: timestamp,
-        updatedAt: timestamp,
-      };
-      nextDocumentId += 1;
-      documents.push(document);
+    createDocument,
 
-      const workspace = workspaces.find(
-        (item) => item.id === candidate.workspaceId,
-      );
-      if (workspace) {
-        workspace.documentCount += 1;
-        workspace.updatedAt = timestamp;
-      }
-
-      const collection = collections.find(
-        (item) =>
-          item.workspaceId === candidate.workspaceId &&
-          item.id === candidate.collectionId,
-      );
-      if (collection) {
-        collection.documentCount += 1;
-        collection.updatedAt = timestamp;
-      }
-
-      return copyDocument(document);
+    async ingestDocument(candidate) {
+      return createDocument(candidate);
     },
 
     async retryDocument(id) {
@@ -181,6 +200,10 @@ export function createFixtureKnowledgeRepository(
       }
 
       return copyDocument(document);
+    },
+
+    async searchKnowledge() {
+      return [];
     },
   };
 }

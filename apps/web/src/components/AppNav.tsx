@@ -6,6 +6,7 @@ import {
   Settings,
 } from "lucide-react";
 import { NavLink } from "react-router-dom";
+import { useKnowledgeRepository } from "../data/useKnowledgeRepository";
 
 interface AppNavProps {
   ariaLabel: string;
@@ -46,11 +47,16 @@ const navigationItems = [
 ] as const;
 
 export function AppNav({ ariaLabel, onNavigate }: AppNavProps) {
+  const repository = useKnowledgeRepository();
   return (
     <nav aria-label={ariaLabel}>
       <ul className="space-y-2">
         {navigationItems.map((item) => {
           const Icon = item.icon;
+          const label =
+            item.to === "/app/knowledge" && repository.mode === "api"
+              ? "Source search"
+              : item.label;
 
           return (
             <li key={item.label}>
@@ -69,7 +75,7 @@ export function AppNav({ ariaLabel, onNavigate }: AppNavProps) {
                   to={item.to}
                 >
                   <Icon aria-hidden="true" size={18} />
-                  {item.label}
+                  {label}
                 </NavLink>
               ) : (
                 <span
@@ -77,7 +83,7 @@ export function AppNav({ ariaLabel, onNavigate }: AppNavProps) {
                   className="flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-medium text-slate-500"
                 >
                   <Icon aria-hidden="true" size={18} />
-                  <span className="flex-1">{item.label}</span>
+                  <span className="flex-1">{label}</span>
                   <span className="text-[10px] font-semibold uppercase tracking-wider">
                     Soon
                   </span>

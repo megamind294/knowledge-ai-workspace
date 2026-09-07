@@ -10,7 +10,7 @@
 
 **Spec:** `docs/superpowers/specs/2026-08-27-ai-knowledge-workspace-design.md`
 
-**Progress:** Task 1 is complete. The provider-neutral generation boundary, validated OpenAI-compatible adapter, confidence filter, bounded prompt assembly, service-level answer validation, stored-chunk deduplication, and exact citation mapping passed all 275 tests plus the complete PostgreSQL 16 + pgvector quality workflow in [GitHub Actions run #95](https://github.com/megamind294/knowledge-ai-workspace/actions/runs/34145214136) at `ec22be0d013fa04c1b035e212c02883c64317bc6`. Independent review findings were resolved. No live provider call or application-facing generated answer is claimed.
+**Progress:** Tasks 1 and 2 are complete. The provider-neutral generation core and PostgreSQL conversation history schema, including scope-bound immutable citation mappings, passed all 282 tests plus the complete PostgreSQL 16 + pgvector quality workflow in [GitHub Actions run #103](https://github.com/megamind294/knowledge-ai-workspace/actions/runs/34167811582) at `b98e95e6a77f657e2b816f957df18aa552ad19f1`. Independent review findings were resolved. No live provider call, conversation API, or application-facing generated answer is claimed.
 
 ## Global constraints
 
@@ -45,8 +45,8 @@
 
 ### Task 2: Conversation and citation schema
 
-- [ ] Add conversations, messages, and message-source mappings with workspace-scoped foreign keys and cascading deletion.
-- [ ] Test immutable source mappings, message ordering, and cross-workspace integrity against PostgreSQL.
+- [x] Add conversations, messages, and message-source mappings with workspace-scoped foreign keys and cascading deletion.
+- [x] Test immutable source mappings, message ordering, scope isolation, re-index retention, and lifecycle behavior against PostgreSQL.
 
 ### Task 3: Authorized conversation repository
 

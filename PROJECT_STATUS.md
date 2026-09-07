@@ -2,7 +2,7 @@
 
 ## Current milestone
 
-**Day 4 — document ingestion and retrieval: implementation and acceptance complete; merge pending**
+**Day 5 — grounded chat: generation core and durable conversation schema complete**
 
 Day 1 was merged into `main` through [pull request #2](https://github.com/megamind294/knowledge-ai-workspace/pull/2). Day 2 was merged through [pull request #4](https://github.com/megamind294/knowledge-ai-workspace/pull/4) after clean local acceptance and GitHub Actions verification.
 
@@ -191,10 +191,15 @@ Day 3 now includes:
 - provider-neutral runtime validation for non-empty, bounded answers and well-formed citation lists
 - duplicate citation and retrieval-row removal by stored chunk identity
 - provider response schemas with unique, source-count-bounded citation identifiers
-- 22 focused Day 5 tests, bringing the CI total to 275 automated tests
-- clean install, lint, strict type-checking, PostgreSQL 16 + pgvector tests, production builds, dependency validation, and zero-vulnerability audit passing in [GitHub Actions run #95](https://github.com/megamind294/knowledge-ai-workspace/actions/runs/34145214136) at `ec22be0d013fa04c1b035e212c02883c64317bc6`
+- PostgreSQL conversations and ordered user/assistant messages with workspace-consistent collection and document scopes
+- exact assistant-message-to-chunk source mappings constrained to the conversation scope
+- database-triggered source-mapping immutability with stable historical citations across document re-indexing
+- cascading conversation cleanup for deleted workspaces, collections, and documents, with deleted authors safely set to null
+- supporting foreign-key and conversation-history indexes for lifecycle and pagination paths
+- 29 focused Day 5 tests, bringing the CI total to 282 automated tests
+- clean install, lint, strict type-checking, PostgreSQL 16 + pgvector tests, production builds, dependency validation, and zero-vulnerability audit passing in [GitHub Actions run #103](https://github.com/megamind294/knowledge-ai-workspace/actions/runs/34167811582) at `b98e95e6a77f657e2b816f957df18aa552ad19f1`
 - independent review completed with all important and minor findings resolved before handoff
 
 ## Next milestone
 
-Day 5 Task 1 is complete on the draft branch. Next are the conversation/message/source schema, transactional authorized history repository, grounded chat HTTP composition, React conversation and citation experience, evaluation fixtures, and final acceptance. The generation core is not yet exposed through the API or frontend, and no live generation-provider call, persisted conversation, displayed generated answer, or model-quality claim is made.
+Day 5 Tasks 1 and 2 are complete on the draft branch. Next are the transactional authorized history repository, grounded chat HTTP composition, React conversation and citation experience, evaluation fixtures, and final acceptance. The generation core and schema are not yet exposed through the API or frontend, and no live generation-provider call, persisted application conversation, displayed generated answer, or model-quality claim is made.

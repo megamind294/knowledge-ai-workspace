@@ -10,6 +10,8 @@
 
 **Spec:** `docs/superpowers/specs/2026-08-27-ai-knowledge-workspace-design.md`
 
+**Progress:** Task 1 is complete. The provider-neutral generation boundary, validated OpenAI-compatible adapter, confidence filter, bounded prompt assembly, and exact citation mapping passed all 269 tests plus the complete PostgreSQL 16 + pgvector quality workflow in [GitHub Actions run #91](https://github.com/megamind294/knowledge-ai-workspace/actions/runs/34144142739) at `ea03dd3ad58cb46d10ca884e95c90a9fbe36c45a`. No live provider call or application-facing generated answer is claimed.
+
 ## Global constraints
 
 - Every query is authorized at workspace, collection, or document scope before embedding or generation provider calls.
@@ -38,8 +40,8 @@
 - [x] Write failing tests for structured response parsing, request and body timeouts, safe provider failures, bounded prompts, citation allow-listing, low-confidence refusal, and exact source mapping.
 - [x] Confirm failures are caused by the missing Day 5 modules.
 - [x] Implement the smallest provider adapter and service that satisfy the tests.
-- [ ] Run focused tests and complete repository quality gates.
-- [ ] Commit and publish `feat: add grounded answer generation core`.
+- [x] Run focused tests and complete repository quality gates.
+- [x] Commit and publish `feat: add grounded answer generation core`.
 
 ### Task 2: Conversation and citation schema
 

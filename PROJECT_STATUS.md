@@ -176,6 +176,22 @@ Day 3 now includes:
 - exact final implementation-head GitHub Actions verification passed in [run #85](https://github.com/megamind294/knowledge-ai-workspace/actions/runs/34111536239) at `56acbe74ed3ab0b96c65ae9f8704c062ae4995cf`
 - all 225 runnable tests and complete quality gates passed on the binary-parser implementation head in [GitHub Actions run #77](https://github.com/megamind294/knowledge-ai-workspace/actions/runs/33746802747) at `8065f0ddc5d5a61293438ab1070f2e801df1808a`
 
+## Day 5 completed scope
+
+- a complete seven-task grounded-chat implementation plan
+- provider-neutral structured text-generation contracts
+- an OpenAI-compatible generation adapter with one deadline spanning request and response-body parsing
+- strict response-envelope, JSON, answer, and citation validation
+- normalized provider failures without upstream payload, credential, or source-content leakage
+- prompts that explicitly treat retrieved chunks as untrusted data rather than instructions
+- server-side citation allow-listing against supplied source identifiers
+- configurable cosine-similarity rejection with no generation call for missing or low-confidence context
+- bounded source count and aggregate source characters
+- deterministic source identifiers and exact mapping back to retrieved chunk metadata
+- duplicate citation removal in first-mention order
+- 16 focused Day 5 tests, bringing the CI total to 269 automated tests
+- clean install, lint, strict type-checking, PostgreSQL 16 + pgvector tests, production builds, dependency validation, and zero-vulnerability audit passing in [GitHub Actions run #91](https://github.com/megamind294/knowledge-ai-workspace/actions/runs/34144142739) at `ea03dd3ad58cb46d10ca884e95c90a9fbe36c45a`
+
 ## Next milestone
 
-Day 4 implementation and acceptance are complete. A clean install passed all 246 runnable tests locally, and the complete PostgreSQL 16 + pgvector workflow passed on the final implementation head in [GitHub Actions run #85](https://github.com/megamind294/knowledge-ai-workspace/actions/runs/34111536239) at `56acbe74ed3ab0b96c65ae9f8704c062ae4995cf`. API mode supports real byte upload, restart-persistent filesystem storage, PDF/TXT/Markdown/DOCX textual extraction, synchronous indexing and retry, and scoped semantic source search. Scanned PDFs still require OCR, no live provider call is claimed, and retrieval returns source chunks and scores rather than generated answers or citations. Merge is the remaining integration step; Day 5 grounded answers, citations, and conversation history follow afterward.
+Day 5 Task 1 is complete on the draft branch. Next are the conversation/message/source schema, transactional authorized history repository, grounded chat HTTP composition, React conversation and citation experience, evaluation fixtures, and final acceptance. The generation core is not yet exposed through the API or frontend, and no live generation-provider call, persisted conversation, displayed generated answer, or model-quality claim is made.

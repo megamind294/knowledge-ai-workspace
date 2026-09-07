@@ -40,6 +40,7 @@ CREATE TABLE conversation_messages (
   id UUID PRIMARY KEY,
   conversation_id UUID NOT NULL,
   workspace_id UUID NOT NULL,
+  submission_id UUID,
   role TEXT NOT NULL CHECK (role IN ('user', 'assistant')),
   position INTEGER NOT NULL CHECK (position > 0),
   content TEXT NOT NULL
@@ -47,6 +48,7 @@ CREATE TABLE conversation_messages (
   model TEXT CHECK (model IS NULL OR LENGTH(TRIM(model)) > 0),
   created_at TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP,
   UNIQUE (conversation_id, position),
+  UNIQUE (conversation_id, submission_id, role),
   UNIQUE (id, workspace_id, conversation_id, role),
   FOREIGN KEY (conversation_id, workspace_id)
     REFERENCES conversations(id, workspace_id)

@@ -169,6 +169,22 @@ describe("DocumentParser", () => {
     await expect(operation).rejects.not.toThrow(/private document|provider/i);
   });
 
+  it.each([
+    ["application/pdf", {}],
+    [
+      "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+      { pdf: async () => [{ text: "unused" }] },
+    ],
+  ])("reports an unavailable explicitly omitted binary parser for %s", async (mediaType, parsers) => {
+    await expectParserError(
+      new DocumentParser(parsers).extract({
+        mediaType,
+        bytes: new Uint8Array([1, 2, 3]),
+      }),
+      "PARSER_UNAVAILABLE",
+    );
+  });
+
   it("rejects unsupported media types", async () => {
     await expectParserError(
       new DocumentParser().extract({

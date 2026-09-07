@@ -207,7 +207,7 @@ describe("validated local document upload preview", () => {
     );
     expect(
       screen.getByText(
-        /pdf, txt, markdown, and docx files can be indexed up to 10 mib/i,
+        /pdf, txt, markdown, and docx files can be indexed up to 10 mib when provider-backed indexing is configured/i,
       ),
     ).toBeVisible();
     expect(screen.queryByText(/parsing (?:is|are) not available/i)).not.toBeInTheDocument();

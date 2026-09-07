@@ -57,6 +57,14 @@ function serviceError(response: Response, cause: IngestionServiceError) {
         "INTERNAL_ERROR",
         "Document indexing is temporarily unavailable",
       );
+      return;
+    default:
+      error(
+        response,
+        503,
+        "INTERNAL_ERROR",
+        "Document indexing is temporarily unavailable",
+      );
   }
 }
 

@@ -14,7 +14,9 @@ describe("ApiClient", () => {
 
     await expect(client.request("/api/workspaces")).resolves.toEqual({ workspaces: [] });
     expect(fetchMock).toHaveBeenNthCalledWith(2, "https://api.example.com/api/auth/refresh", expect.objectContaining({ credentials: "include", method: "POST" }));
-    expect(fetchMock.mock.calls[2]?.[1]?.headers).toMatchObject({ Authorization: "Bearer replacement" });
+    expect(
+      new Headers(fetchMock.mock.calls[2]?.[1]?.headers).get("authorization"),
+    ).toBe("Bearer replacement");
   });
 
   it("does not loop when refresh is unauthorized and exposes the normalized API error", async () => {
@@ -66,8 +68,34 @@ describe("ApiClient", () => {
       "/api/content",
       expect.objectContaining({
         body: file,
-        headers: { "Content-Type": "text/plain" },
+        headers: expect.any(Headers),
       }),
     );
+    const sentHeaders = new Headers(fetchMock.mock.calls[0]?.[1]?.headers);
+    expect(sentHeaders.get("content-type")).toBe("text/plain");
+  });
+
+  it.each([
+    new Headers({ "Content-Type": "text/plain", "X-Upload-Mode": "source" }),
+    [["Content-Type", "text/plain"], ["X-Upload-Mode", "source"]] as [string, string][],
+  ])("preserves every valid HeadersInit form", async (headers) => {
+    const fetchMock = vi.fn().mockResolvedValue(
+      new Response(JSON.stringify({ upload: {} }), {
+        status: 201,
+        headers: { "content-type": "application/json" },
+      }),
+    );
+    vi.stubGlobal("fetch", fetchMock);
+    const client = new ApiClient({ baseUrl: "" });
+
+    await client.request("/api/content", {
+      method: "POST",
+      body: new File(["hello"], "notes.txt", { type: "text/plain" }),
+      headers,
+    });
+
+    const sentHeaders = new Headers(fetchMock.mock.calls[0]?.[1]?.headers);
+    expect(sentHeaders.get("content-type")).toBe("text/plain");
+    expect(sentHeaders.get("x-upload-mode")).toBe("source");
   });
 });

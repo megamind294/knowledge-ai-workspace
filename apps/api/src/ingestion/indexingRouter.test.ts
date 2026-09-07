@@ -104,4 +104,27 @@ describe("authenticated document indexing trigger", () => {
       expect(JSON.stringify(response.body)).not.toContain("provider detail");
     },
   );
+
+  it("sanitizes an unknown service error code", async () => {
+    const indexDocument = vi.fn().mockRejectedValue(
+      new IngestionServiceError(
+        "FUTURE_PROVIDER_FAILURE" as never,
+        "private future provider detail",
+      ),
+    );
+    const app = createApp({
+      indexing: { service: { indexDocument }, accessTokenSecret: secret },
+    });
+
+    const response = await request(app)
+      .post(path())
+      .set("authorization", `Bearer ${await token()}`)
+      .expect(503);
+
+    expect(response.body.error).toMatchObject({
+      code: "INTERNAL_ERROR",
+      message: "Document indexing is temporarily unavailable",
+    });
+    expect(JSON.stringify(response.body)).not.toContain("private");
+  });
 });

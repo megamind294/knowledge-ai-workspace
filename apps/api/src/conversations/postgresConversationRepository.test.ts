@@ -1,6 +1,10 @@
+import { Pool } from "pg";
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
 import { runMigrations } from "../database/migrate.js";
-import type { DatabasePool } from "../database/pool.js";
+import type {
+  DatabasePool,
+  DatabaseTransactionClient,
+} from "../database/pool.js";
 import { createPgMemPool } from "../testSupport/pgMem.js";
 import {
   ConversationRepositoryError,
@@ -23,13 +27,59 @@ const ids = {
 
 const embedding = `[${Array.from({ length: 1536 }, () => "1").join(",")}]`;
 
-describe("PostgresConversationRepository", () => {
+const TEST_SCHEMA = "keystone_conversation_repository_test";
+
+async function createPostgresTestPool(databaseUrl: string) {
+  const admin = new Pool({ connectionString: databaseUrl });
+  await admin.query(`DROP SCHEMA IF EXISTS ${TEST_SCHEMA} CASCADE`);
+  await admin.query(`CREATE SCHEMA ${TEST_SCHEMA}`);
+  await admin.end();
+  return new Pool({
+    connectionString: databaseUrl,
+    options: `-c search_path=${TEST_SCHEMA},public`,
+  });
+}
+
+function pauseTransactionAfter(pool: DatabasePool, pattern: RegExp) {
+  let markReached!: () => void;
+  let resumeQuery!: () => void;
+  const reached = new Promise<void>((resolve) => {
+    markReached = resolve;
+  });
+  const resume = new Promise<void>((resolve) => {
+    resumeQuery = resolve;
+  });
+  const wrappedPool: DatabasePool = {
+    query: (text, values) => pool.query(text, values),
+    async connect() {
+      const client = await pool.connect();
+      const wrappedClient: DatabaseTransactionClient = {
+        async query(text, values) {
+          const result = await client.query(text, values);
+          if (pattern.test(text)) {
+            markReached();
+            await resume;
+          }
+          return result;
+        },
+        release: () => client.release(),
+      };
+      return wrappedClient;
+    },
+    end: () => Promise.resolve(),
+  };
+  return { pool: wrappedPool, reached, resume: resumeQuery };
+}
+
+describe.sequential("PostgresConversationRepository", () => {
   let pool: DatabasePool;
   let generatedIds: string[];
   let repository: PostgresConversationRepository;
 
   beforeEach(async () => {
-    pool = createPgMemPool();
+    pool = process.env.TEST_DATABASE_URL
+      ? await createPostgresTestPool(process.env.TEST_DATABASE_URL)
+      : createPgMemPool();
     await runMigrations(pool);
     await pool.query(
       `INSERT INTO users (id,email,display_name)
@@ -261,5 +311,136 @@ describe("PostgresConversationRepository", () => {
     expect(first.nextPosition).toBe(2);
     expect(second.items.map((message) => message.position)).toEqual([3, 4]);
     expect(second.nextPosition).toBeNull();
+  });
+
+  it("rejects unsafe pagination bounds", async () => {
+    await expect(
+      repository.listMessages(ids.owner, ids.workspace, ids.conversation, { limit: 0 }),
+    ).rejects.toEqual(
+      new ConversationRepositoryError(
+        "INVALID_INPUT",
+        "Conversation pagination is invalid",
+      ),
+    );
+  });
+
+  it("serializes concurrent retries of the same submission", async () => {
+    if (!process.env.TEST_DATABASE_URL) return;
+    const conversation = await repository.createConversation(ids.owner, {
+      workspaceId: ids.workspace,
+      scope: { type: "workspace" },
+      title: "Policy review",
+    });
+    generatedIds.push(
+      "10000000-0000-4000-8000-000000000082",
+      "10000000-0000-4000-8000-000000000083",
+    );
+    const input = {
+      workspaceId: ids.workspace,
+      conversationId: conversation.id,
+      submissionId: ids.submission,
+      userContent: "Question",
+      assistantContent: "Answer",
+      model: "test-generation",
+      sources: [],
+    };
+
+    const [first, second] = await Promise.all([
+      repository.appendTurn(ids.owner, input),
+      repository.appendTurn(ids.owner, input),
+    ]);
+    expect(second).toEqual(first);
+    const count = await pool.query<{ count: string }>(
+      "SELECT COUNT(*)::text AS count FROM conversation_messages WHERE conversation_id=$1",
+      [conversation.id],
+    );
+    expect(count.rows[0]?.count).toBe("2");
+  });
+
+  it("holds membership authorization through a conversation write", async () => {
+    if (!process.env.TEST_DATABASE_URL) return;
+    const paused = pauseTransactionAfter(pool, /FROM workspace_members[\s\S]*FOR SHARE/u);
+    const lockedRepository = new PostgresConversationRepository(
+      paused.pool,
+      () => ids.conversation,
+    );
+    const creation = lockedRepository.createConversation(ids.owner, {
+      workspaceId: ids.workspace,
+      scope: { type: "workspace" },
+      title: "Policy review",
+    });
+    await paused.reached;
+    let revocationCompleted = false;
+    const revocation = pool
+      .query("DELETE FROM workspace_members WHERE workspace_id=$1 AND user_id=$2", [
+        ids.workspace,
+        ids.owner,
+      ])
+      .then(() => {
+        revocationCompleted = true;
+      });
+    await new Promise((resolve) => setTimeout(resolve, 30));
+    expect(revocationCompleted).toBe(false);
+    paused.resume();
+    await creation;
+    await revocation;
+  });
+
+  it("holds membership authorization through a conversation history read", async () => {
+    if (!process.env.TEST_DATABASE_URL) return;
+    const conversation = await repository.createConversation(ids.owner, {
+      workspaceId: ids.workspace,
+      scope: { type: "workspace" },
+      title: "Policy review",
+    });
+    await repository.appendTurn(ids.owner, {
+      workspaceId: ids.workspace,
+      conversationId: conversation.id,
+      submissionId: ids.submission,
+      userContent: "Question",
+      assistantContent: "Answer",
+      model: "test-generation",
+      sources: [],
+    });
+
+    const paused = pauseTransactionAfter(pool, /JOIN workspace_members[\s\S]*FOR SHARE/u);
+    const lockedRepository = new PostgresConversationRepository(paused.pool);
+    const history = lockedRepository.listMessages(
+      ids.owner,
+      ids.workspace,
+      conversation.id,
+      { limit: 10 },
+    );
+    await paused.reached;
+    let revocationCompleted = false;
+    const revocation = pool
+      .query("DELETE FROM workspace_members WHERE workspace_id=$1 AND user_id=$2", [
+        ids.workspace,
+        ids.owner,
+      ])
+      .then(() => {
+        revocationCompleted = true;
+      });
+    await new Promise((resolve) => setTimeout(resolve, 30));
+    expect(revocationCompleted).toBe(false);
+    paused.resume();
+    await expect(history).resolves.toMatchObject({
+      items: [{ role: "user" }, { role: "assistant" }],
+    });
+    await revocation;
+  });
+
+  it("normalizes unexpected storage failures without leaking database details", async () => {
+    await pool.query("DROP TABLE conversations CASCADE");
+
+    await expect(
+      repository.createConversation(ids.owner, {
+        workspaceId: ids.workspace,
+        scope: { type: "workspace" },
+        title: "Policy review",
+      }),
+    ).rejects.toEqual(
+      new ConversationRepositoryError("STORAGE", "Conversation storage failed"),
+    );
   });
 });

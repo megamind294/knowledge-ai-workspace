@@ -9,7 +9,9 @@ import type {
 export type ConversationRepositoryErrorCode =
   | "NOT_FOUND"
   | "INVALID_SOURCE"
-  | "CONFLICT";
+  | "CONFLICT"
+  | "INVALID_INPUT"
+  | "STORAGE";
 
 export class ConversationRepositoryError extends Error {
   constructor(
@@ -152,6 +154,18 @@ function isConstraintError(error: unknown, code: string, phrase: string) {
   return candidate.code === code || candidate.data?.error?.includes(phrase) === true;
 }
 
+function storageError() {
+  return new ConversationRepositoryError("STORAGE", "Conversation storage failed");
+}
+
+function isMessageSourceConstraint(error: unknown) {
+  const candidate = error as { code?: string; constraint?: string };
+  return (
+    ["23503", "23514"].includes(candidate.code ?? "") &&
+    candidate.constraint?.startsWith("message_sources_") === true
+  );
+}
+
 export class PostgresConversationRepository {
   constructor(
     private readonly pool: DatabasePool,
@@ -163,7 +177,9 @@ export class PostgresConversationRepository {
     try {
       await client.query("BEGIN");
       const membership = await client.query(
-        "SELECT 1 FROM workspace_members WHERE workspace_id=$1 AND user_id=$2",
+        `SELECT 1 FROM workspace_members
+         WHERE workspace_id=$1 AND user_id=$2
+         FOR SHARE`,
         [input.workspaceId, userId],
       );
       if (!membership.rowCount) {
@@ -175,7 +191,9 @@ export class PostgresConversationRepository {
       const columns = scopeColumns(input.scope);
       if (input.scope.type === "collection") {
         const collection = await client.query(
-          "SELECT 1 FROM collections WHERE id=$1 AND workspace_id=$2",
+          `SELECT 1 FROM collections
+           WHERE id=$1 AND workspace_id=$2
+           FOR SHARE`,
           [input.scope.collectionId, input.workspaceId],
         );
         if (!collection.rowCount) {
@@ -186,7 +204,9 @@ export class PostgresConversationRepository {
         }
       } else if (input.scope.type === "document") {
         const document = await client.query(
-          "SELECT 1 FROM documents WHERE id=$1 AND workspace_id=$2",
+          `SELECT 1 FROM documents
+           WHERE id=$1 AND workspace_id=$2
+           FOR SHARE`,
           [input.scope.documentId, input.workspaceId],
         );
         if (!document.rowCount) {
@@ -216,7 +236,8 @@ export class PostgresConversationRepository {
       return conversationFromRow(result.rows[0]!);
     } catch (error) {
       await rollback(client);
-      throw error;
+      if (error instanceof ConversationRepositoryError) throw error;
+      throw storageError();
     } finally {
       client.release();
     }
@@ -377,11 +398,7 @@ export class PostgresConversationRepository {
       };
     } catch (error) {
       await rollback(client);
-      if (
-        !(error instanceof ConversationRepositoryError) &&
-        (isConstraintError(error, "23503", "foreign key constraint") ||
-          isConstraintError(error, "23514", "check constraint"))
-      ) {
+      if (!(error instanceof ConversationRepositoryError) && isMessageSourceConstraint(error)) {
         throw new ConversationRepositoryError(
           "INVALID_SOURCE",
           "Conversation source is invalid",
@@ -393,7 +410,8 @@ export class PostgresConversationRepository {
       ) {
         throw new ConversationRepositoryError("CONFLICT", "Conversation write conflicted");
       }
-      throw error;
+      if (error instanceof ConversationRepositoryError) throw error;
+      throw storageError();
     } finally {
       client.release();
     }
@@ -405,35 +423,62 @@ export class PostgresConversationRepository {
     conversationId: string,
     options: { limit: number; afterPosition?: number },
   ) {
-    const access = await this.pool.query(
-      `SELECT 1 FROM conversations c
-       JOIN workspace_members m ON m.workspace_id=c.workspace_id
-       WHERE c.id=$1 AND c.workspace_id=$2 AND m.user_id=$3`,
-      [conversationId, workspaceId, userId],
-    );
-    if (!access.rowCount) return null;
-    const result = await this.pool.query(
-      `SELECT * FROM conversation_messages
-       WHERE conversation_id=$1 AND workspace_id=$2 AND position>$3
-       ORDER BY position
-       LIMIT $4`,
-      [conversationId, workspaceId, options.afterPosition ?? 0, options.limit + 1],
-    );
-    const hasNext = result.rows.length > options.limit;
-    const rows = result.rows.slice(0, options.limit);
-    const items = await Promise.all(
-      rows.map(async (row) =>
-        messageFromRow(
-          row,
-          row.role === "assistant"
-            ? await this.sourcesForMessage(this.pool, row.id as string)
-            : [],
+    if (
+      !Number.isInteger(options.limit) ||
+      options.limit < 1 ||
+      options.limit > 100 ||
+      (options.afterPosition !== undefined &&
+        (!Number.isInteger(options.afterPosition) || options.afterPosition < 0))
+    ) {
+      throw new ConversationRepositoryError(
+        "INVALID_INPUT",
+        "Conversation pagination is invalid",
+      );
+    }
+    const client = await this.pool.connect();
+    try {
+      await client.query("BEGIN");
+      const access = await client.query(
+        `SELECT 1 FROM conversations c
+         JOIN workspace_members m ON m.workspace_id=c.workspace_id
+         WHERE c.id=$1 AND c.workspace_id=$2 AND m.user_id=$3
+         FOR SHARE`,
+        [conversationId, workspaceId, userId],
+      );
+      if (!access.rowCount) {
+        await client.query("COMMIT");
+        return null;
+      }
+      const result = await client.query(
+        `SELECT * FROM conversation_messages
+         WHERE conversation_id=$1 AND workspace_id=$2 AND position>$3
+         ORDER BY position
+         LIMIT $4`,
+        [conversationId, workspaceId, options.afterPosition ?? 0, options.limit + 1],
+      );
+      const hasNext = result.rows.length > options.limit;
+      const rows = result.rows.slice(0, options.limit);
+      const items = await Promise.all(
+        rows.map(async (row) =>
+          messageFromRow(
+            row,
+            row.role === "assistant"
+              ? await this.sourcesForMessage(client, row.id as string)
+              : [],
+          ),
         ),
-      ),
-    );
-    return {
-      items,
-      nextPosition: hasNext ? items.at(-1)!.position : null,
-    };
+      );
+      await client.query("COMMIT");
+      return {
+        items,
+        nextPosition: hasNext ? items.at(-1)!.position : null,
+      };
+    } catch (error) {
+      await rollback(client);
+      if (error instanceof ConversationRepositoryError) throw error;
+      throw storageError();
+    } finally {
+      client.release();
+    }
   }
 }

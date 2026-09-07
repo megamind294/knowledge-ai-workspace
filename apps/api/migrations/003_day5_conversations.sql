@@ -40,7 +40,7 @@ CREATE TABLE conversation_messages (
   id UUID PRIMARY KEY,
   conversation_id UUID NOT NULL,
   workspace_id UUID NOT NULL,
-  submission_id UUID,
+  submission_id UUID NOT NULL,
   role TEXT NOT NULL CHECK (role IN ('user', 'assistant')),
   position INTEGER NOT NULL CHECK (position > 0),
   content TEXT NOT NULL

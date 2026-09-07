@@ -445,17 +445,17 @@ describe.sequential("PostgreSQL schema", () => {
     );
     await pool.query(
       `INSERT INTO conversation_messages
-        (id, conversation_id, workspace_id, role, position, content)
-       VALUES ($1, $3, $4, 'user', 1, 'Question'),
-              ($2, $3, $4, 'assistant', 2, 'Answer')`,
+        (id, conversation_id, workspace_id, submission_id, role, position, content)
+       VALUES ($1, $3, $4, $3, 'user', 1, 'Question'),
+              ($2, $3, $4, $3, 'assistant', 2, 'Answer')`,
       [ids.message, ids.messageTwo, ids.conversation, ids.workspace],
     );
 
     await expect(
       pool.query(
         `INSERT INTO conversation_messages
-          (id, conversation_id, workspace_id, role, position, content)
-         VALUES ($1, $2, $3, 'assistant', 2, 'Duplicate position')`,
+          (id, conversation_id, workspace_id, submission_id, role, position, content)
+         VALUES ($1, $2, $3, $1, 'assistant', 2, 'Duplicate position')`,
         [ids.chunkTwo, ids.conversation, ids.workspace],
       ),
     ).rejects.toThrow();
@@ -529,8 +529,8 @@ describe.sequential("PostgreSQL schema", () => {
     );
     await pool.query(
       `INSERT INTO conversation_messages
-        (id, conversation_id, workspace_id, role, position, content)
-       VALUES ($1, $2, $3, 'assistant', 1, 'Answer')`,
+        (id, conversation_id, workspace_id, submission_id, role, position, content)
+       VALUES ($1, $2, $3, $1, 'assistant', 1, 'Answer')`,
       [ids.message, ids.conversation, ids.workspace],
     );
     await expect(
@@ -559,8 +559,8 @@ describe.sequential("PostgreSQL schema", () => {
     );
     await pool.query(
       `INSERT INTO conversation_messages
-        (id, conversation_id, workspace_id, role, position, content)
-       VALUES ($1, $2, $3, 'assistant', 1, 'Answer')`,
+        (id, conversation_id, workspace_id, submission_id, role, position, content)
+       VALUES ($1, $2, $3, $1, 'assistant', 1, 'Answer')`,
       [ids.message, ids.conversation, ids.workspace],
     );
     await expect(
@@ -591,8 +591,8 @@ describe.sequential("PostgreSQL schema", () => {
     );
     await pool.query(
       `INSERT INTO conversation_messages
-        (id, conversation_id, workspace_id, role, position, content)
-       VALUES ($1, $2, $3, 'assistant', 1, 'Answer')`,
+        (id, conversation_id, workspace_id, submission_id, role, position, content)
+       VALUES ($1, $2, $3, $1, 'assistant', 1, 'Answer')`,
       [ids.message, ids.conversation, ids.workspace],
     );
     await pool.query(
@@ -663,8 +663,8 @@ describe.sequential("PostgreSQL schema", () => {
     );
     await pool.query(
       `INSERT INTO conversation_messages
-        (id, conversation_id, workspace_id, role, position, content, model)
-       VALUES ($1, $2, $3, 'assistant', 1, 'Answer', 'test-model')`,
+        (id, conversation_id, workspace_id, submission_id, role, position, content, model)
+       VALUES ($1, $2, $3, $1, 'assistant', 1, 'Answer', 'test-model')`,
       [ids.message, ids.conversation, ids.workspace],
     );
     await pool.query(

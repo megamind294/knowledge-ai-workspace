@@ -11,12 +11,16 @@ const ids = {
   workspaceTwo: "00000000-0000-4000-8000-000000000011",
   collection: "00000000-0000-4000-8000-000000000020",
   collectionTwo: "00000000-0000-4000-8000-000000000021",
+  collectionAlt: "00000000-0000-4000-8000-000000000022",
   document: "00000000-0000-4000-8000-000000000030",
   documentTwo: "00000000-0000-4000-8000-000000000031",
+  documentAlt: "00000000-0000-4000-8000-000000000032",
   run: "00000000-0000-4000-8000-000000000040",
   runTwo: "00000000-0000-4000-8000-000000000041",
+  runAlt: "00000000-0000-4000-8000-000000000042",
   chunk: "00000000-0000-4000-8000-000000000050",
   chunkTwo: "00000000-0000-4000-8000-000000000051",
+  chunkAlt: "00000000-0000-4000-8000-000000000052",
   conversation: "00000000-0000-4000-8000-000000000060",
   message: "00000000-0000-4000-8000-000000000070",
   messageTwo: "00000000-0000-4000-8000-000000000071",
@@ -351,6 +355,11 @@ describe.sequential("PostgreSQL schema", () => {
       "INSERT INTO collections (id, workspace_id, name) VALUES ($1, $3, 'One'), ($2, $4, 'Two')",
       [ids.collection, ids.collectionTwo, ids.workspace, ids.workspaceTwo],
     );
+    await pool.query(
+      `UPDATE documents
+       SET collection_id = CASE id WHEN $1 THEN $2::uuid ELSE $3::uuid END`,
+      [ids.document, ids.collection, ids.collectionTwo],
+    );
     await insertRun(ids.run, ids.document, ids.workspace, "active");
     await insertRun(ids.runTwo, ids.documentTwo, ids.workspaceTwo, "active");
     await pool.query(
@@ -396,32 +405,32 @@ describe.sequential("PostgreSQL schema", () => {
     await expect(
       pool.query(
         `INSERT INTO conversations
-          (id, workspace_id, created_by_user_id, scope_type, title)
-         VALUES ($1, $2, $3, 'workspace', 'Workspace chat')`,
+          (id, workspace_id, created_by_user_id, scope_type, scope_key, title)
+         VALUES ($1, $2, $3, 'workspace', 'workspace', 'Workspace chat')`,
         [ids.conversation, ids.workspace, ids.owner],
       ),
     ).resolves.toBeDefined();
     await expect(
       pool.query(
         `INSERT INTO conversations
-          (id, workspace_id, scope_type, collection_id, title)
-         VALUES ($1, $2, 'collection', $3, 'Cross-workspace chat')`,
+          (id, workspace_id, scope_type, scope_key, collection_id, title)
+         VALUES ($1, $2, 'collection', $3, $3, 'Cross-workspace chat')`,
         [ids.message, ids.workspace, ids.collectionTwo],
       ),
     ).rejects.toThrow();
     await expect(
       pool.query(
         `INSERT INTO conversations
-          (id, workspace_id, scope_type, document_id, title)
-         VALUES ($1, $2, 'document', $3, 'Cross-workspace document')`,
+          (id, workspace_id, scope_type, scope_key, document_id, title)
+         VALUES ($1, $2, 'document', $3, $3, 'Cross-workspace document')`,
         [ids.message, ids.workspace, ids.documentTwo],
       ),
     ).rejects.toThrow();
     await expect(
       pool.query(
-        `INSERT INTO conversations (id, workspace_id, scope_type, title)
-         VALUES ($1, $2, 'collection', 'Missing collection')`,
-        [ids.message, ids.workspace],
+        `INSERT INTO conversations (id, workspace_id, scope_type, scope_key, title)
+         VALUES ($1, $2, 'collection', $3, 'Missing collection')`,
+        [ids.message, ids.workspace, ids.collection],
       ),
     ).rejects.toThrow();
   });
@@ -430,8 +439,8 @@ describe.sequential("PostgreSQL schema", () => {
     await runMigrations(pool);
     await seedConversationSources();
     await pool.query(
-      `INSERT INTO conversations (id, workspace_id, scope_type, title)
-       VALUES ($1, $2, 'workspace', 'Policy')`,
+      `INSERT INTO conversations (id, workspace_id, scope_type, scope_key, title)
+       VALUES ($1, $2, 'workspace', 'workspace', 'Policy')`,
       [ids.conversation, ids.workspace],
     );
     await pool.query(
@@ -453,49 +462,203 @@ describe.sequential("PostgreSQL schema", () => {
     await expect(
       pool.query(
         `INSERT INTO message_sources
-          (message_id, conversation_id, workspace_id, message_role, chunk_id, document_id, citation_ordinal)
-         VALUES ($1, $2, $3, 'assistant', $4, $5, 0)`,
-        [ids.message, ids.conversation, ids.workspace, ids.chunk, ids.document],
+          (message_id, conversation_id, workspace_id, scope_type, scope_key, message_role, chunk_id, document_id, source_collection_id, citation_ordinal)
+         VALUES ($1, $2, $3, 'workspace', 'workspace', 'assistant', $4, $5, $6, 0)`,
+        [ids.message, ids.conversation, ids.workspace, ids.chunk, ids.document, ids.collection],
       ),
     ).rejects.toThrow();
     await expect(
       pool.query(
         `INSERT INTO message_sources
-          (message_id, conversation_id, workspace_id, message_role, chunk_id, document_id, citation_ordinal)
-         VALUES ($1, $2, $3, 'assistant', $4, $5, 0)`,
+          (message_id, conversation_id, workspace_id, scope_type, scope_key, message_role, chunk_id, document_id, source_collection_id, citation_ordinal)
+         VALUES ($1, $2, $3, 'workspace', 'workspace', 'assistant', $4, $5, $6, 0)`,
         [
           ids.messageTwo,
           ids.conversation,
           ids.workspace,
           ids.chunkTwo,
           ids.documentTwo,
+          ids.collectionTwo,
         ],
       ),
     ).rejects.toThrow();
     await expect(
       pool.query(
         `INSERT INTO message_sources
-          (message_id, conversation_id, workspace_id, message_role, chunk_id, document_id, citation_ordinal)
-         VALUES ($1, $2, $3, 'assistant', $4, $5, 0)`,
-        [ids.messageTwo, ids.conversation, ids.workspace, ids.chunk, ids.document],
+          (message_id, conversation_id, workspace_id, scope_type, scope_key, message_role, chunk_id, document_id, source_collection_id, citation_ordinal)
+         VALUES ($1, $2, $3, 'workspace', 'workspace', 'assistant', $4, $5, $6, 0)`,
+        [ids.messageTwo, ids.conversation, ids.workspace, ids.chunk, ids.document, ids.collection],
       ),
     ).resolves.toBeDefined();
     await expect(
       pool.query(
         `INSERT INTO message_sources
-          (message_id, conversation_id, workspace_id, message_role, chunk_id, document_id, citation_ordinal)
-         VALUES ($1, $2, $3, 'assistant', $4, $5, 1)`,
-        [ids.messageTwo, ids.conversation, ids.workspace, ids.chunk, ids.document],
+          (message_id, conversation_id, workspace_id, scope_type, scope_key, message_role, chunk_id, document_id, source_collection_id, citation_ordinal)
+         VALUES ($1, $2, $3, 'workspace', 'workspace', 'assistant', $4, $5, $6, 1)`,
+        [ids.messageTwo, ids.conversation, ids.workspace, ids.chunk, ids.document, ids.collection],
       ),
     ).rejects.toThrow();
+  });
+
+  it("rejects citations outside collection and document conversation scopes", async () => {
+    await runMigrations(pool);
+    await seedConversationSources();
+    await pool.query(
+      "INSERT INTO collections (id, workspace_id, name) VALUES ($1, $2, 'Alternate')",
+      [ids.collectionAlt, ids.workspace],
+    );
+    await pool.query(
+      `INSERT INTO documents
+        (id, workspace_id, collection_id, original_filename, media_type, size_bytes, ingestion_state)
+       VALUES ($1, $2, $3, 'alternate.txt', 'text/plain', 12, 'indexed')`,
+      [ids.documentAlt, ids.workspace, ids.collectionAlt],
+    );
+    await insertRun(ids.runAlt, ids.documentAlt, ids.workspace, "active");
+    await pool.query(
+      `INSERT INTO document_chunks
+        (id, index_run_id, document_id, workspace_id, ordinal, content, word_count, embedding)
+       VALUES ($1, $2, $3, $4, 0, 'alternate source', 2, $5)`,
+      [ids.chunkAlt, ids.runAlt, ids.documentAlt, ids.workspace, embedding],
+    );
+
+    await pool.query(
+      `INSERT INTO conversations
+        (id, workspace_id, scope_type, scope_key, collection_id, title)
+       VALUES ($1, $2, 'collection', $3, $3, 'Collection chat')`,
+      [ids.conversation, ids.workspace, ids.collection],
+    );
+    await pool.query(
+      `INSERT INTO conversation_messages
+        (id, conversation_id, workspace_id, role, position, content)
+       VALUES ($1, $2, $3, 'assistant', 1, 'Answer')`,
+      [ids.message, ids.conversation, ids.workspace],
+    );
+    await expect(
+      pool.query(
+        `INSERT INTO message_sources
+          (message_id, conversation_id, workspace_id, scope_type, scope_key, chunk_id, document_id, source_collection_id, citation_ordinal)
+         VALUES ($1, $2, $3, 'collection', $4, $5, $6, $7, 0)`,
+        [
+          ids.message,
+          ids.conversation,
+          ids.workspace,
+          ids.collection,
+          ids.chunkAlt,
+          ids.documentAlt,
+          ids.collectionAlt,
+        ],
+      ),
+    ).rejects.toThrow();
+
+    await pool.query("DELETE FROM conversations WHERE id = $1", [ids.conversation]);
+    await pool.query(
+      `INSERT INTO conversations
+        (id, workspace_id, scope_type, scope_key, document_id, title)
+       VALUES ($1, $2, 'document', $3, $3, 'Document chat')`,
+      [ids.conversation, ids.workspace, ids.document],
+    );
+    await pool.query(
+      `INSERT INTO conversation_messages
+        (id, conversation_id, workspace_id, role, position, content)
+       VALUES ($1, $2, $3, 'assistant', 1, 'Answer')`,
+      [ids.message, ids.conversation, ids.workspace],
+    );
+    await expect(
+      pool.query(
+        `INSERT INTO message_sources
+          (message_id, conversation_id, workspace_id, scope_type, scope_key, chunk_id, document_id, source_collection_id, citation_ordinal)
+         VALUES ($1, $2, $3, 'document', $4, $5, $6, $7, 0)`,
+        [
+          ids.message,
+          ids.conversation,
+          ids.workspace,
+          ids.document,
+          ids.chunkAlt,
+          ids.documentAlt,
+          ids.collectionAlt,
+        ],
+      ),
+    ).rejects.toThrow();
+  });
+
+  it("keeps cited chunks stable across re-indexing and rejects mapping updates", async () => {
+    await runMigrations(pool);
+    await seedConversationSources();
+    await pool.query(
+      `INSERT INTO conversations (id, workspace_id, scope_type, scope_key, title)
+       VALUES ($1, $2, 'workspace', 'workspace', 'Policy')`,
+      [ids.conversation, ids.workspace],
+    );
+    await pool.query(
+      `INSERT INTO conversation_messages
+        (id, conversation_id, workspace_id, role, position, content)
+       VALUES ($1, $2, $3, 'assistant', 1, 'Answer')`,
+      [ids.message, ids.conversation, ids.workspace],
+    );
+    await pool.query(
+      `INSERT INTO message_sources
+        (message_id, conversation_id, workspace_id, scope_type, scope_key, chunk_id, document_id, source_collection_id, citation_ordinal)
+       VALUES ($1, $2, $3, 'workspace', 'workspace', $4, $5, $6, 0)`,
+      [ids.message, ids.conversation, ids.workspace, ids.chunk, ids.document, ids.collection],
+    );
+
+    if (process.env.TEST_DATABASE_URL) {
+      await expect(
+        pool.query(
+          "UPDATE message_sources SET citation_ordinal = 1 WHERE message_id = $1",
+          [ids.message],
+        ),
+      ).rejects.toThrow(/immutable/u);
+    }
+
+    await pool.query("UPDATE document_index_runs SET status = 'superseded' WHERE id = $1", [ids.run]);
+    await insertRun(ids.runAlt, ids.document, ids.workspace, "active");
+    await pool.query(
+      `INSERT INTO document_chunks
+        (id, index_run_id, document_id, workspace_id, ordinal, content, word_count, embedding)
+       VALUES ($1, $2, $3, $4, 0, 'replacement source', 2, $5)`,
+      [ids.chunkAlt, ids.runAlt, ids.document, ids.workspace, embedding],
+    );
+    const source = await pool.query<{ chunk_id: string; citation_ordinal: number }>(
+      "SELECT chunk_id, citation_ordinal FROM message_sources WHERE message_id = $1",
+      [ids.message],
+    );
+    expect(source.rows).toEqual([{ chunk_id: ids.chunk, citation_ordinal: 0 }]);
+  });
+
+  it("nulls deleted conversation authors and cascades scoped conversations", async () => {
+    await runMigrations(pool);
+    await seedConversationSources();
+    await pool.query(
+      "INSERT INTO users (id, email, display_name) VALUES ($1, 'author@example.com', 'Author')",
+      [ids.member],
+    );
+    await pool.query(
+      `INSERT INTO conversations
+        (id, workspace_id, created_by_user_id, scope_type, scope_key, document_id, title)
+       VALUES ($1, $2, $3, 'document', $4, $4, 'Document chat')`,
+      [ids.conversation, ids.workspace, ids.member, ids.document],
+    );
+    await pool.query("DELETE FROM users WHERE id = $1", [ids.member]);
+    const author = await pool.query<{ created_by_user_id: string | null }>(
+      "SELECT created_by_user_id FROM conversations WHERE id = $1",
+      [ids.conversation],
+    );
+    expect(author.rows).toEqual([{ created_by_user_id: null }]);
+
+    await pool.query("DELETE FROM documents WHERE id = $1", [ids.document]);
+    const conversation = await pool.query("SELECT 1 FROM conversations WHERE id = $1", [
+      ids.conversation,
+    ]);
+    expect(conversation.rowCount).toBe(0);
   });
 
   it("cascades messages and source mappings with their conversation", async () => {
     await runMigrations(pool);
     await seedConversationSources();
     await pool.query(
-      `INSERT INTO conversations (id, workspace_id, scope_type, title)
-       VALUES ($1, $2, 'workspace', 'Policy')`,
+      `INSERT INTO conversations (id, workspace_id, scope_type, scope_key, title)
+       VALUES ($1, $2, 'workspace', 'workspace', 'Policy')`,
       [ids.conversation, ids.workspace],
     );
     await pool.query(
@@ -506,9 +669,9 @@ describe.sequential("PostgreSQL schema", () => {
     );
     await pool.query(
       `INSERT INTO message_sources
-        (message_id, conversation_id, workspace_id, message_role, chunk_id, document_id, citation_ordinal)
-       VALUES ($1, $2, $3, 'assistant', $4, $5, 0)`,
-      [ids.message, ids.conversation, ids.workspace, ids.chunk, ids.document],
+        (message_id, conversation_id, workspace_id, scope_type, scope_key, message_role, chunk_id, document_id, source_collection_id, citation_ordinal)
+       VALUES ($1, $2, $3, 'workspace', 'workspace', 'assistant', $4, $5, $6, 0)`,
+      [ids.message, ids.conversation, ids.workspace, ids.chunk, ids.document, ids.collection],
     );
 
     await pool.query("DELETE FROM conversations WHERE id=$1", [ids.conversation]);

@@ -10,7 +10,7 @@
 
 **Spec:** `docs/superpowers/specs/2026-08-27-ai-knowledge-workspace-design.md`
 
-**Progress:** Tasks 1–5 are complete locally. The provider-neutral generation core, scope-bound persistence, authenticated conversation API, production runtime composition, and React conversation/citation experience pass lint, strict type-checking, all 318 locally runnable tests, production builds, dependency validation, and a zero-vulnerability audit. Exact-head PostgreSQL/pgvector CI verification is pending. No live provider call or model-quality claim is made.
+**Progress:** Tasks 1–5 are complete. The provider-neutral generation core, scope-bound persistence, authenticated conversation API, production runtime composition, and React conversation/citation experience pass lint, strict type-checking, all 327 tests against PostgreSQL 16 with pgvector, production builds, dependency validation, and a zero-vulnerability audit in [GitHub Actions run #119](https://github.com/megamind294/knowledge-ai-workspace/actions/runs/34287837062) at implementation commit `a002946e1805e10e5594880b015dc474b10d1260`. No live provider call or model-quality claim is made.
 
 ## Global constraints
 

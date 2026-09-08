@@ -2,7 +2,7 @@
 
 ## Current milestone
 
-**Day 5 — grounded chat: React conversation and citation experience complete locally**
+**Day 5 — grounded chat: React conversation and citation experience complete and verified**
 
 Day 1 was merged into `main` through [pull request #2](https://github.com/megamind294/knowledge-ai-workspace/pull/2). Day 2 was merged through [pull request #4](https://github.com/megamind294/knowledge-ai-workspace/pull/4) after clean local acceptance and GitHub Actions verification.
 
@@ -223,6 +223,7 @@ Day 3 now includes:
 - 74 focused Day 5 tests, bringing the current local runnable total to 318; the nine PostgreSQL/pgvector-only cases will run in CI
 - lint, strict type-checking, all 318 locally runnable tests, production builds, dependency validation, and a zero-vulnerability production audit passing on the reviewed Task 5 tree
 - independent Task 5 frontend review completed with no unresolved critical or important findings
+- all 327 tests, including nine PostgreSQL/pgvector cases, and the complete quality workflow passing in [GitHub Actions run #119](https://github.com/megamind294/knowledge-ai-workspace/actions/runs/34287837062) at implementation commit `a002946e1805e10e5594880b015dc474b10d1260`
 
 ## Next milestone
 

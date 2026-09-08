@@ -10,7 +10,7 @@
 
 **Spec:** `docs/superpowers/specs/2026-08-27-ai-knowledge-workspace-design.md`
 
-**Progress:** Tasks 1 and 2 are complete. The provider-neutral generation core and PostgreSQL conversation history schema, including scope-bound immutable citation mappings, passed all 282 tests plus the complete PostgreSQL 16 + pgvector quality workflow in [GitHub Actions run #103](https://github.com/megamind294/knowledge-ai-workspace/actions/runs/34167811582) at `b98e95e6a77f657e2b816f957df18aa552ad19f1`. Independent review findings were resolved. No live provider call, conversation API, or application-facing generated answer is claimed.
+**Progress:** Tasks 1–3 are complete. The provider-neutral generation core, scope-bound conversation schema, and membership-authorized transactional repository passed all 294 tests plus the complete PostgreSQL 16 + pgvector quality workflow in [GitHub Actions run #111](https://github.com/megamind294/knowledge-ai-workspace/actions/runs/34186909440) at `a33cd49fa8537ed14359ffac05259783bfbcfdac`. Independent review findings were resolved. No live provider call, conversation API, or application-facing generated answer is claimed.
 
 ## Global constraints
 
@@ -50,8 +50,8 @@
 
 ### Task 3: Authorized conversation repository
 
-- [ ] Add transactional conversation creation, message persistence, history pagination, and idempotent submission semantics.
-- [ ] Re-check membership within write transactions and normalize storage failures.
+- [x] Add transactional conversation creation, message persistence, history pagination, and idempotent submission semantics.
+- [x] Re-check membership within write transactions and normalize storage failures.
 
 ### Task 4: Grounded chat API and runtime composition
 

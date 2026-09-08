@@ -2,7 +2,7 @@
 
 ## Current milestone
 
-**Day 5 — grounded chat: generation core and durable conversation schema complete**
+**Day 5 — grounded chat: generation core and authorized conversation repository complete**
 
 Day 1 was merged into `main` through [pull request #2](https://github.com/megamind294/knowledge-ai-workspace/pull/2). Day 2 was merged through [pull request #4](https://github.com/megamind294/knowledge-ai-workspace/pull/4) after clean local acceptance and GitHub Actions verification.
 
@@ -196,10 +196,15 @@ Day 3 now includes:
 - database-triggered source-mapping immutability with stable historical citations across document re-indexing
 - cascading conversation cleanup for deleted workspaces, collections, and documents, with deleted authors safely set to null
 - supporting foreign-key and conversation-history indexes for lifecycle and pagination paths
-- 29 focused Day 5 tests, bringing the CI total to 282 automated tests
-- clean install, lint, strict type-checking, PostgreSQL 16 + pgvector tests, production builds, dependency validation, and zero-vulnerability audit passing in [GitHub Actions run #103](https://github.com/megamind294/knowledge-ai-workspace/actions/runs/34167811582) at `b98e95e6a77f657e2b816f957df18aa552ad19f1`
+- transactional, membership-authorized conversation creation with collection and document scope validation
+- atomic ordered user/assistant turn persistence with exact source revalidation inside the write transaction
+- idempotent submission retries and conversation-row serialization for concurrent turn writers
+- bounded, stable-position history pagination with authorization held through the complete read transaction
+- PostgreSQL authorization-revocation and concurrent-submission coverage, plus normalized connection, query, and constraint failures
+- 41 focused Day 5 tests, bringing the CI total to 294 automated tests
+- clean install, lint, strict type-checking, PostgreSQL 16 + pgvector tests, production builds, dependency validation, and zero-vulnerability audit passing in [GitHub Actions run #111](https://github.com/megamind294/knowledge-ai-workspace/actions/runs/34186909440) at `a33cd49fa8537ed14359ffac05259783bfbcfdac`
 - independent review completed with all important and minor findings resolved before handoff
 
 ## Next milestone
 
-Day 5 Tasks 1 and 2 are complete on the draft branch. Next are the transactional authorized history repository, grounded chat HTTP composition, React conversation and citation experience, evaluation fixtures, and final acceptance. The generation core and schema are not yet exposed through the API or frontend, and no live generation-provider call, persisted application conversation, displayed generated answer, or model-quality claim is made.
+Day 5 Tasks 1–3 are complete on the draft branch. Next are grounded chat HTTP and runtime composition, the React conversation and citation experience, evaluation fixtures, and final acceptance. The generation core and repository are not yet exposed through the API or frontend, and no live generation-provider call, application-facing persisted conversation, displayed generated answer, or model-quality claim is made.

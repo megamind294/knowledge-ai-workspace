@@ -15,6 +15,7 @@ import type {
   WorkspaceSummary,
 } from "../domain/knowledge";
 import type { KnowledgeRepository } from "./knowledgeRepository";
+import { createApiConversationRepository } from "./apiConversationRepository";
 
 const mediaToUi: Record<KnowledgeDocument["mediaType"], DocumentMediaType> = {
   "application/pdf": "pdf",
@@ -46,6 +47,7 @@ function missing(error: unknown) {
 export function createApiKnowledgeRepository(
   client: Pick<ApiClient, "request">,
 ): KnowledgeRepository {
+  const conversations = createApiConversationRepository(client);
   async function workspaces() {
     return (
       await client.request<{ workspaces: Workspace[] }>("/api/workspaces")
@@ -278,5 +280,11 @@ export function createApiKnowledgeRepository(
       );
       return response.results;
     },
+
+    listConversations: conversations.list,
+    createConversation: conversations.create,
+    getConversation: conversations.get,
+    getConversationHistory: conversations.history,
+    sendConversationMessage: conversations.send,
   };
 }

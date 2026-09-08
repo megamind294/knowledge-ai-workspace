@@ -2,7 +2,7 @@
 
 ## Current milestone
 
-**Day 5 — grounded chat: authenticated API and runtime composition complete**
+**Day 5 — grounded chat: React conversation and citation experience complete locally**
 
 Day 1 was merged into `main` through [pull request #2](https://github.com/megamind294/knowledge-ai-workspace/pull/2). Day 2 was merged through [pull request #4](https://github.com/megamind294/knowledge-ai-workspace/pull/4) after clean local acceptance and GitHub Actions verification.
 
@@ -209,10 +209,21 @@ Day 3 now includes:
 - short-lived atomic submission reservations that prevent concurrent retries from duplicating provider calls
 - leased-transaction retrieval that holds membership and scope authorization through source generation without nested pool acquisition
 - normalized provider failures and inaccessible-conversation responses without upstream or cross-workspace leakage
+- direct-linkable authenticated conversation list and detail routes in the React application
+- workspace-, collection-, and document-scoped conversation creation with scope metadata loading gates
+- paginated conversation history with stable position ordering, message-ID deduplication, and recoverable load-more failures
+- grounded-answer and insufficient-context presentation with exact stored passages, page/section provenance, and source navigation
+- idempotent answer retry controls that preserve the original submission identifier
+- route-isolated sent-message state and preservation of a newly typed draft during an in-flight answer
+- explicit workspace, collection, document, conversation, history, and generation loading/failure/retry states without internal-error leakage
+- explicit fixture-mode separation that makes no AI-provider claim or call
 - 62 focused Day 5 tests, bringing the local runnable total to 306 and the full CI total to 315 tests
 - clean install, lint, strict type-checking, all 315 tests against PostgreSQL 16 + pgvector, production builds, dependency validation, and zero-vulnerability audit passing in [GitHub Actions run #115](https://github.com/megamind294/knowledge-ai-workspace/actions/runs/34252235457) at implementation commit `10a5680bc7b644c0ae9d5b5568812d406e3ffede`
 - independent review completed with all important and minor findings resolved before handoff
+- 74 focused Day 5 tests, bringing the current local runnable total to 318; the nine PostgreSQL/pgvector-only cases will run in CI
+- lint, strict type-checking, all 318 locally runnable tests, production builds, dependency validation, and a zero-vulnerability production audit passing on the reviewed Task 5 tree
+- independent Task 5 frontend review completed with no unresolved critical or important findings
 
 ## Next milestone
 
-Day 5 Tasks 1–4 are complete on the draft branch. Next are the React conversation and citation experience, deterministic groundedness evaluation, and final acceptance. The API is composed only when both embedding and generation providers are configured, but it is not yet consumed by the frontend. No live provider call, displayed generated answer, or model-quality claim is made.
+Day 5 Tasks 1–5 are complete on the draft branch. Next are deterministic groundedness evaluation and final acceptance. The React experience consumes the authenticated conversation API only in API mode; provider-backed routes are composed only when both embedding and generation providers are configured. No live provider call or model-quality claim is made.

@@ -12,4 +12,10 @@ export const knowledgeQueryKeys = {
     ["knowledge", "scope-documents", workspaceId, collectionId || "all"] as const,
   document: (documentId: string) =>
     ["knowledge", "document", documentId] as const,
+  conversations: (workspaceId: string) =>
+    ["knowledge", "workspace", workspaceId, "conversations"] as const,
+  conversation: (workspaceId: string, conversationId: string) =>
+    ["knowledge", "workspace", workspaceId, "conversation", conversationId] as const,
+  conversationHistory: (workspaceId: string, conversationId: string) =>
+    ["knowledge", "workspace", workspaceId, "conversation", conversationId, "messages"] as const,
 };

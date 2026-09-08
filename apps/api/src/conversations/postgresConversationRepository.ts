@@ -1,4 +1,4 @@
-import { randomUUID } from "node:crypto";
+import { createHash, randomUUID } from "node:crypto";
 import type { RetrievalScope } from "@knowledge-ai/contracts";
 import type { QueryResultRow } from "pg";
 import type {
@@ -38,6 +38,21 @@ export interface MessageSourceRecord {
   documentId: string;
   collectionId: string | null;
   citationOrdinal: number;
+  originalFilename: string;
+  ordinal: number;
+  content: string;
+  wordCount: number;
+  pageNumber: number | null;
+  sectionHeading: string | null;
+  score: number | null;
+}
+
+export interface AppendTurnSourceInput {
+  chunkId: string;
+  documentId: string;
+  collectionId: string | null;
+  citationOrdinal: number;
+  score: number;
 }
 
 export interface ConversationMessageRecord {
@@ -69,8 +84,55 @@ export interface AppendTurnInput {
   submissionId: string;
   userContent: string;
   assistantContent: string;
-  model: string;
-  sources: readonly MessageSourceRecord[];
+  model: string | null;
+  sources: readonly AppendTurnSourceInput[];
+  reservationToken?: string;
+}
+
+export type SubmissionReservation =
+  | { state: "reserved"; token: string }
+  | { state: "in_progress" }
+  | { state: "completed"; turn: ConversationTurnRecord };
+
+export interface ConversationRepository {
+  createConversation(
+    userId: string,
+    input: CreateConversationInput,
+  ): Promise<ConversationRecord>;
+  listConversations(
+    userId: string,
+    workspaceId: string,
+    limit: number,
+  ): Promise<ConversationRecord[]>;
+  getConversation(
+    userId: string,
+    workspaceId: string,
+    conversationId: string,
+  ): Promise<ConversationRecord | null>;
+  getTurnBySubmission(
+    userId: string,
+    workspaceId: string,
+    conversationId: string,
+    submissionId: string,
+  ): Promise<ConversationTurnRecord | null>;
+  reserveSubmission(
+    userId: string,
+    workspaceId: string,
+    conversationId: string,
+    submissionId: string,
+    question: string,
+  ): Promise<SubmissionReservation | null>;
+  releaseSubmission(reservationToken: string): Promise<void>;
+  appendTurn(
+    userId: string,
+    input: AppendTurnInput,
+  ): Promise<ConversationTurnRecord>;
+  listMessages(
+    userId: string,
+    workspaceId: string,
+    conversationId: string,
+    options: { limit: number; afterPosition?: number },
+  ): Promise<{ items: ConversationMessageRecord[]; nextPosition: number | null } | null>;
 }
 
 function iso(value: Date | string) {
@@ -158,6 +220,10 @@ function storageError() {
   return new ConversationRepositoryError("STORAGE", "Conversation storage failed");
 }
 
+function advisoryLockKey(value: string) {
+  return createHash("sha256").update(value).digest().readInt32BE(0);
+}
+
 function isMessageSourceConstraint(error: unknown) {
   const candidate = error as { code?: string; constraint?: string };
   return (
@@ -166,10 +232,11 @@ function isMessageSourceConstraint(error: unknown) {
   );
 }
 
-export class PostgresConversationRepository {
+export class PostgresConversationRepository implements ConversationRepository {
   constructor(
     private readonly pool: DatabasePool,
     private readonly createId: () => string = randomUUID,
+    private readonly createReservationId: () => string = randomUUID,
   ) {}
 
   private async connect() {
@@ -251,15 +318,60 @@ export class PostgresConversationRepository {
     }
   }
 
+  async listConversations(userId: string, workspaceId: string, limit: number) {
+    if (!Number.isInteger(limit) || limit < 1 || limit > 100) {
+      throw new ConversationRepositoryError(
+        "INVALID_INPUT",
+        "Conversation pagination is invalid",
+      );
+    }
+    try {
+      const result = await this.pool.query(
+        `SELECT c.* FROM conversations c
+         JOIN workspace_members m ON m.workspace_id=c.workspace_id
+         WHERE c.workspace_id=$1 AND m.user_id=$2
+         ORDER BY c.updated_at DESC,c.id
+         LIMIT $3`,
+        [workspaceId, userId, limit],
+      );
+      return result.rows.map(conversationFromRow);
+    } catch (error) {
+      if (error instanceof ConversationRepositoryError) throw error;
+      throw storageError();
+    }
+  }
+
+  async getConversation(
+    userId: string,
+    workspaceId: string,
+    conversationId: string,
+  ) {
+    try {
+      const result = await this.pool.query(
+        `SELECT c.* FROM conversations c
+         JOIN workspace_members m ON m.workspace_id=c.workspace_id
+         WHERE c.id=$1 AND c.workspace_id=$2 AND m.user_id=$3`,
+        [conversationId, workspaceId, userId],
+      );
+      return result.rows[0] ? conversationFromRow(result.rows[0]) : null;
+    } catch {
+      throw storageError();
+    }
+  }
+
   private async sourcesForMessage(
     queryable: Pick<DatabasePool, "query"> | Pick<DatabaseTransactionClient, "query">,
     messageId: string,
   ) {
     const result = await queryable.query(
-      `SELECT chunk_id,document_id,source_collection_id,citation_ordinal
-       FROM message_sources
-       WHERE message_id=$1
-       ORDER BY citation_ordinal`,
+      `SELECT s.chunk_id,s.document_id,s.source_collection_id,s.citation_ordinal,
+              s.relevance_score,d.original_filename,c.ordinal,c.content,c.word_count,
+              c.page_number,c.section_heading
+       FROM message_sources s
+       JOIN document_chunks c ON c.id=s.chunk_id
+       JOIN documents d ON d.id=s.document_id
+       WHERE s.message_id=$1
+       ORDER BY s.citation_ordinal`,
       [messageId],
     );
     return result.rows.map((row) => ({
@@ -267,6 +379,13 @@ export class PostgresConversationRepository {
       documentId: row.document_id as string,
       collectionId: (row.source_collection_id as string | null) ?? null,
       citationOrdinal: Number(row.citation_ordinal),
+      originalFilename: row.original_filename as string,
+      ordinal: Number(row.ordinal),
+      content: row.content as string,
+      wordCount: Number(row.word_count),
+      pageNumber: row.page_number === null ? null : Number(row.page_number),
+      sectionHeading: (row.section_heading as string | null) ?? null,
+      score: row.relevance_score === null ? null : Number(row.relevance_score),
     }));
   }
 
@@ -290,6 +409,132 @@ export class PostgresConversationRepository {
       userMessage: messageFromRow(userRow),
       assistantMessage: messageFromRow(assistantRow, sources),
     };
+  }
+
+  async getTurnBySubmission(
+    userId: string,
+    workspaceId: string,
+    conversationId: string,
+    submissionId: string,
+  ) {
+    const client = await this.connect();
+    try {
+      await client.query("BEGIN");
+      const access = await client.query(
+        `SELECT 1 FROM conversations c
+         JOIN workspace_members m ON m.workspace_id=c.workspace_id
+         WHERE c.id=$1 AND c.workspace_id=$2 AND m.user_id=$3
+         FOR SHARE`,
+        [conversationId, workspaceId, userId],
+      );
+      if (!access.rowCount) {
+        await client.query("COMMIT");
+        return null;
+      }
+      const turn = await this.existingTurn(client, conversationId, submissionId);
+      await client.query("COMMIT");
+      return turn;
+    } catch {
+      await rollback(client);
+      throw storageError();
+    } finally {
+      client.release();
+    }
+  }
+
+  async reserveSubmission(
+    userId: string,
+    workspaceId: string,
+    conversationId: string,
+    submissionId: string,
+    question: string,
+  ): Promise<SubmissionReservation | null> {
+    const client = await this.connect();
+    const token = this.createReservationId();
+    const questionHash = createHash("sha256").update(question).digest("hex");
+    const leaseExpiresAt = new Date(Date.now() + 10 * 60 * 1000);
+    try {
+      await client.query("BEGIN");
+      await client.query("SELECT pg_advisory_xact_lock($1::integer)", [
+        advisoryLockKey(`${conversationId}:${submissionId}`),
+      ]);
+      const access = await client.query(
+        `SELECT 1 FROM conversations c
+         JOIN workspace_members m ON m.workspace_id=c.workspace_id
+         WHERE c.id=$1 AND c.workspace_id=$2 AND m.user_id=$3
+         FOR SHARE`,
+        [conversationId, workspaceId, userId],
+      );
+      if (!access.rowCount) {
+        await client.query("COMMIT");
+        return null;
+      }
+      const completed = await this.existingTurn(client, conversationId, submissionId);
+      if (completed) {
+        if (completed.userMessage.content !== question) {
+          throw new ConversationRepositoryError(
+            "CONFLICT",
+            "Submission identifier already belongs to another question",
+          );
+        }
+        await client.query("COMMIT");
+        return { state: "completed", turn: completed };
+      }
+      const current = await client.query(
+        `SELECT question_hash,reservation_token,completed_at,lease_expires_at
+         FROM conversation_submission_reservations
+         WHERE conversation_id=$1 AND submission_id=$2
+         FOR UPDATE`,
+        [conversationId, submissionId],
+      );
+      const row = current.rows[0];
+      if (!row) {
+        await client.query(
+          `INSERT INTO conversation_submission_reservations
+            (conversation_id,workspace_id,submission_id,question_hash,reservation_token,lease_expires_at)
+           VALUES ($1,$2,$3,$4,$5,$6)`,
+          [conversationId, workspaceId, submissionId, questionHash, token, leaseExpiresAt],
+        );
+        await client.query("COMMIT");
+        return { state: "reserved", token };
+      }
+      if (row.question_hash !== questionHash) {
+        throw new ConversationRepositoryError(
+          "CONFLICT",
+          "Submission identifier already belongs to another question",
+        );
+      }
+      if (new Date(row.lease_expires_at as Date | string).getTime() > Date.now()) {
+        await client.query("COMMIT");
+        return { state: "in_progress" };
+      }
+      await client.query(
+        `UPDATE conversation_submission_reservations
+         SET reservation_token=$3,lease_expires_at=$4
+         WHERE conversation_id=$1 AND submission_id=$2`,
+        [conversationId, submissionId, token, leaseExpiresAt],
+      );
+      await client.query("COMMIT");
+      return { state: "reserved", token };
+    } catch (error) {
+      await rollback(client);
+      if (error instanceof ConversationRepositoryError) throw error;
+      throw storageError();
+    } finally {
+      client.release();
+    }
+  }
+
+  async releaseSubmission(reservationToken: string) {
+    try {
+      await this.pool.query(
+        `DELETE FROM conversation_submission_reservations
+         WHERE reservation_token=$1 AND completed_at IS NULL`,
+        [reservationToken],
+      );
+    } catch {
+      throw storageError();
+    }
   }
 
   async appendTurn(userId: string, input: AppendTurnInput) {
@@ -316,6 +561,22 @@ export class PostgresConversationRepository {
       if (existing) {
         await client.query("COMMIT");
         return existing;
+      }
+
+      if (input.reservationToken) {
+        const reservation = await client.query(
+          `SELECT 1 FROM conversation_submission_reservations
+           WHERE conversation_id=$1 AND submission_id=$2
+             AND reservation_token=$3 AND completed_at IS NULL
+           FOR UPDATE`,
+          [input.conversationId, input.submissionId, input.reservationToken],
+        );
+        if (!reservation.rowCount) {
+          throw new ConversationRepositoryError(
+            "CONFLICT",
+            "Submission reservation is no longer valid",
+          );
+        }
       }
 
       for (const source of input.sources) {
@@ -378,8 +639,8 @@ export class PostgresConversationRepository {
         await client.query(
           `INSERT INTO message_sources
             (message_id,conversation_id,workspace_id,scope_type,scope_key,message_role,
-             chunk_id,document_id,source_collection_id,citation_ordinal)
-           VALUES ($1,$2,$3,$4,$5,'assistant',$6,$7,$8,$9)`,
+             chunk_id,document_id,source_collection_id,citation_ordinal,relevance_score)
+           VALUES ($1,$2,$3,$4,$5,'assistant',$6,$7,$8,$9,$10)`,
           [
             assistantMessageId,
             input.conversationId,
@@ -390,6 +651,7 @@ export class PostgresConversationRepository {
             source.documentId,
             source.collectionId,
             source.citationOrdinal,
+            source.score,
           ],
         );
       }
@@ -397,12 +659,21 @@ export class PostgresConversationRepository {
         "UPDATE conversations SET updated_at=CURRENT_TIMESTAMP WHERE id=$1",
         [input.conversationId],
       );
-      await client.query("COMMIT");
       const userRow = messages.rows.find((row) => row.role === "user")!;
       const assistantRow = messages.rows.find((row) => row.role === "assistant")!;
+      const sources = await this.sourcesForMessage(client, assistantMessageId);
+      if (input.reservationToken) {
+        await client.query(
+          `UPDATE conversation_submission_reservations
+           SET completed_at=CURRENT_TIMESTAMP
+           WHERE reservation_token=$1`,
+          [input.reservationToken],
+        );
+      }
+      await client.query("COMMIT");
       return {
         userMessage: messageFromRow(userRow),
-        assistantMessage: messageFromRow(assistantRow, input.sources),
+        assistantMessage: messageFromRow(assistantRow, sources),
       };
     } catch (error) {
       await rollback(client);

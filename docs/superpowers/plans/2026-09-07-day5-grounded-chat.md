@@ -10,7 +10,7 @@
 
 **Spec:** `docs/superpowers/specs/2026-08-27-ai-knowledge-workspace-design.md`
 
-**Progress:** Tasks 1–3 are complete. The provider-neutral generation core, scope-bound conversation schema, and membership-authorized transactional repository passed all 294 tests plus the complete PostgreSQL 16 + pgvector quality workflow in [GitHub Actions run #111](https://github.com/megamind294/knowledge-ai-workspace/actions/runs/34186909440) at `a33cd49fa8537ed14359ffac05259783bfbcfdac`. Independent review findings were resolved. No live provider call, conversation API, or application-facing generated answer is claimed.
+**Progress:** Tasks 1–4 are complete locally. The provider-neutral generation core, scope-bound persistence, authenticated conversation API, and production runtime composition pass lint, strict type-checking, 306 locally runnable tests, production builds, dependency validation, and a zero-vulnerability audit. Nine PostgreSQL/pgvector tests await exact-head CI after publication. No live provider call, frontend conversation UI, or displayed generated answer is claimed.
 
 ## Global constraints
 
@@ -55,8 +55,8 @@
 
 ### Task 4: Grounded chat API and runtime composition
 
-- [ ] Add shared request/response contracts and authenticated create/list/get/message endpoints.
-- [ ] Compose embedding, retrieval, generation, persistence, and exact citation mapping in the production runtime.
+- [x] Add shared request/response contracts and authenticated create/list/get/message endpoints.
+- [x] Compose embedding, retrieval, generation, persistence, and exact citation mapping in the production runtime.
 
 ### Task 5: React conversation and citation experience
 

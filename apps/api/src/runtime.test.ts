@@ -2,6 +2,7 @@ import request from "supertest";
 import { describe, expect, it } from "vitest";
 import type { ApiConfig } from "./config.js";
 import { IngestionService } from "./ingestion/ingestionService.js";
+import { GroundedAnswerService } from "./answers/groundedAnswerService.js";
 import { createApiRuntime } from "./runtime.js";
 import { FileSystemObjectStore } from "./storage/fileSystemObjectStore.js";
 import { createPgMemPool } from "./testSupport/pgMem.js";
@@ -10,6 +11,7 @@ const config: ApiConfig = {
   accessTokenSecret: "a-production-length-access-token-secret",
   databaseUrl: "postgresql://keystone:secret@localhost:5432/keystone",
   embedding: null,
+  generation: null,
   googleOAuth: null,
   nodeEnv: "test",
   objectStorageDirectory: ".data/test-objects",
@@ -103,6 +105,62 @@ describe("production API runtime", () => {
       .post("/api/workspaces/not-a-uuid/documents/not-a-uuid/index")
       .set("authorization", `Bearer ${registration.body.accessToken}`)
       .expect(400);
+    await runtime.close();
+  });
+
+  it("composes authenticated grounded-conversation routes when both AI providers are configured", async () => {
+    const runtime = await createApiRuntime(
+      {
+        ...config,
+        embedding: {
+          apiKey: "private-embedding-key",
+          dimensions: 1536,
+          endpoint: "http://127.0.0.1:1/v1/embeddings",
+          model: "test-embedding",
+          timeoutMs: 100,
+        },
+        generation: {
+          apiKey: "private-generation-key",
+          endpoint: "http://127.0.0.1:1/v1/chat/completions",
+          model: "test-generation",
+          timeoutMs: 100,
+        },
+      },
+      { pool: createPgMemPool() },
+    );
+    expect(runtime.groundedAnswerService).toBeInstanceOf(GroundedAnswerService);
+
+    const registration = await request(runtime.app)
+      .post("/api/auth/register")
+      .send({
+        displayName: "Rinkle Sharma",
+        email: "chat@example.com",
+        password: "Strong-password-42!",
+      })
+      .expect(201);
+    const authorization = {
+      authorization: `Bearer ${registration.body.accessToken}`,
+    };
+    const workspace = await request(runtime.app)
+      .post("/api/workspaces")
+      .set(authorization)
+      .send({ name: "Grounded chat", slug: "grounded-chat", description: "" })
+      .expect(201);
+    const conversation = await request(runtime.app)
+      .post(`/api/workspaces/${workspace.body.workspace.id}/conversations`)
+      .set(authorization)
+      .send({ scope: { type: "workspace" }, title: "Policies" })
+      .expect(201);
+    await request(runtime.app)
+      .post(
+        `/api/workspaces/${workspace.body.workspace.id}/conversations/${conversation.body.conversation.id}/messages`,
+      )
+      .set(authorization)
+      .send({
+        submissionId: "00000000-0000-4000-8000-000000000099",
+        question: "What is the policy?",
+      })
+      .expect(503);
     await runtime.close();
   });
 

@@ -153,6 +153,27 @@ describe.sequential("PostgresConversationRepository", () => {
     });
   });
 
+  it("lists and gets conversations only for current workspace members", async () => {
+    const conversation = await repository.createConversation(ids.owner, {
+      workspaceId: ids.workspace,
+      scope: { type: "workspace" },
+      title: "Policy review",
+    });
+
+    await expect(
+      repository.listConversations(ids.owner, ids.workspace, 20),
+    ).resolves.toEqual([conversation]);
+    await expect(
+      repository.getConversation(ids.owner, ids.workspace, conversation.id),
+    ).resolves.toEqual(conversation);
+    await expect(
+      repository.listConversations(ids.outsider, ids.workspace, 20),
+    ).resolves.toEqual([]);
+    await expect(
+      repository.getConversation(ids.outsider, ids.workspace, conversation.id),
+    ).resolves.toBeNull();
+  });
+
   it("atomically persists an ordered grounded turn and exact sources", async () => {
     const conversation = await repository.createConversation(ids.owner, {
       workspaceId: ids.workspace,
@@ -172,6 +193,7 @@ describe.sequential("PostgresConversationRepository", () => {
           documentId: ids.document,
           collectionId: ids.collection,
           citationOrdinal: 0,
+          score: 0.9,
         },
       ],
     });
@@ -181,8 +203,227 @@ describe.sequential("PostgresConversationRepository", () => {
       id: ids.assistantMessage,
       role: "assistant",
       position: 2,
-      sources: [{ chunkId: ids.chunk, citationOrdinal: 0 }],
+      sources: [
+        {
+          chunkId: ids.chunk,
+          citationOrdinal: 0,
+          originalFilename: "policy.txt",
+          ordinal: 0,
+          content: "Grounded policy source",
+          wordCount: 3,
+          pageNumber: null,
+          sectionHeading: null,
+          score: 0.9,
+        },
+      ],
     });
+  });
+
+  it("returns an authorized previously completed submission before provider work", async () => {
+    const conversation = await repository.createConversation(ids.owner, {
+      workspaceId: ids.workspace,
+      scope: { type: "workspace" },
+      title: "Policy review",
+    });
+    const expected = await repository.appendTurn(ids.owner, {
+      workspaceId: ids.workspace,
+      conversationId: conversation.id,
+      submissionId: ids.submission,
+      userContent: "Question",
+      assistantContent: "Answer",
+      model: "test-generation",
+      sources: [],
+    });
+
+    await expect(
+      repository.getTurnBySubmission(
+        ids.owner,
+        ids.workspace,
+        conversation.id,
+        ids.submission,
+      ),
+    ).resolves.toEqual(expected);
+    await expect(
+      repository.getTurnBySubmission(
+        ids.outsider,
+        ids.workspace,
+        conversation.id,
+        ids.submission,
+      ),
+    ).resolves.toBeNull();
+  });
+
+  it("atomically reserves one provider execution per submission", async () => {
+    const conversation = await repository.createConversation(ids.owner, {
+      workspaceId: ids.workspace,
+      scope: { type: "workspace" },
+      title: "Policy review",
+    });
+    const first = await repository.reserveSubmission(
+      ids.owner,
+      ids.workspace,
+      conversation.id,
+      ids.submission,
+      "Question",
+    );
+    expect(first).toMatchObject({ state: "reserved" });
+    if (!first || first.state !== "reserved") throw new Error("Expected reservation");
+
+    await expect(
+      repository.reserveSubmission(
+        ids.owner,
+        ids.workspace,
+        conversation.id,
+        ids.submission,
+        "Question",
+      ),
+    ).resolves.toEqual({ state: "in_progress" });
+    await expect(
+      repository.reserveSubmission(
+        ids.owner,
+        ids.workspace,
+        conversation.id,
+        ids.submission,
+        "Different question",
+      ),
+    ).rejects.toEqual(
+      new ConversationRepositoryError(
+        "CONFLICT",
+        "Submission identifier already belongs to another question",
+      ),
+    );
+
+    const turn = await repository.appendTurn(ids.owner, {
+      workspaceId: ids.workspace,
+      conversationId: conversation.id,
+      submissionId: ids.submission,
+      userContent: "Question",
+      assistantContent: "Answer",
+      model: "test-generation",
+      sources: [],
+      reservationToken: first.token,
+    });
+    await expect(
+      repository.reserveSubmission(
+        ids.owner,
+        ids.workspace,
+        conversation.id,
+        ids.submission,
+        "Question",
+      ),
+    ).resolves.toEqual({ state: "completed", turn });
+  });
+
+  it("recognizes reservationless completed turns before provider work", async () => {
+    const conversation = await repository.createConversation(ids.owner, {
+      workspaceId: ids.workspace,
+      scope: { type: "workspace" },
+      title: "Policy review",
+    });
+    const turn = await repository.appendTurn(ids.owner, {
+      workspaceId: ids.workspace,
+      conversationId: conversation.id,
+      submissionId: ids.submission,
+      userContent: "Question",
+      assistantContent: "Answer",
+      model: "test-generation",
+      sources: [],
+    });
+
+    await expect(
+      repository.reserveSubmission(
+        ids.owner,
+        ids.workspace,
+        conversation.id,
+        ids.submission,
+        "Question",
+      ),
+    ).resolves.toEqual({ state: "completed", turn });
+    await expect(
+      repository.reserveSubmission(
+        ids.owner,
+        ids.workspace,
+        conversation.id,
+        ids.submission,
+        "Different question",
+      ),
+    ).rejects.toEqual(
+      new ConversationRepositoryError(
+        "CONFLICT",
+        "Submission identifier already belongs to another question",
+      ),
+    );
+  });
+
+  it.skipIf(!process.env.TEST_DATABASE_URL)(
+    "serializes concurrent first-time submission reservations",
+    async () => {
+      const conversation = await repository.createConversation(ids.owner, {
+        workspaceId: ids.workspace,
+        scope: { type: "workspace" },
+        title: "Policy review",
+      });
+      generatedIds.push(
+        "10000000-0000-4000-8000-000000000084",
+        "10000000-0000-4000-8000-000000000085",
+      );
+
+      const results = await Promise.all([
+        repository.reserveSubmission(
+          ids.owner,
+          ids.workspace,
+          conversation.id,
+          ids.submission,
+          "Question",
+        ),
+        repository.reserveSubmission(
+          ids.owner,
+          ids.workspace,
+          conversation.id,
+          ids.submission,
+          "Question",
+        ),
+      ]);
+
+      expect(results.map((result) => result?.state).sort()).toEqual([
+        "in_progress",
+        "reserved",
+      ]);
+      const count = await pool.query<{ count: string }>(
+        `SELECT COUNT(*)::text AS count
+         FROM conversation_submission_reservations
+         WHERE conversation_id=$1 AND submission_id=$2`,
+        [conversation.id, ids.submission],
+      );
+      expect(count.rows[0]?.count).toBe("1");
+    },
+  );
+
+  it("releases a failed provider reservation for a safe retry", async () => {
+    const conversation = await repository.createConversation(ids.owner, {
+      workspaceId: ids.workspace,
+      scope: { type: "workspace" },
+      title: "Policy review",
+    });
+    const first = await repository.reserveSubmission(
+      ids.owner,
+      ids.workspace,
+      conversation.id,
+      ids.submission,
+      "Question",
+    );
+    if (!first || first.state !== "reserved") throw new Error("Expected reservation");
+    await repository.releaseSubmission(first.token);
+
+    await expect(
+      repository.reserveSubmission(
+        ids.owner,
+        ids.workspace,
+        conversation.id,
+        ids.submission,
+        "Question",
+      ),
+    ).resolves.toMatchObject({ state: "reserved" });
   });
 
   it("returns the original turn for an idempotent submission retry", async () => {
@@ -238,6 +479,7 @@ describe.sequential("PostgresConversationRepository", () => {
             documentId: ids.document,
             collectionId: ids.collection,
             citationOrdinal: 0,
+            score: 0.9,
           },
         ],
       }),

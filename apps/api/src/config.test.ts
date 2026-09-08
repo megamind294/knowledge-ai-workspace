@@ -7,6 +7,7 @@ describe("API configuration", () => {
       accessTokenSecret: null,
       databaseUrl: null,
       embedding: null,
+      generation: null,
       googleOAuth: null,
       nodeEnv: "test",
       objectStorageDirectory: ".data/objects",
@@ -70,6 +71,36 @@ describe("API configuration", () => {
         NODE_ENV: "production",
         EMBEDDING_API_KEY: "private-embedding-key",
         EMBEDDING_ENDPOINT: "http://embeddings.example.com/v1/embeddings",
+      }),
+    ).toThrowError(/invalid api configuration/i);
+  });
+
+  it("loads complete generation-provider configuration", () => {
+    expect(
+      loadApiConfig({
+        NODE_ENV: "production",
+        GENERATION_API_KEY: "private-generation-key",
+      }).generation,
+    ).toEqual({
+      apiKey: "private-generation-key",
+      endpoint: "https://api.openai.com/v1/chat/completions",
+      model: "gpt-4.1-mini",
+      timeoutMs: 30000,
+    });
+  });
+
+  it("rejects partial or insecure generation-provider configuration", () => {
+    expect(() =>
+      loadApiConfig({
+        NODE_ENV: "production",
+        GENERATION_MODEL: "gpt-4.1-mini",
+      }),
+    ).toThrowError(/invalid api configuration/i);
+    expect(() =>
+      loadApiConfig({
+        NODE_ENV: "production",
+        GENERATION_API_KEY: "private-generation-key",
+        GENERATION_ENDPOINT: "http://generation.example.com/v1/chat/completions",
       }),
     ).toThrowError(/invalid api configuration/i);
   });

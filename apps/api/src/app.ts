@@ -15,7 +15,13 @@ import type { KnowledgeRepository } from "./knowledge/knowledgeRepository.js";
 import type { ObjectStore } from "./storage/objectStore.js";
 import type { EmbeddingProvider } from "./ai/embeddingProvider.js";
 import { createRetrievalRouter } from "./retrieval/retrievalRouter.js";
-import type { RetrievalRepository } from "./retrieval/retrievalRepository.js";
+import type {
+  AuthorizedRetrievalRepository,
+  RetrievalRepository,
+} from "./retrieval/retrievalRepository.js";
+import { createConversationRouter } from "./conversations/conversationRouter.js";
+import type { ConversationRepository } from "./conversations/postgresConversationRepository.js";
+import type { GroundedAnswerService } from "./answers/groundedAnswerService.js";
 
 const REQUEST_ID_PATTERN = /^[A-Za-z0-9._-]{1,128}$/;
 
@@ -48,6 +54,13 @@ interface CreateAppOptions {
   retrieval?: {
     repository: RetrievalRepository;
     embeddingProvider: EmbeddingProvider;
+    accessTokenSecret: Uint8Array;
+  };
+  conversations?: {
+    repository: ConversationRepository;
+    retrievalRepository: AuthorizedRetrievalRepository;
+    embeddingProvider: EmbeddingProvider;
+    answerService: Pick<GroundedAnswerService, "answer">;
     accessTokenSecret: Uint8Array;
   };
   registerRoutes?: (app: Express) => void;
@@ -103,6 +116,9 @@ export function createApp(options: CreateAppOptions = {}) {
   }
   if (options.retrieval) {
     app.use("/api", createRetrievalRouter(options.retrieval));
+  }
+  if (options.conversations) {
+    app.use("/api", createConversationRouter(options.conversations));
   }
 
   options.registerRoutes?.(app);

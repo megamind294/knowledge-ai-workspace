@@ -1,5 +1,7 @@
 import { createApp } from "./app.js";
 import { OpenAiEmbeddingProvider } from "./ai/openAiEmbeddingProvider.js";
+import { OpenAiGenerationProvider } from "./ai/openAiGenerationProvider.js";
+import { GroundedAnswerService } from "./answers/groundedAnswerService.js";
 import { AuthService } from "./auth/authService.js";
 import { GoogleOAuthAdapter } from "./auth/googleOAuth.js";
 import { PostgresAuthRepository } from "./auth/postgresAuthRepository.js";
@@ -12,6 +14,7 @@ import { PostgresIngestionRepository } from "./ingestion/postgresIngestionReposi
 import { PostgresKnowledgeRepository } from "./knowledge/postgresKnowledgeRepository.js";
 import { PostgresRetrievalRepository } from "./retrieval/postgresRetrievalRepository.js";
 import { FileSystemObjectStore } from "./storage/fileSystemObjectStore.js";
+import { PostgresConversationRepository } from "./conversations/postgresConversationRepository.js";
 
 const GOOGLE_AUTHORIZATION_ENDPOINT = "https://accounts.google.com/o/oauth2/v2/auth";
 const GOOGLE_TOKEN_ENDPOINT = "https://oauth2.googleapis.com/token";
@@ -61,6 +64,15 @@ export async function createApiRuntime(
         embeddingProvider,
       })
     : null;
+  const retrievalRepository = embeddingProvider
+    ? new PostgresRetrievalRepository(pool)
+    : null;
+  const generationProvider = config.generation
+    ? new OpenAiGenerationProvider(config.generation)
+    : null;
+  const groundedAnswerService = generationProvider
+    ? new GroundedAnswerService({ provider: generationProvider })
+    : null;
 
   return {
     app: createApp({
@@ -90,14 +102,25 @@ export async function createApiRuntime(
         : undefined,
       retrieval: embeddingProvider
         ? {
-            repository: new PostgresRetrievalRepository(pool),
+            repository: retrievalRepository!,
             embeddingProvider,
             accessTokenSecret,
           }
         : undefined,
+      conversations:
+        embeddingProvider && retrievalRepository && groundedAnswerService
+          ? {
+              repository: new PostgresConversationRepository(pool),
+              retrievalRepository,
+              embeddingProvider,
+              answerService: groundedAnswerService,
+              accessTokenSecret,
+            }
+          : undefined,
     }),
     close: () => pool.end(),
     ingestionService,
+    groundedAnswerService,
     objectStore,
     pool,
   };

@@ -16,6 +16,10 @@ const ApiEnvironmentSchema = z.object({
   EMBEDDING_ENDPOINT: z.url().optional(),
   EMBEDDING_MODEL: z.string().min(1).optional(),
   EMBEDDING_TIMEOUT_MS: z.coerce.number().int().min(100).max(120_000).optional(),
+  GENERATION_API_KEY: z.string().min(1).optional(),
+  GENERATION_ENDPOINT: z.url().optional(),
+  GENERATION_MODEL: z.string().min(1).optional(),
+  GENERATION_TIMEOUT_MS: z.coerce.number().int().min(100).max(120_000).optional(),
   GOOGLE_OAUTH_CLIENT_ID: z.string().min(1).optional(),
   GOOGLE_OAUTH_CLIENT_SECRET: z.string().min(1).optional(),
   GOOGLE_OAUTH_REDIRECT_URI: z.url().optional(),
@@ -56,6 +60,31 @@ const ApiEnvironmentSchema = z.object({
       context.addIssue({
         code: "custom",
         message: "Production embedding endpoint must use HTTPS",
+      });
+    }
+  }
+  if (
+    !value.GENERATION_API_KEY &&
+    [
+      value.GENERATION_ENDPOINT,
+      value.GENERATION_MODEL,
+      value.GENERATION_TIMEOUT_MS,
+    ].some((item) => item !== undefined)
+  ) {
+    context.addIssue({
+      code: "custom",
+      message: "Generation configuration requires an API key",
+    });
+  }
+  if (value.NODE_ENV === "production" && value.GENERATION_ENDPOINT) {
+    const endpoint = new URL(value.GENERATION_ENDPOINT);
+    if (
+      endpoint.protocol !== "https:" &&
+      !["localhost", "127.0.0.1"].includes(endpoint.hostname)
+    ) {
+      context.addIssue({
+        code: "custom",
+        message: "Production generation endpoint must use HTTPS",
       });
     }
   }
@@ -110,10 +139,18 @@ interface EmbeddingEnvironment {
   timeoutMs: number;
 }
 
+interface GenerationEnvironment {
+  apiKey: string;
+  endpoint: string;
+  model: string;
+  timeoutMs: number;
+}
+
 export interface ApiConfig {
   accessTokenSecret: string | null;
   databaseUrl: string | null;
   embedding: EmbeddingEnvironment | null;
+  generation: GenerationEnvironment | null;
   googleOAuth: GoogleOAuthEnvironment | null;
   nodeEnv: "development" | "test" | "production";
   objectStorageDirectory: string;
@@ -142,6 +179,16 @@ export function loadApiConfig(
           model: result.data.EMBEDDING_MODEL ?? "text-embedding-3-small",
           dimensions: result.data.EMBEDDING_DIMENSIONS ?? 1536,
           timeoutMs: result.data.EMBEDDING_TIMEOUT_MS ?? 15_000,
+        }
+      : null,
+    generation: result.data.GENERATION_API_KEY
+      ? {
+          apiKey: result.data.GENERATION_API_KEY,
+          endpoint:
+            result.data.GENERATION_ENDPOINT ??
+            "https://api.openai.com/v1/chat/completions",
+          model: result.data.GENERATION_MODEL ?? "gpt-4.1-mini",
+          timeoutMs: result.data.GENERATION_TIMEOUT_MS ?? 30_000,
         }
       : null,
     googleOAuth: result.data.GOOGLE_OAUTH_CLIENT_ID

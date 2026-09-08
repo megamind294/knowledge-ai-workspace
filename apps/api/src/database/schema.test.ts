@@ -67,6 +67,7 @@ describe.sequential("PostgreSQL schema", () => {
       { name: "001_day3_core.sql" },
       { name: "002_day4_ingestion.sql" },
       { name: "003_day5_conversations.sql" },
+      { name: "004_day5_source_relevance.sql" },
     ]);
   });
 
@@ -80,6 +81,7 @@ describe.sequential("PostgreSQL schema", () => {
       { name: "001_day3_core.sql" },
       { name: "002_day4_ingestion.sql" },
       { name: "003_day5_conversations.sql" },
+      { name: "004_day5_source_relevance.sql" },
     ]);
   });
 

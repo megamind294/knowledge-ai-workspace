@@ -1,4 +1,4 @@
-import { Pool } from "pg";
+import { Pool, type QueryResultRow } from "pg";
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
 import { runMigrations } from "../database/migrate.js";
 import type {
@@ -50,12 +50,17 @@ function pauseTransactionAfter(pool: DatabasePool, pattern: RegExp) {
     resumeQuery = resolve;
   });
   const wrappedPool: DatabasePool = {
-    query: (text, values) => pool.query(text, values),
+    query<Row extends QueryResultRow = QueryResultRow>(text: string, values?: unknown[]) {
+      return pool.query<Row>(text, values);
+    },
     async connect() {
       const client = await pool.connect();
       const wrappedClient: DatabaseTransactionClient = {
-        async query(text, values) {
-          const result = await client.query(text, values);
+        async query<Row extends QueryResultRow = QueryResultRow>(
+          text: string,
+          values?: unknown[],
+        ) {
+          const result = await client.query<Row>(text, values);
           if (pattern.test(text)) {
             markReached();
             await resume;
@@ -303,10 +308,14 @@ describe.sequential("PostgresConversationRepository", () => {
     const first = await repository.listMessages(ids.owner, ids.workspace, conversation.id, {
       limit: 2,
     });
+    expect(first).not.toBeNull();
+    if (!first) throw new Error("Expected first conversation history page");
     const second = await repository.listMessages(ids.owner, ids.workspace, conversation.id, {
       limit: 2,
       afterPosition: first.nextPosition!,
     });
+    expect(second).not.toBeNull();
+    if (!second) throw new Error("Expected second conversation history page");
     expect(first.items.map((message) => message.position)).toEqual([1, 2]);
     expect(first.nextPosition).toBe(2);
     expect(second.items.map((message) => message.position)).toEqual([3, 4]);

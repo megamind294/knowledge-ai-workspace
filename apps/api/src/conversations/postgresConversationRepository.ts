@@ -169,7 +169,7 @@ function isMessageSourceConstraint(error: unknown) {
 export class PostgresConversationRepository {
   constructor(
     private readonly pool: DatabasePool,
-    private readonly createId = randomUUID,
+    private readonly createId: () => string = randomUUID,
   ) {}
 
   private async connect() {

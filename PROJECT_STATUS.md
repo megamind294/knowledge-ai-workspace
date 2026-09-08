@@ -210,7 +210,7 @@ Day 3 now includes:
 - leased-transaction retrieval that holds membership and scope authorization through source generation without nested pool acquisition
 - normalized provider failures and inaccessible-conversation responses without upstream or cross-workspace leakage
 - 62 focused Day 5 tests, bringing the local runnable total to 306 and the full CI total to 315 tests
-- clean install, lint, strict type-checking, PostgreSQL 16 + pgvector tests, production builds, dependency validation, and zero-vulnerability audit passing in [GitHub Actions run #111](https://github.com/megamind294/knowledge-ai-workspace/actions/runs/34186909440) at `a33cd49fa8537ed14359ffac05259783bfbcfdac`
+- clean install, lint, strict type-checking, all 315 tests against PostgreSQL 16 + pgvector, production builds, dependency validation, and zero-vulnerability audit passing in [GitHub Actions run #115](https://github.com/megamind294/knowledge-ai-workspace/actions/runs/34252235457) at implementation commit `10a5680bc7b644c0ae9d5b5568812d406e3ffede`
 - independent review completed with all important and minor findings resolved before handoff
 
 ## Next milestone

@@ -33,6 +33,12 @@ const navigationItems = [
     available: true,
   },
   {
+    label: "Conversations",
+    to: "/app/conversations",
+    icon: MessagesSquare,
+    available: true,
+  },
+  {
     label: "Knowledge preview",
     to: "/app/knowledge",
     icon: MessagesSquare,

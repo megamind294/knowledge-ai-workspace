@@ -1,0 +1,763 @@
+import { createHash, randomUUID } from "node:crypto";
+import type { RetrievalScope } from "@knowledge-ai/contracts";
+import type { QueryResultRow } from "pg";
+import type {
+  DatabasePool,
+  DatabaseTransactionClient,
+} from "../database/pool.js";
+
+export type ConversationRepositoryErrorCode =
+  | "NOT_FOUND"
+  | "INVALID_SOURCE"
+  | "CONFLICT"
+  | "INVALID_INPUT"
+  | "STORAGE";
+
+export class ConversationRepositoryError extends Error {
+  constructor(
+    readonly code: ConversationRepositoryErrorCode,
+    message: string,
+  ) {
+    super(message);
+    this.name = "ConversationRepositoryError";
+  }
+}
+
+export interface ConversationRecord {
+  id: string;
+  workspaceId: string;
+  createdByUserId: string | null;
+  scope: RetrievalScope;
+  title: string;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface MessageSourceRecord {
+  chunkId: string;
+  documentId: string;
+  collectionId: string | null;
+  citationOrdinal: number;
+  originalFilename: string;
+  ordinal: number;
+  content: string;
+  wordCount: number;
+  pageNumber: number | null;
+  sectionHeading: string | null;
+  score: number | null;
+}
+
+export interface AppendTurnSourceInput {
+  chunkId: string;
+  documentId: string;
+  collectionId: string | null;
+  citationOrdinal: number;
+  score: number;
+}
+
+export interface ConversationMessageRecord {
+  id: string;
+  conversationId: string;
+  submissionId: string | null;
+  role: "user" | "assistant";
+  position: number;
+  content: string;
+  model: string | null;
+  createdAt: string;
+  sources: MessageSourceRecord[];
+}
+
+export interface ConversationTurnRecord {
+  userMessage: ConversationMessageRecord;
+  assistantMessage: ConversationMessageRecord;
+}
+
+export interface CreateConversationInput {
+  workspaceId: string;
+  scope: RetrievalScope;
+  title: string;
+}
+
+export interface AppendTurnInput {
+  workspaceId: string;
+  conversationId: string;
+  submissionId: string;
+  userContent: string;
+  assistantContent: string;
+  model: string | null;
+  sources: readonly AppendTurnSourceInput[];
+  reservationToken?: string;
+}
+
+export type SubmissionReservation =
+  | { state: "reserved"; token: string }
+  | { state: "in_progress" }
+  | { state: "completed"; turn: ConversationTurnRecord };
+
+export interface ConversationRepository {
+  createConversation(
+    userId: string,
+    input: CreateConversationInput,
+  ): Promise<ConversationRecord>;
+  listConversations(
+    userId: string,
+    workspaceId: string,
+    limit: number,
+  ): Promise<ConversationRecord[]>;
+  getConversation(
+    userId: string,
+    workspaceId: string,
+    conversationId: string,
+  ): Promise<ConversationRecord | null>;
+  getTurnBySubmission(
+    userId: string,
+    workspaceId: string,
+    conversationId: string,
+    submissionId: string,
+  ): Promise<ConversationTurnRecord | null>;
+  reserveSubmission(
+    userId: string,
+    workspaceId: string,
+    conversationId: string,
+    submissionId: string,
+    question: string,
+  ): Promise<SubmissionReservation | null>;
+  releaseSubmission(reservationToken: string): Promise<void>;
+  appendTurn(
+    userId: string,
+    input: AppendTurnInput,
+  ): Promise<ConversationTurnRecord>;
+  listMessages(
+    userId: string,
+    workspaceId: string,
+    conversationId: string,
+    options: { limit: number; afterPosition?: number },
+  ): Promise<{ items: ConversationMessageRecord[]; nextPosition: number | null } | null>;
+}
+
+function iso(value: Date | string) {
+  return new Date(value).toISOString();
+}
+
+function scopeFromRow(row: QueryResultRow): RetrievalScope {
+  if (row.scope_type === "collection") {
+    return { type: "collection", collectionId: row.collection_id as string };
+  }
+  if (row.scope_type === "document") {
+    return { type: "document", documentId: row.document_id as string };
+  }
+  return { type: "workspace" };
+}
+
+function conversationFromRow(row: QueryResultRow): ConversationRecord {
+  return {
+    id: row.id as string,
+    workspaceId: row.workspace_id as string,
+    createdByUserId: (row.created_by_user_id as string | null) ?? null,
+    scope: scopeFromRow(row),
+    title: row.title as string,
+    createdAt: iso(row.created_at as Date),
+    updatedAt: iso(row.updated_at as Date),
+  };
+}
+
+function messageFromRow(
+  row: QueryResultRow,
+  sources: readonly MessageSourceRecord[] = [],
+): ConversationMessageRecord {
+  return {
+    id: row.id as string,
+    conversationId: row.conversation_id as string,
+    submissionId: (row.submission_id as string | null) ?? null,
+    role: row.role as "user" | "assistant",
+    position: Number(row.position),
+    content: row.content as string,
+    model: (row.model as string | null) ?? null,
+    createdAt: iso(row.created_at as Date),
+    sources: [...sources],
+  };
+}
+
+async function rollback(client: DatabaseTransactionClient) {
+  try {
+    await client.query("ROLLBACK");
+  } catch {
+    // Preserve the original transaction error.
+  }
+}
+
+function scopeColumns(scope: RetrievalScope) {
+  if (scope.type === "collection") {
+    return {
+      scopeType: "collection",
+      scopeKey: scope.collectionId,
+      collectionId: scope.collectionId,
+      documentId: null,
+    } as const;
+  }
+  if (scope.type === "document") {
+    return {
+      scopeType: "document",
+      scopeKey: scope.documentId,
+      collectionId: null,
+      documentId: scope.documentId,
+    } as const;
+  }
+  return {
+    scopeType: "workspace",
+    scopeKey: "workspace",
+    collectionId: null,
+    documentId: null,
+  } as const;
+}
+
+function isConstraintError(error: unknown, code: string, phrase: string) {
+  const candidate = error as { code?: string; data?: { error?: string } };
+  return candidate.code === code || candidate.data?.error?.includes(phrase) === true;
+}
+
+function storageError() {
+  return new ConversationRepositoryError("STORAGE", "Conversation storage failed");
+}
+
+function advisoryLockKey(value: string) {
+  return createHash("sha256").update(value).digest().readInt32BE(0);
+}
+
+function isMessageSourceConstraint(error: unknown) {
+  const candidate = error as { code?: string; constraint?: string };
+  return (
+    ["23503", "23514"].includes(candidate.code ?? "") &&
+    candidate.constraint?.startsWith("message_sources_") === true
+  );
+}
+
+export class PostgresConversationRepository implements ConversationRepository {
+  constructor(
+    private readonly pool: DatabasePool,
+    private readonly createId: () => string = randomUUID,
+    private readonly createReservationId: () => string = randomUUID,
+  ) {}
+
+  private async connect() {
+    try {
+      return await this.pool.connect();
+    } catch {
+      throw storageError();
+    }
+  }
+
+  async createConversation(userId: string, input: CreateConversationInput) {
+    const client = await this.connect();
+    try {
+      await client.query("BEGIN");
+      const membership = await client.query(
+        `SELECT 1 FROM workspace_members
+         WHERE workspace_id=$1 AND user_id=$2
+         FOR SHARE`,
+        [input.workspaceId, userId],
+      );
+      if (!membership.rowCount) {
+        throw new ConversationRepositoryError(
+          "NOT_FOUND",
+          "Conversation scope not found",
+        );
+      }
+      const columns = scopeColumns(input.scope);
+      if (input.scope.type === "collection") {
+        const collection = await client.query(
+          `SELECT 1 FROM collections
+           WHERE id=$1 AND workspace_id=$2
+           FOR SHARE`,
+          [input.scope.collectionId, input.workspaceId],
+        );
+        if (!collection.rowCount) {
+          throw new ConversationRepositoryError(
+            "NOT_FOUND",
+            "Conversation scope not found",
+          );
+        }
+      } else if (input.scope.type === "document") {
+        const document = await client.query(
+          `SELECT 1 FROM documents
+           WHERE id=$1 AND workspace_id=$2
+           FOR SHARE`,
+          [input.scope.documentId, input.workspaceId],
+        );
+        if (!document.rowCount) {
+          throw new ConversationRepositoryError(
+            "NOT_FOUND",
+            "Conversation scope not found",
+          );
+        }
+      }
+      const result = await client.query(
+        `INSERT INTO conversations
+          (id,workspace_id,created_by_user_id,scope_type,scope_key,collection_id,document_id,title)
+         VALUES ($1,$2,$3,$4,$5,$6,$7,$8)
+         RETURNING *`,
+        [
+          this.createId(),
+          input.workspaceId,
+          userId,
+          columns.scopeType,
+          columns.scopeKey,
+          columns.collectionId,
+          columns.documentId,
+          input.title,
+        ],
+      );
+      await client.query("COMMIT");
+      return conversationFromRow(result.rows[0]!);
+    } catch (error) {
+      await rollback(client);
+      if (error instanceof ConversationRepositoryError) throw error;
+      throw storageError();
+    } finally {
+      client.release();
+    }
+  }
+
+  async listConversations(userId: string, workspaceId: string, limit: number) {
+    if (!Number.isInteger(limit) || limit < 1 || limit > 100) {
+      throw new ConversationRepositoryError(
+        "INVALID_INPUT",
+        "Conversation pagination is invalid",
+      );
+    }
+    try {
+      const result = await this.pool.query(
+        `SELECT c.* FROM conversations c
+         JOIN workspace_members m ON m.workspace_id=c.workspace_id
+         WHERE c.workspace_id=$1 AND m.user_id=$2
+         ORDER BY c.updated_at DESC,c.id
+         LIMIT $3`,
+        [workspaceId, userId, limit],
+      );
+      return result.rows.map(conversationFromRow);
+    } catch (error) {
+      if (error instanceof ConversationRepositoryError) throw error;
+      throw storageError();
+    }
+  }
+
+  async getConversation(
+    userId: string,
+    workspaceId: string,
+    conversationId: string,
+  ) {
+    try {
+      const result = await this.pool.query(
+        `SELECT c.* FROM conversations c
+         JOIN workspace_members m ON m.workspace_id=c.workspace_id
+         WHERE c.id=$1 AND c.workspace_id=$2 AND m.user_id=$3`,
+        [conversationId, workspaceId, userId],
+      );
+      return result.rows[0] ? conversationFromRow(result.rows[0]) : null;
+    } catch {
+      throw storageError();
+    }
+  }
+
+  private async sourcesForMessage(
+    queryable: Pick<DatabasePool, "query"> | Pick<DatabaseTransactionClient, "query">,
+    messageId: string,
+  ) {
+    const result = await queryable.query(
+      `SELECT s.chunk_id,s.document_id,s.source_collection_id,s.citation_ordinal,
+              s.relevance_score,d.original_filename,c.ordinal,c.content,c.word_count,
+              c.page_number,c.section_heading
+       FROM message_sources s
+       JOIN document_chunks c ON c.id=s.chunk_id
+       JOIN documents d ON d.id=s.document_id
+       WHERE s.message_id=$1
+       ORDER BY s.citation_ordinal`,
+      [messageId],
+    );
+    return result.rows.map((row) => ({
+      chunkId: row.chunk_id as string,
+      documentId: row.document_id as string,
+      collectionId: (row.source_collection_id as string | null) ?? null,
+      citationOrdinal: Number(row.citation_ordinal),
+      originalFilename: row.original_filename as string,
+      ordinal: Number(row.ordinal),
+      content: row.content as string,
+      wordCount: Number(row.word_count),
+      pageNumber: row.page_number === null ? null : Number(row.page_number),
+      sectionHeading: (row.section_heading as string | null) ?? null,
+      score: row.relevance_score === null ? null : Number(row.relevance_score),
+    }));
+  }
+
+  private async existingTurn(
+    client: DatabaseTransactionClient,
+    conversationId: string,
+    submissionId: string,
+  ) {
+    const result = await client.query(
+      `SELECT * FROM conversation_messages
+       WHERE conversation_id=$1 AND submission_id=$2
+       ORDER BY position`,
+      [conversationId, submissionId],
+    );
+    if (result.rows.length !== 2) return null;
+    const userRow = result.rows.find((row) => row.role === "user");
+    const assistantRow = result.rows.find((row) => row.role === "assistant");
+    if (!userRow || !assistantRow) return null;
+    const sources = await this.sourcesForMessage(client, assistantRow.id as string);
+    return {
+      userMessage: messageFromRow(userRow),
+      assistantMessage: messageFromRow(assistantRow, sources),
+    };
+  }
+
+  async getTurnBySubmission(
+    userId: string,
+    workspaceId: string,
+    conversationId: string,
+    submissionId: string,
+  ) {
+    const client = await this.connect();
+    try {
+      await client.query("BEGIN");
+      const access = await client.query(
+        `SELECT 1 FROM conversations c
+         JOIN workspace_members m ON m.workspace_id=c.workspace_id
+         WHERE c.id=$1 AND c.workspace_id=$2 AND m.user_id=$3
+         FOR SHARE`,
+        [conversationId, workspaceId, userId],
+      );
+      if (!access.rowCount) {
+        await client.query("COMMIT");
+        return null;
+      }
+      const turn = await this.existingTurn(client, conversationId, submissionId);
+      await client.query("COMMIT");
+      return turn;
+    } catch {
+      await rollback(client);
+      throw storageError();
+    } finally {
+      client.release();
+    }
+  }
+
+  async reserveSubmission(
+    userId: string,
+    workspaceId: string,
+    conversationId: string,
+    submissionId: string,
+    question: string,
+  ): Promise<SubmissionReservation | null> {
+    const client = await this.connect();
+    const token = this.createReservationId();
+    const questionHash = createHash("sha256").update(question).digest("hex");
+    const leaseExpiresAt = new Date(Date.now() + 10 * 60 * 1000);
+    try {
+      await client.query("BEGIN");
+      await client.query("SELECT pg_advisory_xact_lock($1::integer)", [
+        advisoryLockKey(`${conversationId}:${submissionId}`),
+      ]);
+      const access = await client.query(
+        `SELECT 1 FROM conversations c
+         JOIN workspace_members m ON m.workspace_id=c.workspace_id
+         WHERE c.id=$1 AND c.workspace_id=$2 AND m.user_id=$3
+         FOR SHARE`,
+        [conversationId, workspaceId, userId],
+      );
+      if (!access.rowCount) {
+        await client.query("COMMIT");
+        return null;
+      }
+      const completed = await this.existingTurn(client, conversationId, submissionId);
+      if (completed) {
+        if (completed.userMessage.content !== question) {
+          throw new ConversationRepositoryError(
+            "CONFLICT",
+            "Submission identifier already belongs to another question",
+          );
+        }
+        await client.query("COMMIT");
+        return { state: "completed", turn: completed };
+      }
+      const current = await client.query(
+        `SELECT question_hash,reservation_token,completed_at,lease_expires_at
+         FROM conversation_submission_reservations
+         WHERE conversation_id=$1 AND submission_id=$2
+         FOR UPDATE`,
+        [conversationId, submissionId],
+      );
+      const row = current.rows[0];
+      if (!row) {
+        await client.query(
+          `INSERT INTO conversation_submission_reservations
+            (conversation_id,workspace_id,submission_id,question_hash,reservation_token,lease_expires_at)
+           VALUES ($1,$2,$3,$4,$5,$6)`,
+          [conversationId, workspaceId, submissionId, questionHash, token, leaseExpiresAt],
+        );
+        await client.query("COMMIT");
+        return { state: "reserved", token };
+      }
+      if (row.question_hash !== questionHash) {
+        throw new ConversationRepositoryError(
+          "CONFLICT",
+          "Submission identifier already belongs to another question",
+        );
+      }
+      if (new Date(row.lease_expires_at as Date | string).getTime() > Date.now()) {
+        await client.query("COMMIT");
+        return { state: "in_progress" };
+      }
+      await client.query(
+        `UPDATE conversation_submission_reservations
+         SET reservation_token=$3,lease_expires_at=$4
+         WHERE conversation_id=$1 AND submission_id=$2`,
+        [conversationId, submissionId, token, leaseExpiresAt],
+      );
+      await client.query("COMMIT");
+      return { state: "reserved", token };
+    } catch (error) {
+      await rollback(client);
+      if (error instanceof ConversationRepositoryError) throw error;
+      throw storageError();
+    } finally {
+      client.release();
+    }
+  }
+
+  async releaseSubmission(reservationToken: string) {
+    try {
+      await this.pool.query(
+        `DELETE FROM conversation_submission_reservations
+         WHERE reservation_token=$1 AND completed_at IS NULL`,
+        [reservationToken],
+      );
+    } catch {
+      throw storageError();
+    }
+  }
+
+  async appendTurn(userId: string, input: AppendTurnInput) {
+    const client = await this.connect();
+    try {
+      await client.query("BEGIN");
+      const conversation = await client.query(
+        `SELECT c.* FROM conversations c
+         JOIN workspace_members m ON m.workspace_id=c.workspace_id
+         WHERE c.id=$1 AND c.workspace_id=$2 AND m.user_id=$3
+         FOR UPDATE`,
+        [input.conversationId, input.workspaceId, userId],
+      );
+      const current = conversation.rows[0];
+      if (!current) {
+        throw new ConversationRepositoryError("NOT_FOUND", "Conversation not found");
+      }
+
+      const existing = await this.existingTurn(
+        client,
+        input.conversationId,
+        input.submissionId,
+      );
+      if (existing) {
+        await client.query("COMMIT");
+        return existing;
+      }
+
+      if (input.reservationToken) {
+        const reservation = await client.query(
+          `SELECT 1 FROM conversation_submission_reservations
+           WHERE conversation_id=$1 AND submission_id=$2
+             AND reservation_token=$3 AND completed_at IS NULL
+           FOR UPDATE`,
+          [input.conversationId, input.submissionId, input.reservationToken],
+        );
+        if (!reservation.rowCount) {
+          throw new ConversationRepositoryError(
+            "CONFLICT",
+            "Submission reservation is no longer valid",
+          );
+        }
+      }
+
+      for (const source of input.sources) {
+        const validSource = await client.query(
+          `SELECT 1 FROM document_chunks c
+           JOIN documents d
+             ON d.id=c.document_id AND d.workspace_id=c.workspace_id
+           WHERE c.id=$1 AND c.document_id=$2 AND c.workspace_id=$3
+             AND (d.collection_id=$4 OR (d.collection_id IS NULL AND $4::uuid IS NULL))
+             AND (
+               $5='workspace'
+               OR ($5='collection' AND d.collection_id::text=$6)
+               OR ($5='document' AND d.id::text=$6)
+             )`,
+          [
+            source.chunkId,
+            source.documentId,
+            input.workspaceId,
+            source.collectionId,
+            current.scope_type,
+            current.scope_key,
+          ],
+        );
+        if (!validSource.rowCount) {
+          throw new ConversationRepositoryError(
+            "INVALID_SOURCE",
+            "Conversation source is invalid",
+          );
+        }
+      }
+
+      const positionResult = await client.query<{ last_position: number }>(
+        `SELECT COALESCE(MAX(position),0) AS last_position
+         FROM conversation_messages WHERE conversation_id=$1`,
+        [input.conversationId],
+      );
+      const firstPosition = Number(positionResult.rows[0]?.last_position ?? 0) + 1;
+      const userMessageId = this.createId();
+      const assistantMessageId = this.createId();
+      const messages = await client.query(
+        `INSERT INTO conversation_messages
+          (id,conversation_id,workspace_id,submission_id,role,position,content,model)
+         VALUES ($1,$3,$4,$5,'user',$6,$7,NULL),
+                ($2,$3,$4,$5,'assistant',$8,$9,$10)
+         RETURNING *`,
+        [
+          userMessageId,
+          assistantMessageId,
+          input.conversationId,
+          input.workspaceId,
+          input.submissionId,
+          firstPosition,
+          input.userContent,
+          firstPosition + 1,
+          input.assistantContent,
+          input.model,
+        ],
+      );
+      for (const source of input.sources) {
+        await client.query(
+          `INSERT INTO message_sources
+            (message_id,conversation_id,workspace_id,scope_type,scope_key,message_role,
+             chunk_id,document_id,source_collection_id,citation_ordinal,relevance_score)
+           VALUES ($1,$2,$3,$4,$5,'assistant',$6,$7,$8,$9,$10)`,
+          [
+            assistantMessageId,
+            input.conversationId,
+            input.workspaceId,
+            current.scope_type,
+            current.scope_key,
+            source.chunkId,
+            source.documentId,
+            source.collectionId,
+            source.citationOrdinal,
+            source.score,
+          ],
+        );
+      }
+      await client.query(
+        "UPDATE conversations SET updated_at=CURRENT_TIMESTAMP WHERE id=$1",
+        [input.conversationId],
+      );
+      const userRow = messages.rows.find((row) => row.role === "user")!;
+      const assistantRow = messages.rows.find((row) => row.role === "assistant")!;
+      const sources = await this.sourcesForMessage(client, assistantMessageId);
+      if (input.reservationToken) {
+        await client.query(
+          `UPDATE conversation_submission_reservations
+           SET completed_at=CURRENT_TIMESTAMP
+           WHERE reservation_token=$1`,
+          [input.reservationToken],
+        );
+      }
+      await client.query("COMMIT");
+      return {
+        userMessage: messageFromRow(userRow),
+        assistantMessage: messageFromRow(assistantRow, sources),
+      };
+    } catch (error) {
+      await rollback(client);
+      if (!(error instanceof ConversationRepositoryError) && isMessageSourceConstraint(error)) {
+        throw new ConversationRepositoryError(
+          "INVALID_SOURCE",
+          "Conversation source is invalid",
+        );
+      }
+      if (
+        !(error instanceof ConversationRepositoryError) &&
+        isConstraintError(error, "23505", "duplicate key")
+      ) {
+        throw new ConversationRepositoryError("CONFLICT", "Conversation write conflicted");
+      }
+      if (error instanceof ConversationRepositoryError) throw error;
+      throw storageError();
+    } finally {
+      client.release();
+    }
+  }
+
+  async listMessages(
+    userId: string,
+    workspaceId: string,
+    conversationId: string,
+    options: { limit: number; afterPosition?: number },
+  ) {
+    if (
+      !Number.isInteger(options.limit) ||
+      options.limit < 1 ||
+      options.limit > 100 ||
+      (options.afterPosition !== undefined &&
+        (!Number.isInteger(options.afterPosition) || options.afterPosition < 0))
+    ) {
+      throw new ConversationRepositoryError(
+        "INVALID_INPUT",
+        "Conversation pagination is invalid",
+      );
+    }
+    const client = await this.connect();
+    try {
+      await client.query("BEGIN");
+      const access = await client.query(
+        `SELECT 1 FROM conversations c
+         JOIN workspace_members m ON m.workspace_id=c.workspace_id
+         WHERE c.id=$1 AND c.workspace_id=$2 AND m.user_id=$3
+         FOR SHARE`,
+        [conversationId, workspaceId, userId],
+      );
+      if (!access.rowCount) {
+        await client.query("COMMIT");
+        return null;
+      }
+      const result = await client.query(
+        `SELECT * FROM conversation_messages
+         WHERE conversation_id=$1 AND workspace_id=$2 AND position>$3
+         ORDER BY position
+         LIMIT $4`,
+        [conversationId, workspaceId, options.afterPosition ?? 0, options.limit + 1],
+      );
+      const hasNext = result.rows.length > options.limit;
+      const rows = result.rows.slice(0, options.limit);
+      const items = await Promise.all(
+        rows.map(async (row) =>
+          messageFromRow(
+            row,
+            row.role === "assistant"
+              ? await this.sourcesForMessage(client, row.id as string)
+              : [],
+          ),
+        ),
+      );
+      await client.query("COMMIT");
+      return {
+        items,
+        nextPosition: hasNext ? items.at(-1)!.position : null,
+      };
+    } catch (error) {
+      await rollback(client);
+      if (error instanceof ConversationRepositoryError) throw error;
+      throw storageError();
+    } finally {
+      client.release();
+    }
+  }
+}

@@ -248,4 +248,42 @@ describePostgres("PostgresRetrievalRepository", () => {
       ),
     ).resolves.toEqual([]);
   });
+
+  it("holds scope authorization while protected source processing runs", async () => {
+    let operationStarted!: () => void;
+    let finishOperation!: () => void;
+    const started = new Promise<void>((resolve) => {
+      operationStarted = resolve;
+    });
+    const finish = new Promise<void>((resolve) => {
+      finishOperation = resolve;
+    });
+    const protectedWork = repository.withAuthorizedScope(
+      ids.member,
+      ids.workspace,
+      { type: "document", documentId: ids.document },
+      async () => {
+        operationStarted();
+        await finish;
+        return "complete";
+      },
+    );
+    await started;
+
+    let revocationCompleted = false;
+    const revocation = pool
+      .query("DELETE FROM workspace_members WHERE workspace_id=$1 AND user_id=$2", [
+        ids.workspace,
+        ids.member,
+      ])
+      .then(() => {
+        revocationCompleted = true;
+      });
+    await new Promise((resolve) => setTimeout(resolve, 30));
+    expect(revocationCompleted).toBe(false);
+
+    finishOperation();
+    await expect(protectedWork).resolves.toBe("complete");
+    await revocation;
+  });
 });

@@ -6,6 +6,8 @@ import { LoginPage } from "../pages/auth/LoginPage";
 import { RegisterPage } from "../pages/auth/RegisterPage";
 import { DashboardPage } from "../pages/dashboard/DashboardPage";
 import { CollectionPage } from "../pages/collections/CollectionPage";
+import { ConversationListPage } from "../pages/conversations/ConversationListPage";
+import { ConversationPage } from "../pages/conversations/ConversationPage";
 import { DocumentDetailPage } from "../pages/documents/DocumentDetailPage";
 import { DocumentLibraryPage } from "../pages/documents/DocumentLibraryPage";
 import { MockKnowledgePage } from "../pages/knowledge/MockKnowledgePage";
@@ -25,6 +27,8 @@ export function AppRoutes() {
           <Route element={<WorkspaceListPage />} path="/app/workspaces" />
           <Route element={<DocumentLibraryPage />} path="/app/documents" />
           <Route element={<MockKnowledgePage />} path="/app/knowledge" />
+          <Route element={<ConversationListPage />} path="/app/conversations" />
+          <Route element={<ConversationPage />} path="/app/conversations/:workspaceId/:conversationId" />
           <Route
             element={<DocumentDetailPage />}
             path="/app/documents/:documentId"

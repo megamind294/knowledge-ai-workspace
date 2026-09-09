@@ -1,5 +1,8 @@
 import { DataType, newDb } from "pg-mem";
-import type { DatabasePool } from "../database/pool.js";
+import type {
+  DatabasePool,
+  DatabaseTransactionClient,
+} from "../database/pool.js";
 
 const VECTOR_DIMENSIONS = 1536;
 
@@ -37,5 +40,25 @@ export function createPgMemPool(): DatabasePool {
     implementation: (value: string) => value.length,
   });
 
-  return new (database.adapters.createPg().Pool)() as DatabasePool;
+  const pool = new (database.adapters.createPg().Pool)() as DatabasePool;
+  const stripUnsupportedSql = (sql: string) =>
+    sql.replace(
+      /-- pg-mem-ignore-start:[^\n]*\n[\s\S]*?-- pg-mem-ignore-end\n?/gu,
+      "",
+    );
+  const query: DatabasePool["query"] = (text, values) =>
+    pool.query(stripUnsupportedSql(text), values);
+
+  return {
+    query,
+    async connect() {
+      const client = await pool.connect();
+      const wrapped: DatabaseTransactionClient = {
+        query: (text, values) => client.query(stripUnsupportedSql(text), values),
+        release: () => client.release(),
+      };
+      return wrapped;
+    },
+    end: () => pool.end(),
+  };
 }

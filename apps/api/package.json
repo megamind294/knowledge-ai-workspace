@@ -8,6 +8,8 @@
     "lint": "eslint .",
     "typecheck": "npm run build --workspace @knowledge-ai/contracts && tsc --noEmit",
     "test": "npm run build --workspace @knowledge-ai/contracts && vitest",
+    "evaluate:grounded:fixtures": "npm run build --workspace @knowledge-ai/contracts && vitest --run src/evaluation/groundedAnswerEvaluation.test.ts",
+    "evaluate:grounded": "node -e \"if (!process.env.TEST_DATABASE_URL) { console.error('TEST_DATABASE_URL is required for grounded acceptance'); process.exit(1) }\" && npm run build --workspace @knowledge-ai/contracts && vitest --run src/evaluation/groundedAnswerEvaluation.test.ts src/conversations/postgresConversationRepository.test.ts src/retrieval/postgresRetrievalRepository.test.ts",
     "build": "npm run build --workspace @knowledge-ai/contracts && tsc --project tsconfig.build.json"
   },
   "dependencies": {

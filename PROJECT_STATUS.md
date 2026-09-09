@@ -2,7 +2,7 @@
 
 ## Current milestone
 
-**Day 4 — document ingestion and retrieval: implementation and acceptance complete; merge pending**
+**Day 5 — grounded chat: implementation and acceptance complete; merge pending**
 
 Day 1 was merged into `main` through [pull request #2](https://github.com/megamind294/knowledge-ai-workspace/pull/2). Day 2 was merged through [pull request #4](https://github.com/megamind294/knowledge-ai-workspace/pull/4) after clean local acceptance and GitHub Actions verification.
 
@@ -176,6 +176,68 @@ Day 3 now includes:
 - exact final implementation-head GitHub Actions verification passed in [run #85](https://github.com/megamind294/knowledge-ai-workspace/actions/runs/34111536239) at `56acbe74ed3ab0b96c65ae9f8704c062ae4995cf`
 - all 225 runnable tests and complete quality gates passed on the binary-parser implementation head in [GitHub Actions run #77](https://github.com/megamind294/knowledge-ai-workspace/actions/runs/33746802747) at `8065f0ddc5d5a61293438ab1070f2e801df1808a`
 
+## Day 5 completed scope
+
+- a complete seven-task grounded-chat implementation plan
+- provider-neutral structured text-generation contracts
+- an OpenAI-compatible generation adapter with one deadline spanning request and response-body parsing
+- strict response-envelope, JSON, answer, and citation validation
+- normalized provider failures without upstream payload, credential, or source-content leakage
+- prompts that explicitly treat retrieved chunks as untrusted data rather than instructions
+- server-side citation allow-listing against supplied source identifiers
+- configurable cosine-similarity rejection with no generation call for missing or low-confidence context
+- bounded source count and aggregate source characters
+- deterministic source identifiers and exact mapping back to retrieved chunk metadata
+- provider-neutral runtime validation for non-empty, bounded answers and well-formed citation lists
+- duplicate citation and retrieval-row removal by stored chunk identity
+- provider response schemas with unique, source-count-bounded citation identifiers
+- PostgreSQL conversations and ordered user/assistant messages with workspace-consistent collection and document scopes
+- exact assistant-message-to-chunk source mappings constrained to the conversation scope
+- database-triggered source-mapping immutability with stable historical citations across document re-indexing
+- cascading conversation cleanup for deleted workspaces, collections, and documents, with deleted authors safely set to null
+- supporting foreign-key and conversation-history indexes for lifecycle and pagination paths
+- transactional, membership-authorized conversation creation with collection and document scope validation
+- atomic ordered user/assistant turn persistence with exact source revalidation inside the write transaction
+- idempotent submission retries and conversation-row serialization for concurrent turn writers
+- bounded, stable-position history pagination with authorization held through the complete read transaction
+- PostgreSQL authorization-revocation and concurrent-submission coverage, plus normalized connection, query, and constraint failures
+- shared runtime-validated contracts for conversation creation, listing, history, and message turns
+- authenticated create, list, get, history, and message endpoints with bounded input and pagination validation
+- conversation authorization before embedding plus retrieval-time scope reauthorization before generation
+- runtime composition of OpenAI-compatible embedding and generation providers, pgvector retrieval, citation-safe answering, and atomic conversation persistence
+- deterministic insufficient-context turn persistence without a generation-provider call
+- short-lived atomic submission reservations that prevent concurrent retries from duplicating provider calls
+- leased-transaction retrieval that holds membership and scope authorization through source generation without nested pool acquisition
+- normalized provider failures and inaccessible-conversation responses without upstream or cross-workspace leakage
+- direct-linkable authenticated conversation list and detail routes in the React application
+- workspace-, collection-, and document-scoped conversation creation with scope metadata loading gates
+- paginated conversation history with stable position ordering, message-ID deduplication, and recoverable load-more failures
+- grounded-answer and insufficient-context presentation with exact stored passages, page/section provenance, and source navigation
+- idempotent answer retry controls that preserve the original submission identifier
+- route-isolated sent-message state and preservation of a newly typed draft during an in-flight answer
+- explicit workspace, collection, document, conversation, history, and generation loading/failure/retry states without internal-error leakage
+- explicit fixture-mode separation that makes no AI-provider claim or call
+- 62 focused Day 5 tests, bringing the local runnable total to 306 and the full CI total to 315 tests
+- clean install, lint, strict type-checking, all 315 tests against PostgreSQL 16 + pgvector, production builds, dependency validation, and zero-vulnerability audit passing in [GitHub Actions run #115](https://github.com/megamind294/knowledge-ai-workspace/actions/runs/34252235457) at implementation commit `10a5680bc7b644c0ae9d5b5568812d406e3ffede`
+- independent review completed with all important and minor findings resolved before handoff
+- 74 focused Day 5 tests, bringing the current local runnable total to 318; the nine PostgreSQL/pgvector-only cases will run in CI
+- lint, strict type-checking, all 318 locally runnable tests, production builds, dependency validation, and a zero-vulnerability production audit passing on the reviewed Task 5 tree
+- independent Task 5 frontend review completed with no unresolved critical or important findings
+- all 327 tests, including nine PostgreSQL/pgvector cases, and the complete quality workflow passing in [GitHub Actions run #119](https://github.com/megamind294/knowledge-ai-workspace/actions/runs/34287837062) at implementation commit `a002946e1805e10e5594880b015dc474b10d1260`
+- a typed deterministic grounded-answer evaluation corpus covering supported answers, conflicting evidence, prompt-injection source text, unsupported claims, empty retrieval, and low similarity
+- a portable `npm run evaluate:grounded:fixtures` check for the production OpenAI-compatible prompt boundary
+- a full `npm run evaluate:grounded` acceptance command that requires PostgreSQL, covers transaction and authorization locks, and fails instead of silently skipping without `TEST_DATABASE_URL`
+- an explicit valid-citation unsupported-answer negative control that the deterministic benchmark flags, documenting that citation allow-listing alone is not semantic entailment
+- API-level generation-failure recovery that verifies safe errors, no partial persistence, and retryable submission release
+- safe API mapping plus repository-level transactional citation revalidation that fails closed without exposing cross-scope source details or partially persisting a turn
+- 85 focused Day 5 tests, bringing the current local runnable total to 329; the nine PostgreSQL/pgvector-only cases will run in CI
+- all 338 tests, including the required PostgreSQL/pgvector grounded-answer acceptance command, passing in [GitHub Actions run #123](https://github.com/megamind294/knowledge-ai-workspace/actions/runs/34310958194) at implementation commit `d009b37480ecc6f1cda910f04d9c44f51013df52`
+- independent Task 6 review completed with no unresolved critical or important findings
+- explicit documentation that provider-backed chat sends the question to the embedding endpoint and can send up to eight retrieved passages / 24,000 source characters to the generation endpoint
+- fresh clean-install acceptance passing lint, strict type-checking, all 329 locally runnable tests, groundedness fixtures, production builds, dependency validation, and a zero-vulnerability production audit
+- final independent Day 5 review completed with its provider data-flow disclosure finding resolved before merge
+- the independently reviewed final documentation tree passing exact-head [GitHub Actions run #127](https://github.com/megamind294/knowledge-ai-workspace/actions/runs/34340967297) at commit `4c99bf0144d05fc35020ea07dd911461bbb5506d`
+
 ## Next milestone
 
-Day 4 implementation and acceptance are complete. A clean install passed all 246 runnable tests locally, and the complete PostgreSQL 16 + pgvector workflow passed on the final implementation head in [GitHub Actions run #85](https://github.com/megamind294/knowledge-ai-workspace/actions/runs/34111536239) at `56acbe74ed3ab0b96c65ae9f8704c062ae4995cf`. API mode supports real byte upload, restart-persistent filesystem storage, PDF/TXT/Markdown/DOCX textual extraction, synchronous indexing and retry, and scoped semantic source search. Scanned PDFs still require OCR, no live provider call is claimed, and retrieval returns source chunks and scores rather than generated answers or citations. Merge is the remaining integration step; Day 5 grounded answers, citations, and conversation history follow afterward.
+Day 5 implementation and acceptance are complete on the draft branch; merge remains. The React experience consumes the authenticated conversation API only in API mode; provider-backed routes are composed only when both embedding and generation providers are configured. The deterministic corpus checks system boundaries and detects a controlled unsupported-answer failure; it does not claim live-provider quality or general semantic-groundedness enforcement. Day 6 will begin deployment, operations, and end-to-end hardening after merge.

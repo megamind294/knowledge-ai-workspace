@@ -1,4 +1,12 @@
-import type { RetrievalRequest, RetrievalResult } from "@knowledge-ai/contracts";
+import type {
+  Conversation,
+  ConversationHistoryResponse,
+  CreateConversationRequest,
+  RetrievalRequest,
+  RetrievalResult,
+  SendConversationMessageRequest,
+  SendConversationMessageResponse,
+} from "@knowledge-ai/contracts";
 import type {
   CollectionSummary,
   DashboardSnapshot,
@@ -42,6 +50,25 @@ export interface KnowledgeRepository {
     workspaceId: string,
     request: RetrievalRequest,
   ): Promise<RetrievalResult[]>;
+  listConversations(workspaceId: string): Promise<Conversation[]>;
+  createConversation(
+    workspaceId: string,
+    request: CreateConversationRequest,
+  ): Promise<Conversation>;
+  getConversation(
+    workspaceId: string,
+    conversationId: string,
+  ): Promise<Conversation | null>;
+  getConversationHistory(
+    workspaceId: string,
+    conversationId: string,
+    afterPosition?: number,
+  ): Promise<ConversationHistoryResponse>;
+  sendConversationMessage(
+    workspaceId: string,
+    conversationId: string,
+    request: SendConversationMessageRequest,
+  ): Promise<SendConversationMessageResponse>;
 }
 
 interface FixtureRepositoryOptions {
@@ -204,6 +231,26 @@ export function createFixtureKnowledgeRepository(
 
     async searchKnowledge() {
       return [];
+    },
+
+    async listConversations() {
+      return [];
+    },
+
+    async createConversation() {
+      throw new Error("Grounded conversations require API mode");
+    },
+
+    async getConversation() {
+      return null;
+    },
+
+    async getConversationHistory() {
+      return { messages: [], nextPosition: null };
+    },
+
+    async sendConversationMessage() {
+      throw new Error("Grounded conversations require API mode");
     },
   };
 }

@@ -1,0 +1,735 @@
+import { Pool, type QueryResultRow } from "pg";
+import { afterEach, beforeEach, describe, expect, it } from "vitest";
+import { runMigrations } from "../database/migrate.js";
+import type {
+  DatabasePool,
+  DatabaseTransactionClient,
+} from "../database/pool.js";
+import { createPgMemPool } from "../testSupport/pgMem.js";
+import {
+  ConversationRepositoryError,
+  PostgresConversationRepository,
+} from "./postgresConversationRepository.js";
+
+const ids = {
+  owner: "10000000-0000-4000-8000-000000000001",
+  outsider: "10000000-0000-4000-8000-000000000002",
+  workspace: "10000000-0000-4000-8000-000000000010",
+  collection: "10000000-0000-4000-8000-000000000020",
+  document: "10000000-0000-4000-8000-000000000030",
+  run: "10000000-0000-4000-8000-000000000040",
+  chunk: "10000000-0000-4000-8000-000000000050",
+  conversation: "10000000-0000-4000-8000-000000000060",
+  submission: "10000000-0000-4000-8000-000000000070",
+  userMessage: "10000000-0000-4000-8000-000000000080",
+  assistantMessage: "10000000-0000-4000-8000-000000000081",
+};
+
+const embedding = `[${Array.from({ length: 1536 }, () => "1").join(",")}]`;
+
+const TEST_SCHEMA = "keystone_conversation_repository_test";
+
+async function createPostgresTestPool(databaseUrl: string) {
+  const admin = new Pool({ connectionString: databaseUrl });
+  await admin.query(`DROP SCHEMA IF EXISTS ${TEST_SCHEMA} CASCADE`);
+  await admin.query(`CREATE SCHEMA ${TEST_SCHEMA}`);
+  await admin.end();
+  return new Pool({
+    connectionString: databaseUrl,
+    options: `-c search_path=${TEST_SCHEMA},public`,
+  });
+}
+
+function pauseTransactionAfter(pool: DatabasePool, pattern: RegExp) {
+  let markReached!: () => void;
+  let resumeQuery!: () => void;
+  const reached = new Promise<void>((resolve) => {
+    markReached = resolve;
+  });
+  const resume = new Promise<void>((resolve) => {
+    resumeQuery = resolve;
+  });
+  const wrappedPool: DatabasePool = {
+    query<Row extends QueryResultRow = QueryResultRow>(text: string, values?: unknown[]) {
+      return pool.query<Row>(text, values);
+    },
+    async connect() {
+      const client = await pool.connect();
+      const wrappedClient: DatabaseTransactionClient = {
+        async query<Row extends QueryResultRow = QueryResultRow>(
+          text: string,
+          values?: unknown[],
+        ) {
+          const result = await client.query<Row>(text, values);
+          if (pattern.test(text)) {
+            markReached();
+            await resume;
+          }
+          return result;
+        },
+        release: () => client.release(),
+      };
+      return wrappedClient;
+    },
+    end: () => Promise.resolve(),
+  };
+  return { pool: wrappedPool, reached, resume: resumeQuery };
+}
+
+describe.sequential("PostgresConversationRepository", () => {
+  let pool: DatabasePool;
+  let generatedIds: string[];
+  let repository: PostgresConversationRepository;
+
+  beforeEach(async () => {
+    pool = process.env.TEST_DATABASE_URL
+      ? await createPostgresTestPool(process.env.TEST_DATABASE_URL)
+      : createPgMemPool();
+    await runMigrations(pool);
+    await pool.query(
+      `INSERT INTO users (id,email,display_name)
+       VALUES ($1,'owner@example.com','Owner'),($2,'outsider@example.com','Outsider')`,
+      [ids.owner, ids.outsider],
+    );
+    await pool.query(
+      "INSERT INTO workspaces (id,owner_id,name,slug) VALUES ($1,$2,'Research','research')",
+      [ids.workspace, ids.owner],
+    );
+    await pool.query(
+      "INSERT INTO workspace_members (workspace_id,user_id,role) VALUES ($1,$2,'owner')",
+      [ids.workspace, ids.owner],
+    );
+    await pool.query(
+      "INSERT INTO collections (id,workspace_id,name) VALUES ($1,$2,'Policies')",
+      [ids.collection, ids.workspace],
+    );
+    await pool.query(
+      `INSERT INTO documents
+        (id,workspace_id,collection_id,original_filename,media_type,size_bytes,ingestion_state)
+       VALUES ($1,$2,$3,'policy.txt','text/plain',20,'indexed')`,
+      [ids.document, ids.workspace, ids.collection],
+    );
+    await pool.query(
+      `INSERT INTO document_index_runs
+        (id,document_id,workspace_id,status,embedding_model,embedding_dimensions)
+       VALUES ($1,$2,$3,'active','test-embedding',1536)`,
+      [ids.run, ids.document, ids.workspace],
+    );
+    await pool.query(
+      `INSERT INTO document_chunks
+        (id,index_run_id,document_id,workspace_id,ordinal,content,word_count,embedding)
+       VALUES ($1,$2,$3,$4,0,'Grounded policy source',3,$5)`,
+      [ids.chunk, ids.run, ids.document, ids.workspace, embedding],
+    );
+    generatedIds = [ids.conversation, ids.userMessage, ids.assistantMessage];
+    repository = new PostgresConversationRepository(pool, () => generatedIds.shift()!);
+  });
+
+  afterEach(async () => {
+    await pool.end();
+  });
+
+  it("creates a conversation only for a current workspace member", async () => {
+    await expect(
+      repository.createConversation(ids.outsider, {
+        workspaceId: ids.workspace,
+        scope: { type: "workspace" },
+        title: "Private policy",
+      }),
+    ).rejects.toEqual(
+      new ConversationRepositoryError("NOT_FOUND", "Conversation scope not found"),
+    );
+
+    const conversation = await repository.createConversation(ids.owner, {
+      workspaceId: ids.workspace,
+      scope: { type: "collection", collectionId: ids.collection },
+      title: "Policy review",
+    });
+    expect(conversation).toMatchObject({
+      id: ids.conversation,
+      workspaceId: ids.workspace,
+      scope: { type: "collection", collectionId: ids.collection },
+      title: "Policy review",
+    });
+  });
+
+  it("lists and gets conversations only for current workspace members", async () => {
+    const conversation = await repository.createConversation(ids.owner, {
+      workspaceId: ids.workspace,
+      scope: { type: "workspace" },
+      title: "Policy review",
+    });
+
+    await expect(
+      repository.listConversations(ids.owner, ids.workspace, 20),
+    ).resolves.toEqual([conversation]);
+    await expect(
+      repository.getConversation(ids.owner, ids.workspace, conversation.id),
+    ).resolves.toEqual(conversation);
+    await expect(
+      repository.listConversations(ids.outsider, ids.workspace, 20),
+    ).resolves.toEqual([]);
+    await expect(
+      repository.getConversation(ids.outsider, ids.workspace, conversation.id),
+    ).resolves.toBeNull();
+  });
+
+  it("atomically persists an ordered grounded turn and exact sources", async () => {
+    const conversation = await repository.createConversation(ids.owner, {
+      workspaceId: ids.workspace,
+      scope: { type: "workspace" },
+      title: "Policy review",
+    });
+    const turn = await repository.appendTurn(ids.owner, {
+      workspaceId: ids.workspace,
+      conversationId: conversation.id,
+      submissionId: ids.submission,
+      userContent: "What is the policy?",
+      assistantContent: "The policy is grounded [1].",
+      model: "test-generation",
+      sources: [
+        {
+          chunkId: ids.chunk,
+          documentId: ids.document,
+          collectionId: ids.collection,
+          citationOrdinal: 0,
+          score: 0.9,
+        },
+      ],
+    });
+
+    expect(turn.userMessage).toMatchObject({ id: ids.userMessage, role: "user", position: 1 });
+    expect(turn.assistantMessage).toMatchObject({
+      id: ids.assistantMessage,
+      role: "assistant",
+      position: 2,
+      sources: [
+        {
+          chunkId: ids.chunk,
+          citationOrdinal: 0,
+          originalFilename: "policy.txt",
+          ordinal: 0,
+          content: "Grounded policy source",
+          wordCount: 3,
+          pageNumber: null,
+          sectionHeading: null,
+          score: 0.9,
+        },
+      ],
+    });
+  });
+
+  it("returns an authorized previously completed submission before provider work", async () => {
+    const conversation = await repository.createConversation(ids.owner, {
+      workspaceId: ids.workspace,
+      scope: { type: "workspace" },
+      title: "Policy review",
+    });
+    const expected = await repository.appendTurn(ids.owner, {
+      workspaceId: ids.workspace,
+      conversationId: conversation.id,
+      submissionId: ids.submission,
+      userContent: "Question",
+      assistantContent: "Answer",
+      model: "test-generation",
+      sources: [],
+    });
+
+    await expect(
+      repository.getTurnBySubmission(
+        ids.owner,
+        ids.workspace,
+        conversation.id,
+        ids.submission,
+      ),
+    ).resolves.toEqual(expected);
+    await expect(
+      repository.getTurnBySubmission(
+        ids.outsider,
+        ids.workspace,
+        conversation.id,
+        ids.submission,
+      ),
+    ).resolves.toBeNull();
+  });
+
+  it("atomically reserves one provider execution per submission", async () => {
+    const conversation = await repository.createConversation(ids.owner, {
+      workspaceId: ids.workspace,
+      scope: { type: "workspace" },
+      title: "Policy review",
+    });
+    const first = await repository.reserveSubmission(
+      ids.owner,
+      ids.workspace,
+      conversation.id,
+      ids.submission,
+      "Question",
+    );
+    expect(first).toMatchObject({ state: "reserved" });
+    if (!first || first.state !== "reserved") throw new Error("Expected reservation");
+
+    await expect(
+      repository.reserveSubmission(
+        ids.owner,
+        ids.workspace,
+        conversation.id,
+        ids.submission,
+        "Question",
+      ),
+    ).resolves.toEqual({ state: "in_progress" });
+    await expect(
+      repository.reserveSubmission(
+        ids.owner,
+        ids.workspace,
+        conversation.id,
+        ids.submission,
+        "Different question",
+      ),
+    ).rejects.toEqual(
+      new ConversationRepositoryError(
+        "CONFLICT",
+        "Submission identifier already belongs to another question",
+      ),
+    );
+
+    const turn = await repository.appendTurn(ids.owner, {
+      workspaceId: ids.workspace,
+      conversationId: conversation.id,
+      submissionId: ids.submission,
+      userContent: "Question",
+      assistantContent: "Answer",
+      model: "test-generation",
+      sources: [],
+      reservationToken: first.token,
+    });
+    await expect(
+      repository.reserveSubmission(
+        ids.owner,
+        ids.workspace,
+        conversation.id,
+        ids.submission,
+        "Question",
+      ),
+    ).resolves.toEqual({ state: "completed", turn });
+  });
+
+  it("recognizes reservationless completed turns before provider work", async () => {
+    const conversation = await repository.createConversation(ids.owner, {
+      workspaceId: ids.workspace,
+      scope: { type: "workspace" },
+      title: "Policy review",
+    });
+    const turn = await repository.appendTurn(ids.owner, {
+      workspaceId: ids.workspace,
+      conversationId: conversation.id,
+      submissionId: ids.submission,
+      userContent: "Question",
+      assistantContent: "Answer",
+      model: "test-generation",
+      sources: [],
+    });
+
+    await expect(
+      repository.reserveSubmission(
+        ids.owner,
+        ids.workspace,
+        conversation.id,
+        ids.submission,
+        "Question",
+      ),
+    ).resolves.toEqual({ state: "completed", turn });
+    await expect(
+      repository.reserveSubmission(
+        ids.owner,
+        ids.workspace,
+        conversation.id,
+        ids.submission,
+        "Different question",
+      ),
+    ).rejects.toEqual(
+      new ConversationRepositoryError(
+        "CONFLICT",
+        "Submission identifier already belongs to another question",
+      ),
+    );
+  });
+
+  it.skipIf(!process.env.TEST_DATABASE_URL)(
+    "serializes concurrent first-time submission reservations",
+    async () => {
+      const conversation = await repository.createConversation(ids.owner, {
+        workspaceId: ids.workspace,
+        scope: { type: "workspace" },
+        title: "Policy review",
+      });
+      generatedIds.push(
+        "10000000-0000-4000-8000-000000000084",
+        "10000000-0000-4000-8000-000000000085",
+      );
+
+      const results = await Promise.all([
+        repository.reserveSubmission(
+          ids.owner,
+          ids.workspace,
+          conversation.id,
+          ids.submission,
+          "Question",
+        ),
+        repository.reserveSubmission(
+          ids.owner,
+          ids.workspace,
+          conversation.id,
+          ids.submission,
+          "Question",
+        ),
+      ]);
+
+      expect(results.map((result) => result?.state).sort()).toEqual([
+        "in_progress",
+        "reserved",
+      ]);
+      const count = await pool.query<{ count: string }>(
+        `SELECT COUNT(*)::text AS count
+         FROM conversation_submission_reservations
+         WHERE conversation_id=$1 AND submission_id=$2`,
+        [conversation.id, ids.submission],
+      );
+      expect(count.rows[0]?.count).toBe("1");
+    },
+  );
+
+  it("releases a failed provider reservation for a safe retry", async () => {
+    const conversation = await repository.createConversation(ids.owner, {
+      workspaceId: ids.workspace,
+      scope: { type: "workspace" },
+      title: "Policy review",
+    });
+    const first = await repository.reserveSubmission(
+      ids.owner,
+      ids.workspace,
+      conversation.id,
+      ids.submission,
+      "Question",
+    );
+    if (!first || first.state !== "reserved") throw new Error("Expected reservation");
+    await repository.releaseSubmission(first.token);
+
+    await expect(
+      repository.reserveSubmission(
+        ids.owner,
+        ids.workspace,
+        conversation.id,
+        ids.submission,
+        "Question",
+      ),
+    ).resolves.toMatchObject({ state: "reserved" });
+  });
+
+  it("returns the original turn for an idempotent submission retry", async () => {
+    const conversation = await repository.createConversation(ids.owner, {
+      workspaceId: ids.workspace,
+      scope: { type: "workspace" },
+      title: "Policy review",
+    });
+    const input = {
+      workspaceId: ids.workspace,
+      conversationId: conversation.id,
+      submissionId: ids.submission,
+      userContent: "What is the policy?",
+      assistantContent: "Grounded answer.",
+      model: "test-generation",
+      sources: [],
+    };
+    const first = await repository.appendTurn(ids.owner, input);
+    generatedIds.push(
+      "10000000-0000-4000-8000-000000000082",
+      "10000000-0000-4000-8000-000000000083",
+    );
+    const retried = await repository.appendTurn(ids.owner, {
+      ...input,
+      assistantContent: "This retry must not overwrite history.",
+    });
+
+    expect(retried).toEqual(first);
+    const count = await pool.query<{ count: string }>(
+      "SELECT COUNT(*)::text AS count FROM conversation_messages WHERE conversation_id=$1",
+      [conversation.id],
+    );
+    expect(count.rows[0]?.count).toBe("2");
+  });
+
+  it("rolls back the entire turn when an exact source is invalid", async () => {
+    const conversation = await repository.createConversation(ids.owner, {
+      workspaceId: ids.workspace,
+      scope: { type: "workspace" },
+      title: "Policy review",
+    });
+    await expect(
+      repository.appendTurn(ids.owner, {
+        workspaceId: ids.workspace,
+        conversationId: conversation.id,
+        submissionId: ids.submission,
+        userContent: "Question",
+        assistantContent: "Answer",
+        model: "test-generation",
+        sources: [
+          {
+            chunkId: "10000000-0000-4000-8000-000000000099",
+            documentId: ids.document,
+            collectionId: ids.collection,
+            citationOrdinal: 0,
+            score: 0.9,
+          },
+        ],
+      }),
+    ).rejects.toEqual(
+      new ConversationRepositoryError("INVALID_SOURCE", "Conversation source is invalid"),
+    );
+    const messages = await pool.query(
+      "SELECT 1 FROM conversation_messages WHERE conversation_id=$1",
+      [conversation.id],
+    );
+    expect(messages.rowCount).toBe(0);
+  });
+
+  it("rechecks membership inside the turn transaction", async () => {
+    const conversation = await repository.createConversation(ids.owner, {
+      workspaceId: ids.workspace,
+      scope: { type: "workspace" },
+      title: "Policy review",
+    });
+    await pool.query(
+      "DELETE FROM workspace_members WHERE workspace_id=$1 AND user_id=$2",
+      [ids.workspace, ids.owner],
+    );
+    await expect(
+      repository.appendTurn(ids.owner, {
+        workspaceId: ids.workspace,
+        conversationId: conversation.id,
+        submissionId: ids.submission,
+        userContent: "Question",
+        assistantContent: "Answer",
+        model: "test-generation",
+        sources: [],
+      }),
+    ).rejects.toEqual(
+      new ConversationRepositoryError("NOT_FOUND", "Conversation not found"),
+    );
+  });
+
+  it("paginates history by stable message position", async () => {
+    const conversation = await repository.createConversation(ids.owner, {
+      workspaceId: ids.workspace,
+      scope: { type: "workspace" },
+      title: "Policy review",
+    });
+    await repository.appendTurn(ids.owner, {
+      workspaceId: ids.workspace,
+      conversationId: conversation.id,
+      submissionId: ids.submission,
+      userContent: "Question one",
+      assistantContent: "Answer one",
+      model: "test-generation",
+      sources: [],
+    });
+    generatedIds.push(
+      "10000000-0000-4000-8000-000000000082",
+      "10000000-0000-4000-8000-000000000083",
+    );
+    await repository.appendTurn(ids.owner, {
+      workspaceId: ids.workspace,
+      conversationId: conversation.id,
+      submissionId: "10000000-0000-4000-8000-000000000071",
+      userContent: "Question two",
+      assistantContent: "Answer two",
+      model: "test-generation",
+      sources: [],
+    });
+
+    const first = await repository.listMessages(ids.owner, ids.workspace, conversation.id, {
+      limit: 2,
+    });
+    expect(first).not.toBeNull();
+    if (!first) throw new Error("Expected first conversation history page");
+    const second = await repository.listMessages(ids.owner, ids.workspace, conversation.id, {
+      limit: 2,
+      afterPosition: first.nextPosition!,
+    });
+    expect(second).not.toBeNull();
+    if (!second) throw new Error("Expected second conversation history page");
+    expect(first.items.map((message) => message.position)).toEqual([1, 2]);
+    expect(first.nextPosition).toBe(2);
+    expect(second.items.map((message) => message.position)).toEqual([3, 4]);
+    expect(second.nextPosition).toBeNull();
+  });
+
+  it("rejects unsafe pagination bounds", async () => {
+    await expect(
+      repository.listMessages(ids.owner, ids.workspace, ids.conversation, { limit: 0 }),
+    ).rejects.toEqual(
+      new ConversationRepositoryError(
+        "INVALID_INPUT",
+        "Conversation pagination is invalid",
+      ),
+    );
+  });
+
+  it("serializes concurrent retries of the same submission", async () => {
+    if (!process.env.TEST_DATABASE_URL) return;
+    const conversation = await repository.createConversation(ids.owner, {
+      workspaceId: ids.workspace,
+      scope: { type: "workspace" },
+      title: "Policy review",
+    });
+    generatedIds.push(
+      "10000000-0000-4000-8000-000000000082",
+      "10000000-0000-4000-8000-000000000083",
+    );
+    const input = {
+      workspaceId: ids.workspace,
+      conversationId: conversation.id,
+      submissionId: ids.submission,
+      userContent: "Question",
+      assistantContent: "Answer",
+      model: "test-generation",
+      sources: [],
+    };
+
+    const [first, second] = await Promise.all([
+      repository.appendTurn(ids.owner, input),
+      repository.appendTurn(ids.owner, input),
+    ]);
+    expect(second).toEqual(first);
+    const count = await pool.query<{ count: string }>(
+      "SELECT COUNT(*)::text AS count FROM conversation_messages WHERE conversation_id=$1",
+      [conversation.id],
+    );
+    expect(count.rows[0]?.count).toBe("2");
+  });
+
+  it("holds membership authorization through a conversation write", async () => {
+    if (!process.env.TEST_DATABASE_URL) return;
+    const paused = pauseTransactionAfter(pool, /FROM workspace_members[\s\S]*FOR SHARE/u);
+    const lockedRepository = new PostgresConversationRepository(
+      paused.pool,
+      () => ids.conversation,
+    );
+    const creation = lockedRepository.createConversation(ids.owner, {
+      workspaceId: ids.workspace,
+      scope: { type: "workspace" },
+      title: "Policy review",
+    });
+    await paused.reached;
+    let revocationCompleted = false;
+    const revocation = pool
+      .query("DELETE FROM workspace_members WHERE workspace_id=$1 AND user_id=$2", [
+        ids.workspace,
+        ids.owner,
+      ])
+      .then(() => {
+        revocationCompleted = true;
+      });
+    await new Promise((resolve) => setTimeout(resolve, 30));
+    expect(revocationCompleted).toBe(false);
+    paused.resume();
+    await creation;
+    await revocation;
+  });
+
+  it("holds membership authorization through a conversation history read", async () => {
+    if (!process.env.TEST_DATABASE_URL) return;
+    const conversation = await repository.createConversation(ids.owner, {
+      workspaceId: ids.workspace,
+      scope: { type: "workspace" },
+      title: "Policy review",
+    });
+    await repository.appendTurn(ids.owner, {
+      workspaceId: ids.workspace,
+      conversationId: conversation.id,
+      submissionId: ids.submission,
+      userContent: "Question",
+      assistantContent: "Answer",
+      model: "test-generation",
+      sources: [],
+    });
+
+    const paused = pauseTransactionAfter(pool, /JOIN workspace_members[\s\S]*FOR SHARE/u);
+    const lockedRepository = new PostgresConversationRepository(paused.pool);
+    const history = lockedRepository.listMessages(
+      ids.owner,
+      ids.workspace,
+      conversation.id,
+      { limit: 10 },
+    );
+    await paused.reached;
+    let revocationCompleted = false;
+    const revocation = pool
+      .query("DELETE FROM workspace_members WHERE workspace_id=$1 AND user_id=$2", [
+        ids.workspace,
+        ids.owner,
+      ])
+      .then(() => {
+        revocationCompleted = true;
+      });
+    await new Promise((resolve) => setTimeout(resolve, 30));
+    expect(revocationCompleted).toBe(false);
+    paused.resume();
+    await expect(history).resolves.toMatchObject({
+      items: [{ role: "user" }, { role: "assistant" }],
+    });
+    await revocation;
+  });
+
+  it("normalizes unexpected storage failures without leaking database details", async () => {
+    await pool.query("DROP TABLE conversations CASCADE");
+
+    await expect(
+      repository.createConversation(ids.owner, {
+        workspaceId: ids.workspace,
+        scope: { type: "workspace" },
+        title: "Policy review",
+      }),
+    ).rejects.toEqual(
+      new ConversationRepositoryError("STORAGE", "Conversation storage failed"),
+    );
+  });
+
+  it("normalizes connection acquisition failures for every operation", async () => {
+    const failingPool: DatabasePool = {
+      ...pool,
+      async connect() {
+        throw new Error("postgres://operator:secret@internal-host/database");
+      },
+    };
+    const failingRepository = new PostgresConversationRepository(failingPool);
+    const expected = new ConversationRepositoryError(
+      "STORAGE",
+      "Conversation storage failed",
+    );
+
+    await expect(
+      failingRepository.createConversation(ids.owner, {
+        workspaceId: ids.workspace,
+        scope: { type: "workspace" },
+        title: "Policy review",
+      }),
+    ).rejects.toEqual(expected);
+    await expect(
+      failingRepository.appendTurn(ids.owner, {
+        workspaceId: ids.workspace,
+        conversationId: ids.conversation,
+        submissionId: ids.submission,
+        userContent: "Question",
+        assistantContent: "Answer",
+        model: "test-generation",
+        sources: [],
+      }),
+    ).rejects.toEqual(expected);
+    await expect(
+      failingRepository.listMessages(ids.owner, ids.workspace, ids.conversation, {
+        limit: 10,
+      }),
+    ).rejects.toEqual(expected);
+  });
+});

@@ -2,7 +2,7 @@
 
 ## Current milestone
 
-**Day 5 — grounded chat: deterministic groundedness evaluation implemented; database acceptance pending**
+**Day 5 — grounded chat: deterministic groundedness evaluation and database acceptance complete**
 
 Day 1 was merged into `main` through [pull request #2](https://github.com/megamind294/knowledge-ai-workspace/pull/2). Day 2 was merged through [pull request #4](https://github.com/megamind294/knowledge-ai-workspace/pull/4) after clean local acceptance and GitHub Actions verification.
 
@@ -231,7 +231,9 @@ Day 3 now includes:
 - API-level generation-failure recovery that verifies safe errors, no partial persistence, and retryable submission release
 - safe API mapping plus repository-level transactional citation revalidation that fails closed without exposing cross-scope source details or partially persisting a turn
 - 85 focused Day 5 tests, bringing the current local runnable total to 329; the nine PostgreSQL/pgvector-only cases will run in CI
+- all 338 tests, including the required PostgreSQL/pgvector grounded-answer acceptance command, passing in [GitHub Actions run #123](https://github.com/megamind294/knowledge-ai-workspace/actions/runs/34310958194) at implementation commit `d009b37480ecc6f1cda910f04d9c44f51013df52`
+- independent Task 6 review completed with no unresolved critical or important findings
 
 ## Next milestone
 
-Day 5 Task 6 implementation is complete on the draft branch, but its checkbox remains open until the required database-backed acceptance command passes in exact-head CI. Final clean-install acceptance, documentation review, and merge then remain. The React experience consumes the authenticated conversation API only in API mode; provider-backed routes are composed only when both embedding and generation providers are configured. The deterministic corpus checks system boundaries and detects a controlled unsupported-answer failure; it does not claim live-provider quality or general semantic-groundedness enforcement.
+Day 5 Tasks 1–6 are complete on the draft branch. Final clean-install acceptance, documentation review, and merge remain. The React experience consumes the authenticated conversation API only in API mode; provider-backed routes are composed only when both embedding and generation providers are configured. The deterministic corpus checks system boundaries and detects a controlled unsupported-answer failure; it does not claim live-provider quality or general semantic-groundedness enforcement.

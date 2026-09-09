@@ -10,7 +10,7 @@
 
 **Spec:** `docs/superpowers/specs/2026-08-27-ai-knowledge-workspace-design.md`
 
-**Progress:** Task 6 implementation is complete locally, with its acceptance checkbox pending exact-head PostgreSQL/pgvector CI. The grounded-chat platform and deterministic six-scenario corpus pass all 329 locally runnable tests. The portable fixture command exercises the production provider boundary and flags a valid-citation unsupported-answer negative control; the full acceptance command requires `TEST_DATABASE_URL` so transactional citation-revalidation and authorization-lock cases cannot be silently skipped. Lint, strict type-checking, production builds, dependency validation, and a zero-vulnerability audit remain required before publication. No live provider call, general semantic-entailment enforcement, or model-quality claim is made.
+**Progress:** Tasks 1–6 are complete. The grounded-chat platform and deterministic six-scenario corpus pass all 329 locally runnable tests and all 338 tests against PostgreSQL 16 with pgvector in [GitHub Actions run #123](https://github.com/megamind294/knowledge-ai-workspace/actions/runs/34310958194) at implementation commit `d009b37480ecc6f1cda910f04d9c44f51013df52`. The portable fixture command exercises the production provider boundary and flags a valid-citation unsupported-answer negative control; the full acceptance command requires `TEST_DATABASE_URL` so transactional citation-revalidation and authorization-lock cases cannot be silently skipped. Lint, strict type-checking, production builds, dependency validation, a zero-vulnerability audit, and independent review also pass. No live provider call, general semantic-entailment enforcement, or model-quality claim is made.
 
 ## Global constraints
 
@@ -66,7 +66,7 @@
 ### Task 6: Evaluation and low-confidence acceptance
 
 - [x] Add deterministic groundedness fixtures covering supported answers, conflicting context, prompt injection, unsupported claims, empty retrieval, and low similarity.
-- [ ] Verify provider failures, authorization races, and citation integrity end to end in required PostgreSQL acceptance.
+- [x] Verify provider failures, authorization races, and citation integrity end to end in required PostgreSQL acceptance.
 
 ### Task 7: Day 5 acceptance and documentation
 

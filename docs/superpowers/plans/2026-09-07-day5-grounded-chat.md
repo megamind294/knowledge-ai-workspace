@@ -10,7 +10,7 @@
 
 **Spec:** `docs/superpowers/specs/2026-08-27-ai-knowledge-workspace-design.md`
 
-**Progress:** Day 5 implementation, local acceptance, and final documentation review are complete; exact-head PostgreSQL/pgvector CI for the final documentation tree and merge remain. A fresh install passes all 329 locally runnable tests, groundedness fixtures, lint, strict type-checking, production builds, dependency validation, and a zero-vulnerability audit. All 338 tests passed against PostgreSQL 16 with pgvector in [GitHub Actions run #123](https://github.com/megamind294/knowledge-ai-workspace/actions/runs/34310958194) at implementation commit `d009b37480ecc6f1cda910f04d9c44f51013df52`. The portable fixture command exercises the production provider boundary and flags a valid-citation unsupported-answer negative control; the full acceptance command requires `TEST_DATABASE_URL` so transactional citation-revalidation and authorization-lock cases cannot be silently skipped. No live provider call, general semantic-entailment enforcement, or model-quality claim is made.
+**Progress:** Day 5 implementation and acceptance are complete; merge remains. A fresh install passes all 329 locally runnable tests, groundedness fixtures, lint, strict type-checking, production builds, dependency validation, and a zero-vulnerability audit. All 338 tests passed against PostgreSQL 16 with pgvector, and the independently reviewed final documentation tree passed exact-head [GitHub Actions run #127](https://github.com/megamind294/knowledge-ai-workspace/actions/runs/34340967297) at commit `4c99bf0144d05fc35020ea07dd911461bbb5506d`. The portable fixture command exercises the production provider boundary and flags a valid-citation unsupported-answer negative control; the full acceptance command requires `TEST_DATABASE_URL` so transactional citation-revalidation and authorization-lock cases cannot be silently skipped. No live provider call, general semantic-entailment enforcement, or model-quality claim is made.
 
 ## Global constraints
 
@@ -71,7 +71,7 @@
 ### Task 7: Day 5 acceptance and documentation
 
 - [x] Document implemented behavior, provider configuration, external-provider data handling, operational limits, and reproducible setup.
-- [ ] Require clean install, lint, strict type-checking, all tests, production builds, PostgreSQL/pgvector CI, dependency audit, independent review, and exact-head CI before merge.
+- [x] Require clean install, lint, strict type-checking, all tests, production builds, PostgreSQL/pgvector CI, dependency audit, independent review, and exact-head CI before merge.
 
 ## Plan self-review
 

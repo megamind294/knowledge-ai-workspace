@@ -236,7 +236,8 @@ Day 3 now includes:
 - explicit documentation that provider-backed chat sends the question to the embedding endpoint and can send up to eight retrieved passages / 24,000 source characters to the generation endpoint
 - fresh clean-install acceptance passing lint, strict type-checking, all 329 locally runnable tests, groundedness fixtures, production builds, dependency validation, and a zero-vulnerability production audit
 - final independent Day 5 review completed with its provider data-flow disclosure finding resolved before merge
+- the independently reviewed final documentation tree passing exact-head [GitHub Actions run #127](https://github.com/megamind294/knowledge-ai-workspace/actions/runs/34340967297) at commit `4c99bf0144d05fc35020ea07dd911461bbb5506d`
 
 ## Next milestone
 
-Day 5 implementation and local acceptance are complete on the draft branch. Exact-head PostgreSQL/pgvector CI for the final documentation tree and merge remain. The React experience consumes the authenticated conversation API only in API mode; provider-backed routes are composed only when both embedding and generation providers are configured. The deterministic corpus checks system boundaries and detects a controlled unsupported-answer failure; it does not claim live-provider quality or general semantic-groundedness enforcement.
+Day 5 implementation and acceptance are complete on the draft branch; merge remains. The React experience consumes the authenticated conversation API only in API mode; provider-backed routes are composed only when both embedding and generation providers are configured. The deterministic corpus checks system boundaries and detects a controlled unsupported-answer failure; it does not claim live-provider quality or general semantic-groundedness enforcement. Day 6 will begin deployment, operations, and end-to-end hardening after merge.

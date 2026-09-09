@@ -20,6 +20,23 @@ export const HealthResponseSchema = z
 
 export type HealthResponse = z.infer<typeof HealthResponseSchema>;
 
+const ReadinessResponseBaseSchema = z.object({
+  service: z.literal("knowledge-ai-api"),
+});
+
+export const ReadinessResponseSchema = z.discriminatedUnion("status", [
+  ReadinessResponseBaseSchema.extend({
+    status: z.literal("ready"),
+    checks: z.object({ database: z.literal("ok") }).strict(),
+  }).strict(),
+  ReadinessResponseBaseSchema.extend({
+    status: z.literal("unavailable"),
+    checks: z.object({ database: z.literal("unavailable") }).strict(),
+  }).strict(),
+]);
+
+export type ReadinessResponse = z.infer<typeof ReadinessResponseSchema>;
+
 export const ApiErrorResponseSchema = z
   .object({
     error: z

@@ -1,5 +1,9 @@
 import { randomUUID } from "node:crypto";
-import type { ApiErrorResponse, HealthResponse } from "@knowledge-ai/contracts";
+import type {
+  ApiErrorResponse,
+  HealthResponse,
+  ReadinessResponse,
+} from "@knowledge-ai/contracts";
 import express, {
   type ErrorRequestHandler,
   type Express,
@@ -22,6 +26,7 @@ import type {
 import { createConversationRouter } from "./conversations/conversationRouter.js";
 import type { ConversationRepository } from "./conversations/postgresConversationRepository.js";
 import type { GroundedAnswerService } from "./answers/groundedAnswerService.js";
+import type { ReadinessProbe } from "./operations/readiness.js";
 
 const REQUEST_ID_PATTERN = /^[A-Za-z0-9._-]{1,128}$/;
 
@@ -31,6 +36,7 @@ function resolveRequestId(value: string | undefined) {
 
 interface CreateAppOptions {
   corsOrigin?: string;
+  readiness?: ReadinessProbe;
   auth?: {
     service: AuthService;
     accessTokenSecret: Uint8Array;
@@ -100,6 +106,27 @@ export function createApp(options: CreateAppOptions = {}) {
       service: "knowledge-ai-api",
     };
     response.json(body);
+  });
+
+  app.get("/api/ready", async (_request, response) => {
+    response.setHeader("cache-control", "no-store");
+    try {
+      await options.readiness?.check();
+      if (!options.readiness) throw new Error("Readiness probe unavailable");
+      const body: ReadinessResponse = {
+        status: "ready",
+        service: "knowledge-ai-api",
+        checks: { database: "ok" },
+      };
+      response.json(body);
+    } catch {
+      const body: ReadinessResponse = {
+        status: "unavailable",
+        service: "knowledge-ai-api",
+        checks: { database: "unavailable" },
+      };
+      response.status(503).json(body);
+    }
   });
 
   if (options.auth) {

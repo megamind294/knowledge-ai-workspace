@@ -30,6 +30,14 @@ describe("production API runtime", () => {
   it("migrates PostgreSQL and composes authenticated application routes", async () => {
     const runtime = await createApiRuntime(config, { pool: createPgMemPool() });
 
+    await request(runtime.app)
+      .get("/api/ready")
+      .expect(200, {
+        status: "ready",
+        service: "knowledge-ai-api",
+        checks: { database: "ok" },
+      });
+
     const registration = await request(runtime.app)
       .post("/api/auth/register")
       .send({

@@ -46,8 +46,14 @@ export function createPgMemPool(): DatabasePool {
       /-- pg-mem-ignore-start:[^\n]*\n[\s\S]*?-- pg-mem-ignore-end\n?/gu,
       "",
     );
-  const query: DatabasePool["query"] = (text, values) =>
-    pool.query(stripUnsupportedSql(text), values);
+  const query = ((
+    textOrConfig: string | { text: string },
+    values?: unknown[],
+  ) => {
+    const text =
+      typeof textOrConfig === "string" ? textOrConfig : textOrConfig.text;
+    return pool.query(stripUnsupportedSql(text), values);
+  }) as DatabasePool["query"];
 
   return {
     query,

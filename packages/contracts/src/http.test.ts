@@ -2,6 +2,7 @@ import { describe, expect, it } from "vitest";
 import {
   ApiErrorResponseSchema,
   HealthResponseSchema,
+  ReadinessResponseSchema,
 } from "./http.js";
 
 describe("HTTP contracts", () => {
@@ -33,5 +34,37 @@ describe("HTTP contracts", () => {
         requestId: "request-123",
       },
     });
+  });
+
+  it("accepts only the exact ready and unavailable responses", () => {
+    expect(
+      ReadinessResponseSchema.parse({
+        status: "ready",
+        service: "knowledge-ai-api",
+        checks: { database: "ok" },
+      }),
+    ).toEqual({
+      status: "ready",
+      service: "knowledge-ai-api",
+      checks: { database: "ok" },
+    });
+    expect(
+      ReadinessResponseSchema.parse({
+        status: "unavailable",
+        service: "knowledge-ai-api",
+        checks: { database: "unavailable" },
+      }),
+    ).toEqual({
+      status: "unavailable",
+      service: "knowledge-ai-api",
+      checks: { database: "unavailable" },
+    });
+    expect(() =>
+      ReadinessResponseSchema.parse({
+        status: "ready",
+        service: "knowledge-ai-api",
+        checks: { database: "unavailable" },
+      }),
+    ).toThrow();
   });
 });

@@ -2,7 +2,7 @@
 
 ## Current milestone
 
-**Day 6 — deployment, operations, observability, and end-to-end hardening ready to start**
+**Day 6 — deployment, operations, observability, and end-to-end hardening in progress**
 
 Day 1 was merged into `main` through [pull request #2](https://github.com/megamind294/knowledge-ai-workspace/pull/2). Day 2 was merged through [pull request #4](https://github.com/megamind294/knowledge-ai-workspace/pull/4) after clean local acceptance and GitHub Actions verification.
 
@@ -44,12 +44,12 @@ No file bytes are uploaded, parsed, stored, embedded, or sent to an AI provider 
 - 23 automated tests covering repository and critical view/routing contracts
 - clean lint, strict type-check, test, and production-build commands
 
-## Explicitly not implemented in the current Day 4 slice
+## Current limitations
 
 - shared cloud object storage for horizontally scaled API instances; the current durable adapter targets one persistent filesystem
 - OCR for scanned or image-only PDFs; those files currently return the safe empty-document result
-- generated AI answers or citations
 - production deployment
+- live provider-quality validation or general semantic-entailment enforcement
 
 These are planned milestones, not hidden or partially implemented features.
 
@@ -240,4 +240,4 @@ Day 3 now includes:
 
 ## Next milestone
 
-Day 5 was merged into `main` through [pull request #8](https://github.com/megamind294/knowledge-ai-workspace/pull/8) as `2be317ce5e4ef0e56558520d452353ca1348d611`. The React experience consumes the authenticated conversation API only in API mode; provider-backed routes are composed only when both embedding and generation providers are configured. The deterministic corpus checks system boundaries and detects a controlled unsupported-answer failure; it does not claim live-provider quality or general semantic-groundedness enforcement. Day 6 will add deployment, operations, observability, and end-to-end hardening.
+Day 6 Task 1 adds a strict database-backed `/api/ready` signal while preserving dependency-free `/api/health` liveness. Readiness failures and timeouts return a stable `503` response without infrastructure details, and overlapping probes share one in-flight database query. Structured operational logging, production containers, container smoke tests, browser-level end-to-end and accessibility coverage, deployment guidance, final acceptance, and merge remain.

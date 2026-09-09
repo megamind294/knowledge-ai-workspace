@@ -1,6 +1,7 @@
 import {
   ApiErrorResponseSchema,
   HealthResponseSchema,
+  ReadinessResponseSchema,
 } from "@knowledge-ai/contracts";
 import request from "supertest";
 import { describe, expect, it } from "vitest";
@@ -24,6 +25,42 @@ describe("API application", () => {
       .expect(200);
 
     expect(response.headers["x-request-id"]).toBe("client-request-123");
+  });
+
+  it("returns ready only after the dependency probe succeeds", async () => {
+    const response = await request(
+      createApp({ readiness: { check: async () => undefined } }),
+    )
+      .get("/api/ready")
+      .expect(200);
+
+    expect(ReadinessResponseSchema.parse(response.body)).toEqual({
+      status: "ready",
+      service: "knowledge-ai-api",
+      checks: { database: "ok" },
+    });
+    expect(response.headers["cache-control"]).toBe("no-store");
+  });
+
+  it("returns unavailable without leaking the readiness failure", async () => {
+    const response = await request(
+      createApp({
+        readiness: {
+          check: async () => {
+            throw new Error("postgresql://admin:secret@database/private");
+          },
+        },
+      }),
+    )
+      .get("/api/ready")
+      .expect(503);
+
+    expect(ReadinessResponseSchema.parse(response.body)).toEqual({
+      status: "unavailable",
+      service: "knowledge-ai-api",
+      checks: { database: "unavailable" },
+    });
+    expect(JSON.stringify(response.body)).not.toContain("secret");
   });
 
   it("returns a normalized error without leaking route details", async () => {

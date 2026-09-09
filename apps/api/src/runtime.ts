@@ -7,7 +7,11 @@ import { GoogleOAuthAdapter } from "./auth/googleOAuth.js";
 import { PostgresAuthRepository } from "./auth/postgresAuthRepository.js";
 import type { ApiConfig } from "./config.js";
 import { runMigrations } from "./database/migrate.js";
-import { createDatabasePool, type DatabasePool } from "./database/pool.js";
+import {
+  createDatabasePool,
+  queryWithDriverTimeout,
+  type DatabasePool,
+} from "./database/pool.js";
 import { DocumentParser } from "./ingestion/documentParser.js";
 import { IngestionService } from "./ingestion/ingestionService.js";
 import { PostgresIngestionRepository } from "./ingestion/postgresIngestionRepository.js";
@@ -15,6 +19,7 @@ import { PostgresKnowledgeRepository } from "./knowledge/postgresKnowledgeReposi
 import { PostgresRetrievalRepository } from "./retrieval/postgresRetrievalRepository.js";
 import { FileSystemObjectStore } from "./storage/fileSystemObjectStore.js";
 import { PostgresConversationRepository } from "./conversations/postgresConversationRepository.js";
+import { createDatabaseReadinessProbe } from "./operations/readiness.js";
 
 const GOOGLE_AUTHORIZATION_ENDPOINT = "https://accounts.google.com/o/oauth2/v2/auth";
 const GOOGLE_TOKEN_ENDPOINT = "https://oauth2.googleapis.com/token";
@@ -76,6 +81,9 @@ export async function createApiRuntime(
 
   return {
     app: createApp({
+      readiness: createDatabaseReadinessProbe({
+        query: (queryConfig) => queryWithDriverTimeout(pool, queryConfig),
+      }),
       auth: {
         service: authService,
         accessTokenSecret,

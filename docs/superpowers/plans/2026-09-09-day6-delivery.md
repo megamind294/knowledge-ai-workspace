@@ -10,7 +10,7 @@
 
 **Spec:** `docs/superpowers/specs/2026-08-27-ai-knowledge-workspace-design.md`
 
-**Progress:** Day 6 Task 1 is implemented, independently reviewed, and locally verified. The review identified a stale-query recovery risk; readiness now uses driver-enforced query timeouts, bounded pool acquisition, and regression coverage for recovery after a timed-out query. The repository passes 336 locally runnable tests, nine deterministic grounded-answer fixtures, lint, strict type-checking, production builds, dependency validation, and a zero-vulnerability production audit. Nine PostgreSQL/pgvector integration tests remain CI-only; publication and exact-head CI are pending.
+**Progress:** Day 6 Task 1 is complete. The review identified a stale-query recovery risk; readiness now uses driver-enforced query timeouts, bounded pool acquisition, and regression coverage for recovery after a timed-out query. The repository passes 336 locally runnable tests, nine deterministic grounded-answer fixtures, lint, strict type-checking, production builds, dependency validation, and a zero-vulnerability production audit. All 345 tests, including nine PostgreSQL/pgvector integration cases, passed on implementation commit `0e6668380eb625bdc580fa4a4ca1f83ef787fe6a` in [GitHub Actions run #134](https://github.com/megamind294/knowledge-ai-workspace/actions/runs/34379032073).
 
 ## Global constraints
 
@@ -37,7 +37,7 @@
 - [x] Add a timeout-bounded database readiness probe.
 - [x] Return `200` only when the database probe succeeds and `503` on failure without leaking the cause.
 - [x] Compose readiness through the production runtime while retaining dependency-free liveness.
-- [ ] Run focused and repository-wide quality gates, review, commit, publish, and require exact-head CI.
+- [x] Run focused and repository-wide quality gates, review, commit, publish, and require exact-head CI.
 
 ### Task 2: Structured operational logging
 

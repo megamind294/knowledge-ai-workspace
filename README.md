@@ -134,6 +134,8 @@ Document indexing and semantic retrieval remain disabled unless `EMBEDDING_API_K
 
 Grounded conversation routes require both `EMBEDDING_API_KEY` and `GENERATION_API_KEY`. The optional generation endpoint, model, and timeout default to the OpenAI-compatible chat-completions endpoint, `gpt-4.1-mini`, and 30 seconds. Public production endpoints must use HTTPS. The API authorizes the conversation before embedding, holds scope authorization through retrieval and generation, validates provider citations against retrieved stored chunks, and persists each user/assistant turn atomically. Short-lived database reservations prevent concurrent retries from duplicating provider work; completed retries return their stored turn. Missing or low-confidence context is persisted as a deterministic insufficient-context answer without calling the generation provider.
 
+Provider-backed chat sends the user's question to the configured embedding endpoint. When retrieval meets the default `0.7` similarity threshold, it sends the question plus at most eight retrieved source passages, bounded to 24,000 source characters in aggregate, to the configured generation endpoint. Those passages can contain private workspace document text. Operators must therefore choose providers whose privacy, regional-processing, logging, and retention terms are acceptable for their data, configure HTTPS endpoints, and avoid enabling provider-backed chat for content that must not leave the service. Keystone does not control or erase copies retained by an external provider.
+
 ## Quality commands
 
 ```bash
@@ -158,7 +160,7 @@ In API mode, Day 4 creates document metadata, uploads the actual selected bytes 
 2. **Day 2 — complete:** document library, validated local metadata preview, simulated ingestion states, retry flows, and scoped mock knowledge search
 3. **Day 3 — complete:** Express API, PostgreSQL, email/password authentication, optional Google OAuth boundary, authorized metadata persistence, and frontend API integration
 4. **Day 4 — complete:** normalization/chunking, PDF/TXT/Markdown/DOCX textual extraction, authorized durable filesystem byte storage, pgvector schema, provider-neutral transactional indexing, authenticated indexing/retry UI, and scoped semantic source search
-5. **Day 5 — in progress:** provider-neutral grounded generation, server-validated citations, conversation history, and low-confidence behavior; Tasks 1–6 complete, with final acceptance and merge remaining
+5. **Day 5 — acceptance complete; merge pending:** provider-neutral grounded generation, server-validated citations, conversation history, low-confidence behavior, explicit external-provider data-flow documentation, and deterministic groundedness evaluation
 6. **Day 6:** end-to-end coverage, Docker, deployment, operations documentation, and final polish
 
 See [`PROJECT_STATUS.md`](PROJECT_STATUS.md) for the current handoff state.

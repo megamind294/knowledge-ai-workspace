@@ -10,7 +10,7 @@
 
 **Spec:** `docs/superpowers/specs/2026-08-27-ai-knowledge-workspace-design.md`
 
-**Progress:** Tasks 1–6 are complete. The grounded-chat platform and deterministic six-scenario corpus pass all 329 locally runnable tests and all 338 tests against PostgreSQL 16 with pgvector in [GitHub Actions run #123](https://github.com/megamind294/knowledge-ai-workspace/actions/runs/34310958194) at implementation commit `d009b37480ecc6f1cda910f04d9c44f51013df52`. The portable fixture command exercises the production provider boundary and flags a valid-citation unsupported-answer negative control; the full acceptance command requires `TEST_DATABASE_URL` so transactional citation-revalidation and authorization-lock cases cannot be silently skipped. Lint, strict type-checking, production builds, dependency validation, a zero-vulnerability audit, and independent review also pass. No live provider call, general semantic-entailment enforcement, or model-quality claim is made.
+**Progress:** Day 5 implementation, local acceptance, and final documentation review are complete; exact-head PostgreSQL/pgvector CI for the final documentation tree and merge remain. A fresh install passes all 329 locally runnable tests, groundedness fixtures, lint, strict type-checking, production builds, dependency validation, and a zero-vulnerability audit. All 338 tests passed against PostgreSQL 16 with pgvector in [GitHub Actions run #123](https://github.com/megamind294/knowledge-ai-workspace/actions/runs/34310958194) at implementation commit `d009b37480ecc6f1cda910f04d9c44f51013df52`. The portable fixture command exercises the production provider boundary and flags a valid-citation unsupported-answer negative control; the full acceptance command requires `TEST_DATABASE_URL` so transactional citation-revalidation and authorization-lock cases cannot be silently skipped. No live provider call, general semantic-entailment enforcement, or model-quality claim is made.
 
 ## Global constraints
 
@@ -70,7 +70,7 @@
 
 ### Task 7: Day 5 acceptance and documentation
 
-- [ ] Document implemented behavior, provider configuration, data handling, operational limits, and reproducible setup.
+- [x] Document implemented behavior, provider configuration, external-provider data handling, operational limits, and reproducible setup.
 - [ ] Require clean install, lint, strict type-checking, all tests, production builds, PostgreSQL/pgvector CI, dependency audit, independent review, and exact-head CI before merge.
 
 ## Plan self-review

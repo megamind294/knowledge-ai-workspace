@@ -10,7 +10,7 @@
 
 **Spec:** `docs/superpowers/specs/2026-08-27-ai-knowledge-workspace-design.md`
 
-**Progress:** Day 6 Task 1 is complete. The review identified a stale-query recovery risk; readiness now uses driver-enforced query timeouts, bounded pool acquisition, and regression coverage for recovery after a timed-out query. Day 6 Task 2 is locally complete: allow-listed JSON events cover startup, shutdown, request completion, and readiness transitions without URL, query, credential, body, source, prompt, provider-response, or database-detail fields. The local repository suite has 339 passing runnable tests (nine PostgreSQL/pgvector cases skipped without their database), plus clean lint, strict type-checking, and production builds. Task 2 has not yet been merged or verified in CI.
+**Progress:** Day 6 Tasks 1 and 2 are complete on the draft delivery branch. Task 1 provides dependency-free liveness and bounded database-backed readiness, including timeout recovery. Task 2 adds runtime-allow-listed JSON events for startup, shutdown, request completion, and readiness transitions; operational correlation IDs are server generated, and URLs, query strings, credentials, bodies, source text, prompts, provider responses, caught errors, and database details cannot enter the event schema. The local repository suite has 341 runnable tests with nine PostgreSQL/pgvector cases skipped without their database. All 350 tests passed on implementation commit `a9fabf74eede31968d3560f0ce011566643ea0b6` in [GitHub Actions run #138](https://github.com/megamind294/knowledge-ai-workspace/actions/runs/34414092148), alongside lint, strict type-checking, production builds, dependency validation, grounded-answer fixtures, and a zero-vulnerability production audit.
 
 ## Global constraints
 

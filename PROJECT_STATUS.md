@@ -4,6 +4,8 @@
 
 **Day 6 — deployment, operations, observability, and end-to-end hardening in progress**
 
+Day 6 Tasks 1 and 2 are locally complete. Task 2 emits allow-listed JSON startup, shutdown, request-completion, and readiness-transition events with correlation IDs. Request events include only method, status, and duration; the logging boundary does not accept URLs, query strings, credentials, request/provider bodies, document or source text, prompts, caught errors, or database details. The local repository suite has 339 passing runnable tests (nine PostgreSQL/pgvector cases skipped without their database), plus clean lint, strict type-checking, and production builds. This local Task 2 work has not been merged or verified in CI.
+
 Day 1 was merged into `main` through [pull request #2](https://github.com/megamind294/knowledge-ai-workspace/pull/2). Day 2 was merged through [pull request #4](https://github.com/megamind294/knowledge-ai-workspace/pull/4) after clean local acceptance and GitHub Actions verification.
 
 ## Day 2 completed scope
@@ -240,4 +242,4 @@ Day 3 now includes:
 
 ## Next milestone
 
-Day 6 Task 1 adds a strict database-backed `/api/ready` signal while preserving dependency-free `/api/health` liveness. Readiness failures and timeouts return a stable `503` response without infrastructure details, and overlapping probes share one in-flight database query. Structured operational logging, production containers, container smoke tests, browser-level end-to-end and accessibility coverage, deployment guidance, final acceptance, and merge remain.
+Day 6 Task 1 adds a strict database-backed `/api/ready` signal while preserving dependency-free `/api/health` liveness. Readiness failures and timeouts return a stable `503` response without infrastructure details, and overlapping probes share one in-flight database query. Task 2 adds locally verified structured operational logging without sensitive request, provider, source, or database details. Production containers, container smoke tests, browser-level end-to-end and accessibility coverage, deployment guidance, final acceptance, CI verification, and merge remain.

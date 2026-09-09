@@ -10,7 +10,7 @@
 
 **Spec:** `docs/superpowers/specs/2026-08-27-ai-knowledge-workspace-design.md`
 
-**Progress:** Day 6 Task 1 is complete. The review identified a stale-query recovery risk; readiness now uses driver-enforced query timeouts, bounded pool acquisition, and regression coverage for recovery after a timed-out query. The repository passes 336 locally runnable tests, nine deterministic grounded-answer fixtures, lint, strict type-checking, production builds, dependency validation, and a zero-vulnerability production audit. All 345 tests, including nine PostgreSQL/pgvector integration cases, passed on implementation commit `0e6668380eb625bdc580fa4a4ca1f83ef787fe6a` in [GitHub Actions run #134](https://github.com/megamind294/knowledge-ai-workspace/actions/runs/34379032073).
+**Progress:** Day 6 Task 1 is complete. The review identified a stale-query recovery risk; readiness now uses driver-enforced query timeouts, bounded pool acquisition, and regression coverage for recovery after a timed-out query. Day 6 Task 2 is locally complete: allow-listed JSON events cover startup, shutdown, request completion, and readiness transitions without URL, query, credential, body, source, prompt, provider-response, or database-detail fields. The local repository suite has 339 passing runnable tests (nine PostgreSQL/pgvector cases skipped without their database), plus clean lint, strict type-checking, and production builds. Task 2 has not yet been merged or verified in CI.
 
 ## Global constraints
 
@@ -41,8 +41,8 @@
 
 ### Task 2: Structured operational logging
 
-- [ ] Emit structured startup, shutdown, request-completion, and readiness-transition events with correlation IDs.
-- [ ] Verify that URLs, query strings, credentials, source text, prompts, and provider bodies never enter operational logs.
+- [x] Emit structured startup, shutdown, request-completion, and readiness-transition events with correlation IDs.
+- [x] Verify that URLs, query strings, credentials, source text, prompts, and provider bodies never enter operational logs.
 
 ### Task 3: Production containers
 

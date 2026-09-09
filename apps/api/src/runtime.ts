@@ -20,6 +20,10 @@ import { PostgresRetrievalRepository } from "./retrieval/postgresRetrievalReposi
 import { FileSystemObjectStore } from "./storage/fileSystemObjectStore.js";
 import { PostgresConversationRepository } from "./conversations/postgresConversationRepository.js";
 import { createDatabaseReadinessProbe } from "./operations/readiness.js";
+import {
+  createConsoleOperationalLogger,
+  type OperationalLogger,
+} from "./operations/operationalLogger.js";
 
 const GOOGLE_AUTHORIZATION_ENDPOINT = "https://accounts.google.com/o/oauth2/v2/auth";
 const GOOGLE_TOKEN_ENDPOINT = "https://oauth2.googleapis.com/token";
@@ -27,6 +31,7 @@ const GOOGLE_USER_INFO_ENDPOINT = "https://openidconnect.googleapis.com/v1/useri
 
 interface RuntimeOptions {
   pool?: DatabasePool;
+  operationalLogger?: OperationalLogger;
 }
 
 export async function createApiRuntime(
@@ -38,6 +43,7 @@ export async function createApiRuntime(
   }
 
   const pool = options.pool ?? createDatabasePool(config);
+  const operationalLogger = options.operationalLogger ?? createConsoleOperationalLogger();
   await runMigrations(pool);
 
   const accessTokenSecret = new TextEncoder().encode(config.accessTokenSecret);
@@ -81,6 +87,7 @@ export async function createApiRuntime(
 
   return {
     app: createApp({
+      operationalLogger,
       readiness: createDatabaseReadinessProbe({
         query: (queryConfig) => queryWithDriverTimeout(pool, queryConfig),
       }),
@@ -127,6 +134,7 @@ export async function createApiRuntime(
           : undefined,
     }),
     close: () => pool.end(),
+    operationalLogger,
     ingestionService,
     groundedAnswerService,
     objectStore,

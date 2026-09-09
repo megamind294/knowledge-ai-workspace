@@ -2,7 +2,7 @@
 
 ## Current milestone
 
-**Day 5 — grounded chat: implementation and acceptance complete; merge pending**
+**Day 6 — deployment, operations, observability, and end-to-end hardening ready to start**
 
 Day 1 was merged into `main` through [pull request #2](https://github.com/megamind294/knowledge-ai-workspace/pull/2). Day 2 was merged through [pull request #4](https://github.com/megamind294/knowledge-ai-workspace/pull/4) after clean local acceptance and GitHub Actions verification.
 
@@ -240,4 +240,4 @@ Day 3 now includes:
 
 ## Next milestone
 
-Day 5 implementation and acceptance are complete on the draft branch; merge remains. The React experience consumes the authenticated conversation API only in API mode; provider-backed routes are composed only when both embedding and generation providers are configured. The deterministic corpus checks system boundaries and detects a controlled unsupported-answer failure; it does not claim live-provider quality or general semantic-groundedness enforcement. Day 6 will begin deployment, operations, and end-to-end hardening after merge.
+Day 5 was merged into `main` through [pull request #8](https://github.com/megamind294/knowledge-ai-workspace/pull/8) as `2be317ce5e4ef0e56558520d452353ca1348d611`. The React experience consumes the authenticated conversation API only in API mode; provider-backed routes are composed only when both embedding and generation providers are configured. The deterministic corpus checks system boundaries and detects a controlled unsupported-answer failure; it does not claim live-provider quality or general semantic-groundedness enforcement. Day 6 will add deployment, operations, observability, and end-to-end hardening.

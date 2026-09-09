@@ -2,7 +2,7 @@
 
 ## Current milestone
 
-**Day 5 — grounded chat: React conversation and citation experience complete and verified**
+**Day 5 — grounded chat: deterministic groundedness evaluation implemented; database acceptance pending**
 
 Day 1 was merged into `main` through [pull request #2](https://github.com/megamind294/knowledge-ai-workspace/pull/2). Day 2 was merged through [pull request #4](https://github.com/megamind294/knowledge-ai-workspace/pull/4) after clean local acceptance and GitHub Actions verification.
 
@@ -224,7 +224,14 @@ Day 3 now includes:
 - lint, strict type-checking, all 318 locally runnable tests, production builds, dependency validation, and a zero-vulnerability production audit passing on the reviewed Task 5 tree
 - independent Task 5 frontend review completed with no unresolved critical or important findings
 - all 327 tests, including nine PostgreSQL/pgvector cases, and the complete quality workflow passing in [GitHub Actions run #119](https://github.com/megamind294/knowledge-ai-workspace/actions/runs/34287837062) at implementation commit `a002946e1805e10e5594880b015dc474b10d1260`
+- a typed deterministic grounded-answer evaluation corpus covering supported answers, conflicting evidence, prompt-injection source text, unsupported claims, empty retrieval, and low similarity
+- a portable `npm run evaluate:grounded:fixtures` check for the production OpenAI-compatible prompt boundary
+- a full `npm run evaluate:grounded` acceptance command that requires PostgreSQL, covers transaction and authorization locks, and fails instead of silently skipping without `TEST_DATABASE_URL`
+- an explicit valid-citation unsupported-answer negative control that the deterministic benchmark flags, documenting that citation allow-listing alone is not semantic entailment
+- API-level generation-failure recovery that verifies safe errors, no partial persistence, and retryable submission release
+- safe API mapping plus repository-level transactional citation revalidation that fails closed without exposing cross-scope source details or partially persisting a turn
+- 85 focused Day 5 tests, bringing the current local runnable total to 329; the nine PostgreSQL/pgvector-only cases will run in CI
 
 ## Next milestone
 
-Day 5 Tasks 1–5 are complete on the draft branch. Next are deterministic groundedness evaluation and final acceptance. The React experience consumes the authenticated conversation API only in API mode; provider-backed routes are composed only when both embedding and generation providers are configured. No live provider call or model-quality claim is made.
+Day 5 Task 6 implementation is complete on the draft branch, but its checkbox remains open until the required database-backed acceptance command passes in exact-head CI. Final clean-install acceptance, documentation review, and merge then remain. The React experience consumes the authenticated conversation API only in API mode; provider-backed routes are composed only when both embedding and generation providers are configured. The deterministic corpus checks system boundaries and detects a controlled unsupported-answer failure; it does not claim live-provider quality or general semantic-groundedness enforcement.

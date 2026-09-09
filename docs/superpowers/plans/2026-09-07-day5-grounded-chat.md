@@ -10,7 +10,7 @@
 
 **Spec:** `docs/superpowers/specs/2026-08-27-ai-knowledge-workspace-design.md`
 
-**Progress:** Tasks 1–5 are complete. The provider-neutral generation core, scope-bound persistence, authenticated conversation API, production runtime composition, and React conversation/citation experience pass lint, strict type-checking, all 327 tests against PostgreSQL 16 with pgvector, production builds, dependency validation, and a zero-vulnerability audit in [GitHub Actions run #119](https://github.com/megamind294/knowledge-ai-workspace/actions/runs/34287837062) at implementation commit `a002946e1805e10e5594880b015dc474b10d1260`. No live provider call or model-quality claim is made.
+**Progress:** Task 6 implementation is complete locally, with its acceptance checkbox pending exact-head PostgreSQL/pgvector CI. The grounded-chat platform and deterministic six-scenario corpus pass all 329 locally runnable tests. The portable fixture command exercises the production provider boundary and flags a valid-citation unsupported-answer negative control; the full acceptance command requires `TEST_DATABASE_URL` so transactional citation-revalidation and authorization-lock cases cannot be silently skipped. Lint, strict type-checking, production builds, dependency validation, and a zero-vulnerability audit remain required before publication. No live provider call, general semantic-entailment enforcement, or model-quality claim is made.
 
 ## Global constraints
 
@@ -65,8 +65,8 @@
 
 ### Task 6: Evaluation and low-confidence acceptance
 
-- [ ] Add deterministic groundedness fixtures covering supported answers, conflicting context, prompt injection, unsupported claims, empty retrieval, and low similarity.
-- [ ] Verify provider failures, authorization races, and citation integrity end to end.
+- [x] Add deterministic groundedness fixtures covering supported answers, conflicting context, prompt injection, unsupported claims, empty retrieval, and low similarity.
+- [ ] Verify provider failures, authorization races, and citation integrity end to end in required PostgreSQL acceptance.
 
 ### Task 7: Day 5 acceptance and documentation
 

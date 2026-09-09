@@ -13,6 +13,7 @@ import { GroundedAnswerService } from "../answers/groundedAnswerService.js";
 import { createApp } from "../app.js";
 import { issueAccessToken } from "../auth/tokens.js";
 import type { AuthorizedRetrievalRepository } from "../retrieval/retrievalRepository.js";
+import { ConversationRepositoryError } from "./postgresConversationRepository.js";
 import type {
   AppendTurnInput,
   ConversationRecord,
@@ -462,5 +463,69 @@ describe("grounded conversation API", () => {
       .send({ submissionId: ids.submission, question: "Policy?" })
       .expect(503);
     expect(JSON.stringify(failed.body)).not.toContain("upstream secret");
+  });
+
+  it("normalizes generation failures and releases the submission for retry", async () => {
+    const conversations = new MemoryConversationRepository();
+    let shouldFail = true;
+    const generation: GenerationProvider = {
+      model: "test-generation",
+      generate: async () => {
+        if (shouldFail) {
+          throw new Error("private generation prompt and credential");
+        }
+        return { answer: "Retry succeeded.", citationIds: ["source-1"] };
+      },
+    };
+    const { app } = createTestApp({ conversations, generation });
+
+    const failed = await request(app)
+      .post(
+        `/api/workspaces/${ids.workspace}/conversations/${ids.conversation}/messages`,
+      )
+      .set(auth(await token(ids.member)))
+      .send({ submissionId: ids.submission, question: "Policy?" })
+      .expect(503);
+
+    expect(failed.body.error.message).toBe("Grounded answers are temporarily unavailable");
+    expect(JSON.stringify(failed.body)).not.toContain("private generation");
+    expect(conversations.appended).toBeNull();
+    expect(conversations.reservationActive).toBe(false);
+
+    shouldFail = false;
+    const retried = await request(app)
+      .post(
+        `/api/workspaces/${ids.workspace}/conversations/${ids.conversation}/messages`,
+      )
+      .set(auth(await token(ids.member)))
+      .send({ submissionId: ids.submission, question: "Policy?" })
+      .expect(201);
+
+    expect(retried.body.turn.assistantMessage.content).toBe("Retry succeeded.");
+    expect(conversations.appended?.submissionId).toBe(ids.submission);
+    expect(conversations.reservationActive).toBe(false);
+  });
+
+  it("fails closed when transactional citation revalidation rejects a source", async () => {
+    const conversations = new MemoryConversationRepository();
+    conversations.appendTurn = async () => {
+      throw new ConversationRepositoryError(
+        "INVALID_SOURCE",
+        "private cross-scope source detail",
+      );
+    };
+    const { app } = createTestApp({ conversations });
+
+    const failed = await request(app)
+      .post(
+        `/api/workspaces/${ids.workspace}/conversations/${ids.conversation}/messages`,
+      )
+      .set(auth(await token(ids.member)))
+      .send({ submissionId: ids.submission, question: "Policy?" })
+      .expect(409);
+
+    expect(failed.body.error.message).toBe("Conversation changed; please retry");
+    expect(JSON.stringify(failed.body)).not.toContain("cross-scope");
+    expect(conversations.reservationActive).toBe(false);
   });
 });

@@ -31,5 +31,5 @@ test("browser suite targets the built compose topology with a deterministic prov
   assert.match(journey, /sources\)\.toContainText\("Company records must be retained for seven years\."\)/);
   assert.match(journey, /page\.unroute\("\*\*\/api\/workspaces"\)/);
   assert.doesNotMatch(reporter, /result\.(?:stdout|stderr)|test\.title/);
-  assert.match(reporter, /\^A11Y_CHECKPOINT_/);
+  assert.match(reporter, /A11Y_CHECKPOINT_/);
 });

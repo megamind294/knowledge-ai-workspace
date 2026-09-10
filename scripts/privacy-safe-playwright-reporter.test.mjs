@@ -18,7 +18,7 @@ test("emits only structural console and JUnit diagnostics", async () => {
     duration: 17,
     errors: [
       { message: forbidden[0], stack: forbidden[2] },
-      { message: "A11Y_CHECKPOINT_INVALID_LOGIN:color-contrast,label", location: { file: forbidden[1], line: 73, column: 11 } },
+      { message: "Error: A11Y_CHECKPOINT_INVALID_LOGIN:color-contrast,label", location: { file: forbidden[1], line: 73, column: 11 } },
     ],
   });
   await reporter.onEnd({ status: "failed" });

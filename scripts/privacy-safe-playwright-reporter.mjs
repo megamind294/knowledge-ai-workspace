@@ -24,7 +24,7 @@ export default class PrivacySafeReporter {
       ? result.status : "failed";
     const location = result.errors?.find((error) => error.location)?.location;
     const accessibility = result.errors
-      ?.map((error) => /^A11Y_CHECKPOINT_([A-Z_]+):([a-z0-9,-]+)$/.exec(error.message ?? ""))
+      ?.map((error) => /A11Y_CHECKPOINT_([A-Z_]+):([a-z0-9,-]+)/.exec(error.message ?? ""))
       .find(Boolean);
     const line = Number.isSafeInteger(location?.line) ? location.line : undefined;
     const column = Number.isSafeInteger(location?.column) ? location.column : undefined;

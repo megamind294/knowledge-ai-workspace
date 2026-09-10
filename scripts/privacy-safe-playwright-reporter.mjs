@@ -22,8 +22,17 @@ export default class PrivacySafeReporter {
   onTestEnd(test, result) {
     const status = ["passed", "failed", "timedOut", "skipped", "interrupted"].includes(result.status)
       ? result.status : "failed";
-    this.results.set(test.id, { status, duration: Number.isFinite(result.duration) ? result.duration : 0 });
-    this.writeLine(JSON.stringify({ event: "browser_test_finished", status, durationMs: Number.isFinite(result.duration) ? result.duration : 0 }));
+    const location = result.errors?.find((error) => error.location)?.location;
+    const line = Number.isSafeInteger(location?.line) ? location.line : undefined;
+    const column = Number.isSafeInteger(location?.column) ? location.column : undefined;
+    this.results.set(test.id, { status, duration: Number.isFinite(result.duration) ? result.duration : 0, line, column });
+    this.writeLine(JSON.stringify({
+      event: "browser_test_finished",
+      status,
+      durationMs: Number.isFinite(result.duration) ? result.duration : 0,
+      ...(line === undefined ? {} : { line }),
+      ...(column === undefined ? {} : { column }),
+    }));
   }
 
   async onEnd(result) {

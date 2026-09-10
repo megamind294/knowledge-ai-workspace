@@ -16,7 +16,7 @@ test("emits only structural console and JUnit diagnostics", async () => {
   reporter.onTestEnd({ id: "test-id", title: forbidden[1] }, {
     status: "failed",
     duration: 17,
-    errors: [{ message: forbidden[0], stack: forbidden[2] }],
+    errors: [{ message: forbidden[0], stack: forbidden[2], location: { file: forbidden[1], line: 73, column: 11 } }],
   });
   await reporter.onEnd({ status: "failed" });
 
@@ -25,6 +25,8 @@ test("emits only structural console and JUnit diagnostics", async () => {
   assert.match(diagnostics, /failed/);
   assert.match(diagnostics, /tests="1"/);
   assert.match(diagnostics, /failures="1"/);
+  assert.match(diagnostics, /"line":73/);
+  assert.match(diagnostics, /"column":11/);
 });
 
 test("reports only the final attempt for one retried logical test", async () => {

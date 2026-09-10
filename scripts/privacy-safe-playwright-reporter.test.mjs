@@ -26,3 +26,28 @@ test("emits only structural console and JUnit diagnostics", async () => {
   assert.match(diagnostics, /tests="1"/);
   assert.match(diagnostics, /failures="1"/);
 });
+
+test("reports only the final attempt for one retried logical test", async () => {
+  const forbidden = ["PRIVATE_TEST_ID", "PRIVATE_RETRY_TITLE", "PRIVATE_RETRY_ERROR", "PRIVATE_RETRY_STDOUT", "PRIVATE_RETRY_STDERR"];
+  const directory = await mkdtemp(join(tmpdir(), "safe-reporter-retry-"));
+  const outputFile = join(directory, "results.xml");
+  const lines = [];
+  const reporter = new PrivacySafeReporter({ outputFile, writeLine: (line) => lines.push(line) });
+  const logicalTest = { id: forbidden[0], title: forbidden[1] };
+  reporter.onBegin({}, { allTests: () => [logicalTest] });
+  reporter.onTestEnd(logicalTest, {
+    status: "failed",
+    duration: 10,
+    errors: [{ message: forbidden[2] }],
+    stdout: [forbidden[3]],
+    stderr: [forbidden[4]],
+  });
+  reporter.onTestEnd(logicalTest, { status: "passed", duration: 8 });
+  await reporter.onEnd({ status: "passed" });
+
+  const diagnostics = `${lines.join("\n")}\n${await readFile(outputFile, "utf8")}`;
+  for (const value of forbidden) assert.doesNotMatch(diagnostics, new RegExp(value));
+  assert.match(diagnostics, /tests="1"/);
+  assert.match(diagnostics, /failures="0"/);
+  assert.equal((diagnostics.match(/<testcase /g) ?? []).length, 1);
+});

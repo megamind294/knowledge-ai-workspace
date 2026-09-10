@@ -19,7 +19,7 @@
     "test:container-contract": "node --test scripts/verify-container-contract.test.mjs",
     "verify:compose-contract": "node scripts/verify-compose-contract.mjs",
     "test:compose-contract": "node --test scripts/verify-compose-contract.test.mjs",
-    "test:browser-contract": "node --test scripts/verify-browser-contract.test.mjs",
+    "test:browser-contract": "node --test scripts/verify-browser-contract.test.mjs scripts/deterministic-provider.test.mjs scripts/privacy-safe-playwright-reporter.test.mjs",
     "test:e2e": "playwright test",
     "evaluate:grounded:fixtures": "npm run evaluate:grounded:fixtures --workspace @knowledge-ai/api",
     "evaluate:grounded": "npm run evaluate:grounded --workspace @knowledge-ai/api",

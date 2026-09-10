@@ -8,7 +8,7 @@ export default defineConfig({
   expect: { timeout: 10_000 },
   retries: process.env.CI ? 1 : 0,
   reporter: process.env.CI
-    ? [["line"], ["junit", { outputFile: "test-results/browser-results.xml" }]]
+    ? [["./scripts/privacy-safe-playwright-reporter.mjs", { outputFile: "test-results/browser-results.xml" }]]
     : "line",
   outputDir: "test-results/playwright",
   use: {

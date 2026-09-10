@@ -16,7 +16,10 @@ test("emits only structural console and JUnit diagnostics", async () => {
   reporter.onTestEnd({ id: "test-id", title: forbidden[1] }, {
     status: "failed",
     duration: 17,
-    errors: [{ message: forbidden[0], stack: forbidden[2], location: { file: forbidden[1], line: 73, column: 11 } }],
+    errors: [
+      { message: forbidden[0], stack: forbidden[2] },
+      { message: "A11Y_CHECKPOINT_INVALID_LOGIN:color-contrast,label", location: { file: forbidden[1], line: 73, column: 11 } },
+    ],
   });
   await reporter.onEnd({ status: "failed" });
 
@@ -27,6 +30,8 @@ test("emits only structural console and JUnit diagnostics", async () => {
   assert.match(diagnostics, /failures="1"/);
   assert.match(diagnostics, /"line":73/);
   assert.match(diagnostics, /"column":11/);
+  assert.match(diagnostics, /"checkpoint":"INVALID_LOGIN"/);
+  assert.match(diagnostics, /"rules":\["color-contrast","label"\]/);
 });
 
 test("reports only the final attempt for one retried logical test", async () => {

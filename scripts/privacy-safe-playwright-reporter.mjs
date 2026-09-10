@@ -23,6 +23,9 @@ export default class PrivacySafeReporter {
     const status = ["passed", "failed", "timedOut", "skipped", "interrupted"].includes(result.status)
       ? result.status : "failed";
     const location = result.errors?.find((error) => error.location)?.location;
+    const accessibility = result.errors
+      ?.map((error) => /^A11Y_CHECKPOINT_([A-Z_]+):([a-z0-9,-]+)$/.exec(error.message ?? ""))
+      .find(Boolean);
     const line = Number.isSafeInteger(location?.line) ? location.line : undefined;
     const column = Number.isSafeInteger(location?.column) ? location.column : undefined;
     this.results.set(test.id, { status, duration: Number.isFinite(result.duration) ? result.duration : 0, line, column });
@@ -32,6 +35,7 @@ export default class PrivacySafeReporter {
       durationMs: Number.isFinite(result.duration) ? result.duration : 0,
       ...(line === undefined ? {} : { line }),
       ...(column === undefined ? {} : { column }),
+      ...(accessibility ? { checkpoint: accessibility[1], rules: accessibility[2].split(",") } : {}),
     }));
   }
 

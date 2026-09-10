@@ -22,28 +22,29 @@ async function signIn(page: Page, email: string) {
   await expect(page).toHaveURL(/\/app$/);
 }
 
-async function expectAccessible(page: Page) {
+async function expectAccessible(page: Page, checkpoint: string) {
   const results = await new AxeBuilder({ page }).analyze();
-  expect(results.violations).toEqual([]);
+  const rules = results.violations.map(({ id }) => id).filter((id) => /^[a-z0-9-]+$/.test(id));
+  if (rules.length > 0) throw new Error(`A11Y_CHECKPOINT_${checkpoint}:${rules.join(",")}`);
 }
 
 test("sign in, create a workspace, upload real bytes, index, answer, and open a citation", async ({ page, request }) => {
   const email = await register(request);
   await signIn(page, email);
-  await expectAccessible(page);
+  await expectAccessible(page, "DASHBOARD");
 
   const suffix = randomUUID().slice(0, 8);
   const workspaceName = `Release evidence ${suffix}`;
-  await page.getByRole("link", { name: "Workspaces" }).click();
-  await expectAccessible(page);
+  await page.getByRole("link", { name: "Workspaces", exact: true }).click();
+  await expectAccessible(page, "WORKSPACE_FORM");
   await page.getByLabel("Workspace name").fill(workspaceName);
   await page.getByLabel("Workspace slug").fill(`release-evidence-${suffix}`);
   await page.getByLabel("Workspace description").fill("Deterministic browser sources");
   await page.getByRole("button", { name: "Create workspace" }).click();
   await expect(page.getByRole("heading", { name: workspaceName })).toBeVisible();
 
-  await page.getByRole("link", { name: "Documents" }).click();
-  await expectAccessible(page);
+  await page.getByRole("link", { name: "Documents", exact: true }).click();
+  await expectAccessible(page, "DOCUMENT_FORM");
   await page.getByLabel("Document file").setInputFiles({
     name: "retention-policy.txt",
     mimeType: "text/plain",
@@ -53,10 +54,10 @@ test("sign in, create a workspace, upload real bytes, index, answer, and open a 
   await page.getByRole("button", { name: "Upload and index" }).click();
   await expect(page.getByRole("status")).toContainText("is indexed and ready to search");
   await expect(page.getByRole("link", { name: "Open retention-policy.txt", exact: true })).toBeVisible();
-  await expectAccessible(page);
+  await expectAccessible(page, "DOCUMENT_INDEXED");
 
-  await page.getByRole("link", { name: "Conversations" }).click();
-  await expectAccessible(page);
+  await page.getByRole("link", { name: "Conversations", exact: true }).click();
+  await expectAccessible(page, "CONVERSATION_FORM");
   await page.getByLabel("Workspace").selectOption({ label: workspaceName });
   await page.getByLabel("Conversation title").fill("Retention check");
   await page.getByLabel("Document scope").selectOption({ label: "retention-policy.txt" });
@@ -66,10 +67,10 @@ test("sign in, create a workspace, upload real bytes, index, answer, and open a 
   await expect(page.getByText("The supplied source states that company records must be retained for seven years.")).toBeVisible();
   const sources = page.getByRole("region", { name: "Sources for answer" });
   await expect(sources).toContainText("Company records must be retained for seven years.");
-  await expectAccessible(page);
+  await expectAccessible(page, "GROUNDED_ANSWER");
   await page.getByRole("link", { name: "Open retention-policy.txt" }).click();
   await expect(page.getByRole("heading", { name: "retention-policy.txt" })).toBeVisible();
-  await expectAccessible(page);
+  await expectAccessible(page, "DOCUMENT_DETAIL");
 });
 
 test("invalid sign-in and authenticated repository recovery are accessible", async ({ page, request }) => {
@@ -78,14 +79,14 @@ test("invalid sign-in and authenticated repository recovery are accessible", asy
   await page.getByLabel("Password").fill(password);
   await page.getByRole("button", { name: "Sign in" }).click();
   await expect(page.getByRole("alert")).toBeVisible();
-  await expectAccessible(page);
+  await expectAccessible(page, "INVALID_LOGIN");
 
   const email = await register(request);
   await page.getByLabel("Email address").fill(email);
   await page.getByLabel("Password").fill(password);
   await page.getByRole("button", { name: "Sign in" }).click();
   await expect(page).toHaveURL(/\/app$/);
-  await expectAccessible(page);
+  await expectAccessible(page, "RECOVERED_LOGIN");
 
   await page.route("**/api/workspaces", async (route) => {
     await route.fulfill({
@@ -97,9 +98,9 @@ test("invalid sign-in and authenticated repository recovery are accessible", asy
   await page.getByRole("link", { name: "Workspaces" }).click();
   await expect(page.getByRole("heading", { name: "Workspaces unavailable" })).toBeVisible();
   await expect(page.getByRole("button", { name: "Retry workspaces" })).toBeVisible();
-  await expectAccessible(page);
+  await expectAccessible(page, "WORKSPACES_ERROR");
   await page.unroute("**/api/workspaces");
   await page.getByRole("button", { name: "Retry workspaces" }).click();
   await expect(page.getByRole("heading", { name: "No workspaces yet" })).toBeVisible();
-  await expectAccessible(page);
+  await expectAccessible(page, "WORKSPACES_RECOVERED");
 });

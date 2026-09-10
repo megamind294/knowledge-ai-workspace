@@ -46,8 +46,10 @@
 
 ### Task 3: Production containers
 
-- [ ] Add reproducible non-root API and web images with production-only runtime dependencies.
-- [ ] Serve the SPA with history fallback, security headers, same-origin API proxying, and container health checks.
+- [x] Add reproducible non-root API and web images with production-only runtime dependencies.
+- [x] Serve the SPA with history fallback, security headers, same-origin API proxying, and container health checks.
+
+Task 3 has static local contract verification only: Docker and Podman were unavailable, so the images have not been built or exercised. Task 4 owns the container topology and runtime smoke coverage.
 
 ### Task 4: Container topology and CI smoke
 

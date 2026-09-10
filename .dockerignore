@@ -1,0 +1,15 @@
+.data
+.env
+.env.*
+**/.data
+**/.env
+**/.env.*
+.git
+.superpowers
+.worktrees
+coverage
+dist
+node_modules
+**/dist
+**/node_modules
+npm-debug.log*

@@ -10,7 +10,7 @@
 
 **Spec:** `docs/superpowers/specs/2026-08-27-ai-knowledge-workspace-design.md`
 
-**Progress:** Day 6 Tasks 1 and 2 are complete on the draft delivery branch. Task 1 provides dependency-free liveness and bounded database-backed readiness, including timeout recovery. Task 2 adds runtime-allow-listed JSON events for startup, shutdown, request completion, and readiness transitions; operational correlation IDs are server generated, and URLs, query strings, credentials, bodies, source text, prompts, provider responses, caught errors, and database details cannot enter the event schema. The local repository suite has 341 runnable tests with nine PostgreSQL/pgvector cases skipped without their database. All 350 tests passed on implementation commit `a9fabf74eede31968d3560f0ce011566643ea0b6` in [GitHub Actions run #138](https://github.com/megamind294/knowledge-ai-workspace/actions/runs/34414092148), alongside lint, strict type-checking, production builds, dependency validation, grounded-answer fixtures, and a zero-vulnerability production audit.
+**Progress:** Day 6 Tasks 1–3 are complete on the draft delivery branch. Task 1 provides dependency-free liveness and bounded database-backed readiness, including timeout recovery. Task 2 adds privacy-bounded structured operational events. Task 3 adds immutable-digest, non-root API and web image definitions, production-only API dependencies, explicit persistent document storage, health checks, Nginx SPA fallback, security headers, a same-origin API proxy, and mutation-tested container contracts. The local repository suite has 347 runnable tests with nine PostgreSQL/pgvector cases skipped without their database. All 356 tests passed on implementation commit `dad52bdf482654011f7bff27d89d8bd75990a4bd` in [GitHub Actions run #142](https://github.com/megamind294/knowledge-ai-workspace/actions/runs/34437142538), alongside lint, strict type-checking, production builds, dependency validation, grounded-answer acceptance, and a zero-vulnerability production audit. Docker and Podman remain unavailable locally, so Task 4 still owns actual image builds and runtime smoke coverage.
 
 ## Global constraints
 
@@ -49,7 +49,7 @@
 - [x] Add reproducible non-root API and web images with production-only runtime dependencies.
 - [x] Serve the SPA with history fallback, security headers, same-origin API proxying, and container health checks.
 
-Task 3 has static local contract verification only: Docker and Podman were unavailable, so the images have not been built or exercised. Task 4 owns the container topology and runtime smoke coverage.
+Task 3's static container contracts pass locally and in GitHub Actions. Docker and Podman were unavailable locally and the current CI job does not yet build images, so the images have not been built or exercised. Task 4 owns the container topology and runtime smoke coverage.
 
 ### Task 4: Container topology and CI smoke
 

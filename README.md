@@ -136,7 +136,7 @@ The web build uses API mode by default. Set `VITE_API_URL` when the API is hoste
 
 `apps/web/Dockerfile` builds the Vite SPA in its default same-origin API mode and serves it from an unprivileged Nginx process on port 8080. Its Nginx configuration provides SPA history fallback, a local `/healthz` check, a 10 MiB request limit matching the API, security headers, no request-bearing Nginx logs, and same-origin `/api` proxy rules for an API upstream named `api` on port 4000. The container image does not configure a distinct-origin `VITE_API_URL`.
 
-These are image artifacts only, not a deployment or a container topology. Docker and Podman were unavailable in the implementation environment, so the image definitions are locally contract-verified but have not yet been built or exercised. Task 4 will supply the topology and runtime smoke coverage.
+These are image artifacts only, not a deployment or a container topology. Their mutation-tested static contracts pass locally and in GitHub Actions, but Docker and Podman were unavailable in the implementation environment and the images have not yet been built or exercised. Task 4 will supply the topology and runtime smoke coverage.
 
 Google OAuth remains disabled unless `GOOGLE_OAUTH_CLIENT_ID`, `GOOGLE_OAUTH_CLIENT_SECRET`, and `GOOGLE_OAUTH_REDIRECT_URI` are all present. Configure the callback URI in Google to match exactly. The client control is enabled only after API capability discovery confirms complete configuration.
 
@@ -171,6 +171,6 @@ In API mode, Day 4 creates document metadata, uploads the actual selected bytes 
 3. **Day 3 — complete:** Express API, PostgreSQL, email/password authentication, optional Google OAuth boundary, authorized metadata persistence, and frontend API integration
 4. **Day 4 — complete:** normalization/chunking, PDF/TXT/Markdown/DOCX textual extraction, authorized durable filesystem byte storage, pgvector schema, provider-neutral transactional indexing, authenticated indexing/retry UI, and scoped semantic source search
 5. **Day 5 — complete:** provider-neutral grounded generation, server-validated citations, conversation history, low-confidence behavior, explicit external-provider data-flow documentation, and deterministic groundedness evaluation
-6. **Day 6 — in progress:** CI-verified operational readiness and structured observability plus locally contract-verified production image definitions; container topology/runtime smoke, end-to-end coverage, deployment guidance, and final polish remain
+6. **Day 6 — in progress:** CI-verified operational readiness, structured observability, and production-image contracts; container topology/runtime smoke, end-to-end coverage, deployment guidance, and final polish remain
 
 See [`PROJECT_STATUS.md`](PROJECT_STATUS.md) for the current handoff state.

@@ -1,0 +1,90 @@
+import AxeBuilder from "@axe-core/playwright";
+import { expect, test, type Page, type APIRequestContext } from "@playwright/test";
+import { randomUUID } from "node:crypto";
+
+const password = "Browser-smoke-password-42!";
+
+async function register(request: APIRequestContext) {
+  const email = `browser-smoke+${randomUUID()}@example.com`;
+  const response = await request.post("/api/auth/register", {
+    data: { email, displayName: "Browser Smoke", password },
+    timeout: 10_000,
+  });
+  expect(response.status()).toBe(201);
+  return email;
+}
+
+async function signIn(page: Page, email: string) {
+  await page.goto("/login");
+  await page.getByLabel("Email address").fill(email);
+  await page.getByLabel("Password").fill(password);
+  await page.getByRole("button", { name: "Sign in" }).click();
+  await expect(page).toHaveURL(/\/app$/);
+}
+
+async function expectAccessible(page: Page) {
+  const results = await new AxeBuilder({ page }).analyze();
+  expect(results.violations).toEqual([]);
+}
+
+test("sign in, create a workspace, upload real bytes, index, answer, and open a citation", async ({ page, request }) => {
+  const email = await register(request);
+  await signIn(page, email);
+  await expectAccessible(page);
+
+  const suffix = randomUUID().slice(0, 8);
+  const workspaceName = `Release evidence ${suffix}`;
+  await page.getByRole("link", { name: "Workspaces" }).click();
+  await page.getByLabel("Workspace name").fill(workspaceName);
+  await page.getByLabel("Workspace slug").fill(`release-evidence-${suffix}`);
+  await page.getByLabel("Workspace description").fill("Deterministic browser sources");
+  await page.getByRole("button", { name: "Create workspace" }).click();
+  await expect(page.getByRole("heading", { name: workspaceName })).toBeVisible();
+
+  await page.getByRole("link", { name: "Documents" }).click();
+  await page.getByLabel("Document file").setInputFiles({
+    name: "retention-policy.txt",
+    mimeType: "text/plain",
+    buffer: Buffer.from("Retention Policy\nCompany records must be retained for seven years."),
+  });
+  await page.getByLabel("Workspace").selectOption({ label: workspaceName });
+  await page.getByRole("button", { name: "Upload and index" }).click();
+  await expect(page.getByRole("status")).toContainText("is indexed and ready to search");
+  await expect(page.getByText("retention-policy.txt")).toBeVisible();
+
+  await page.getByRole("link", { name: "Conversations" }).click();
+  await page.getByLabel("Workspace").selectOption({ label: workspaceName });
+  await page.getByLabel("Conversation title").fill("Retention check");
+  await page.getByLabel("Document scope").selectOption({ label: "retention-policy.txt" });
+  await page.getByRole("button", { name: "Create conversation" }).click();
+  await page.getByLabel("Ask a question").fill("How long must company records be retained?");
+  await page.getByRole("button", { name: "Send question" }).click();
+  await expect(page.getByText("The deterministic source states that retention is seven years.")).toBeVisible();
+  await expect(page.getByRole("region", { name: "Sources for answer" })).toContainText("Retention Policy");
+  await expectAccessible(page);
+  await page.getByRole("link", { name: "Open retention-policy.txt" }).click();
+  await expect(page.getByRole("heading", { name: "retention-policy.txt" })).toBeVisible();
+});
+
+test("invalid sign-in and authenticated repository recovery are accessible", async ({ page, request }) => {
+  await page.goto("/login");
+  await page.getByLabel("Email address").fill(`missing+${randomUUID()}@example.com`);
+  await page.getByLabel("Password").fill(password);
+  await page.getByRole("button", { name: "Sign in" }).click();
+  await expect(page.getByRole("alert")).toBeVisible();
+  await expectAccessible(page);
+
+  const email = await register(request);
+  await page.route("**/api/workspaces", async (route) => {
+    await route.fulfill({
+      status: 503,
+      contentType: "application/json",
+      body: JSON.stringify({ error: { code: "INTERNAL_ERROR", message: "Temporarily unavailable", requestId: randomUUID() } }),
+    });
+  });
+  await signIn(page, email);
+  await page.getByRole("link", { name: "Workspaces" }).click();
+  await expect(page.getByRole("heading", { name: "Workspaces unavailable" })).toBeVisible();
+  await expect(page.getByRole("button", { name: "Retry workspaces" })).toBeVisible();
+  await expectAccessible(page);
+});

@@ -1,5 +1,6 @@
 import type {
   Collection,
+  CreateWorkspaceRequest,
   KnowledgeDocument,
   RetrievalRequest,
   RetrievalResponse,
@@ -152,6 +153,24 @@ export function createApiKnowledgeRepository(
 
   return {
     mode: "api",
+
+    async createWorkspace(input: CreateWorkspaceRequest) {
+      const value = (
+        await client.request<{ workspace: Workspace }>("/api/workspaces", {
+          method: "POST",
+          body: JSON.stringify(input),
+        })
+      ).workspace;
+      return {
+        id: value.id,
+        name: value.name,
+        description: value.description,
+        role: value.role,
+        collectionCount: 0,
+        documentCount: 0,
+        updatedAt: value.updatedAt,
+      };
+    },
 
     async getDashboard() {
       const workspaceList = await workspaces();

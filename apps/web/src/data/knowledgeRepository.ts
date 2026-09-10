@@ -2,6 +2,7 @@ import type {
   Conversation,
   ConversationHistoryResponse,
   CreateConversationRequest,
+  CreateWorkspaceRequest,
   RetrievalRequest,
   RetrievalResult,
   SendConversationMessageRequest,
@@ -26,6 +27,7 @@ export interface KnowledgeRepository {
   readonly mode: "fixture" | "api";
   getDashboard(): Promise<DashboardSnapshot>;
   getWorkspaces(): Promise<WorkspaceSummary[]>;
+  createWorkspace(input: CreateWorkspaceRequest): Promise<WorkspaceSummary>;
   getWorkspace(id: string): Promise<WorkspaceSummary | null>;
   getCollections(workspaceId: string): Promise<CollectionSummary[]>;
   getCollection(
@@ -172,6 +174,21 @@ export function createFixtureKnowledgeRepository(
 
     async getWorkspaces() {
       return workspaces.map(copyWorkspace);
+    },
+
+    async createWorkspace(input) {
+      const timestamp = now().toISOString();
+      const workspace: WorkspaceSummary = {
+        id: `local-workspace-${workspaces.length + 1}`,
+        name: input.name,
+        description: input.description,
+        role: "owner",
+        collectionCount: 0,
+        documentCount: 0,
+        updatedAt: timestamp,
+      };
+      workspaces.push(workspace);
+      return copyWorkspace(workspace);
     },
 
     async getWorkspace(id) {

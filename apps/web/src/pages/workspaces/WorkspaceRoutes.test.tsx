@@ -35,6 +35,47 @@ describe("workspace and collection routes", () => {
     ).toHaveAttribute("href", "/app/workspaces");
   });
 
+  it("creates a workspace and navigates to it in API mode", async () => {
+    const user = userEvent.setup();
+    const created = {
+      id: "00000000-0000-4000-8000-000000000001",
+      name: "Release evidence",
+      description: "Deterministic browser sources",
+      role: "owner" as const,
+      collectionCount: 0,
+      documentCount: 0,
+      updatedAt: "2026-09-10T00:00:00.000Z",
+    };
+    const createWorkspace = vi.fn().mockResolvedValue(created);
+    const repository = {
+      ...fixtureKnowledgeRepository,
+      mode: "api" as const,
+      createWorkspace,
+      async getWorkspace(id: string) {
+        return id === created.id ? created : null;
+      },
+      async getCollections() {
+        return [];
+      },
+    } satisfies KnowledgeRepository;
+    renderAuthenticatedRoute("/app/workspaces", repository);
+
+    await user.type(screen.getByLabelText("Workspace name"), "Release evidence");
+    await user.type(screen.getByLabelText("Workspace slug"), "release-evidence");
+    await user.type(
+      screen.getByLabelText("Workspace description"),
+      "Deterministic browser sources",
+    );
+    await user.click(screen.getByRole("button", { name: "Create workspace" }));
+
+    expect(createWorkspace).toHaveBeenCalledWith({
+      name: "Release evidence",
+      slug: "release-evidence",
+      description: "Deterministic browser sources",
+    });
+    expect(await screen.findByRole("heading", { name: "Release evidence" })).toBeVisible();
+  });
+
   it("supports a direct nested collection URL with documents and breadcrumbs", async () => {
     renderAuthenticatedRoute(
       "/app/workspaces/product-research/collections/market-intelligence",

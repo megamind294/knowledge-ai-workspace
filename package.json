@@ -14,13 +14,20 @@
     "dev:api": "npm run dev --workspace @knowledge-ai/api",
     "lint": "npm run lint --workspace @knowledge-ai/contracts && npm run lint --workspace @knowledge-ai/api && npm run lint --workspace @knowledge-ai/web",
     "typecheck": "npm run typecheck --workspace @knowledge-ai/contracts && npm run typecheck --workspace @knowledge-ai/api && npm run typecheck --workspace @knowledge-ai/web",
-    "test": "npm run test:container-contract && npm run test:compose-contract && npm run test --workspace @knowledge-ai/contracts -- --run && npm run test --workspace @knowledge-ai/api -- --run && npm run test --workspace @knowledge-ai/web --",
+    "test": "npm run test:container-contract && npm run test:compose-contract && npm run test:browser-contract && npm run test --workspace @knowledge-ai/contracts -- --run && npm run test --workspace @knowledge-ai/api -- --run && npm run test --workspace @knowledge-ai/web --",
     "verify:container-contract": "node scripts/verify-container-contract.mjs",
     "test:container-contract": "node --test scripts/verify-container-contract.test.mjs",
     "verify:compose-contract": "node scripts/verify-compose-contract.mjs",
     "test:compose-contract": "node --test scripts/verify-compose-contract.test.mjs",
+    "test:browser-contract": "node --test scripts/verify-browser-contract.test.mjs",
+    "test:e2e": "playwright test",
     "evaluate:grounded:fixtures": "npm run evaluate:grounded:fixtures --workspace @knowledge-ai/api",
     "evaluate:grounded": "npm run evaluate:grounded --workspace @knowledge-ai/api",
     "build": "npm run build --workspace @knowledge-ai/contracts && npm run build --workspace @knowledge-ai/api && npm run build --workspace @knowledge-ai/web"
+  },
+  "devDependencies": {
+    "@axe-core/playwright": "^4.10.2",
+    "@playwright/test": "^1.55.0",
+    "playwright-core": "^1.55.0"
   }
 }

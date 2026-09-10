@@ -92,3 +92,56 @@ jobs:
       - name: Remove smoke resources
         if: always()
         run: docker compose down --volumes --remove-orphans
+
+  browser-smoke:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    env:
+      KEYSTONE_DATABASE_PASSWORD: ci-only-url-safe-database-password
+      KEYSTONE_ACCESS_TOKEN_SECRET: ci-only-access-token-secret-40-characters
+      KEYSTONE_WEB_PORT: "8080"
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+
+      - name: Install test dependencies
+        run: npm ci
+
+      - name: Install Chromium
+        run: npx playwright install --with-deps chromium
+
+      - name: Build browser topology
+        run: docker compose -f compose.yaml -f compose.e2e.yaml build --pull
+
+      - name: Start browser topology
+        run: docker compose -f compose.yaml -f compose.e2e.yaml up --detach --wait --wait-timeout 120
+
+      - name: Exercise production browser flows
+        run: npx playwright test
+
+      - name: Collect privacy-safe diagnostics
+        if: always()
+        run: |
+          mkdir -p test-results
+          docker compose -f compose.yaml -f compose.e2e.yaml ps --format json > test-results/compose-ps.json
+
+      - name: Upload browser diagnostics
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: browser-smoke-diagnostics
+          path: |
+            test-results/browser-results.xml
+            test-results/compose-ps.json
+          if-no-files-found: warn
+          retention-days: 7
+
+      - name: Remove browser resources
+        if: always()
+        run: docker compose -f compose.yaml -f compose.e2e.yaml down --volumes --remove-orphans

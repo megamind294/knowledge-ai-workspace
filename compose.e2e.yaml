@@ -1,0 +1,20 @@
+services:
+  deterministic-provider:
+    build:
+      context: .
+      dockerfile: tests/e2e/provider.Dockerfile
+    init: true
+    network_mode: service:api
+    restart: "no"
+
+  api:
+    environment:
+      EMBEDDING_API_KEY: deterministic-ci-fixture
+      EMBEDDING_DIMENSIONS: "1536"
+      EMBEDDING_ENDPOINT: http://127.0.0.1:8081/v1/embeddings
+      EMBEDDING_MODEL: deterministic-fixture-v1
+      EMBEDDING_TIMEOUT_MS: "5000"
+      GENERATION_API_KEY: deterministic-ci-fixture
+      GENERATION_ENDPOINT: http://127.0.0.1:8081/v1/chat/completions
+      GENERATION_MODEL: deterministic-fixture-v1
+      GENERATION_TIMEOUT_MS: "5000"

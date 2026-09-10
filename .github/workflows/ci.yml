@@ -9,6 +9,9 @@ on:
     branches:
       - main
 
+permissions:
+  contents: read
+
 jobs:
   test-and-build:
     runs-on: ubuntu-latest
@@ -16,7 +19,7 @@ jobs:
       TEST_DATABASE_URL: postgresql://keystone:keystone@localhost:5432/keystone_test
     services:
       postgres:
-        image: pgvector/pgvector:0.8.6-pg16-bookworm
+        image: pgvector/pgvector:0.8.6-pg16-bookworm@sha256:ccc6e83d6e35e931dc7c5def2022729d5a6c370318d099181995567ff1fb4d6b
         env:
           POSTGRES_USER: keystone
           POSTGRES_PASSWORD: keystone
@@ -55,3 +58,37 @@ jobs:
 
       - name: Build
         run: npm run build
+
+  container-smoke:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    env:
+      KEYSTONE_DATABASE_PASSWORD: ci-only-url-safe-database-password
+      KEYSTONE_ACCESS_TOKEN_SECRET: ci-only-access-token-secret-40-characters
+      KEYSTONE_WEB_PORT: "8080"
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+
+      - name: Build production images
+        run: docker compose build --pull
+
+      - name: Start production topology
+        run: docker compose up --detach --wait --wait-timeout 120
+
+      - name: Verify non-root runtimes
+        run: |
+          test "$(docker compose exec -T api id -u)" != "0"
+          test "$(docker compose exec -T web id -u)" != "0"
+
+      - name: Exercise built containers
+        run: node scripts/smoke-containers.mjs
+
+      - name: Remove smoke resources
+        if: always()
+        run: docker compose down --volumes --remove-orphans

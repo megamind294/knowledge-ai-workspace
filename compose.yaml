@@ -1,0 +1,52 @@
+name: keystone
+
+services:
+  database:
+    image: pgvector/pgvector:0.8.6-pg16-bookworm@sha256:ccc6e83d6e35e931dc7c5def2022729d5a6c370318d099181995567ff1fb4d6b
+    environment:
+      POSTGRES_DB: ${KEYSTONE_DATABASE_NAME:-keystone}
+      POSTGRES_USER: ${KEYSTONE_DATABASE_USER:-keystone}
+      POSTGRES_PASSWORD: ${KEYSTONE_DATABASE_PASSWORD:?Set KEYSTONE_DATABASE_PASSWORD to a URL-safe value}
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U $$POSTGRES_USER -d $$POSTGRES_DB"]
+      interval: 5s
+      timeout: 5s
+      retries: 12
+      start_period: 5s
+    restart: unless-stopped
+    volumes:
+      - database-data:/var/lib/postgresql/data
+
+  api:
+    build:
+      context: .
+      dockerfile: apps/api/Dockerfile
+    environment:
+      NODE_ENV: production
+      DATABASE_URL: postgresql://${KEYSTONE_DATABASE_USER:-keystone}:${KEYSTONE_DATABASE_PASSWORD:?Set KEYSTONE_DATABASE_PASSWORD to a URL-safe value}@database:5432/${KEYSTONE_DATABASE_NAME:-keystone}
+      ACCESS_TOKEN_SECRET: ${KEYSTONE_ACCESS_TOKEN_SECRET:?Set KEYSTONE_ACCESS_TOKEN_SECRET to at least 32 characters}
+      WEB_APP_URL: http://localhost:${KEYSTONE_WEB_PORT:-8080}
+      OBJECT_STORAGE_DIRECTORY: /var/lib/keystone/objects
+    depends_on:
+      database:
+        condition: service_healthy
+    init: true
+    restart: unless-stopped
+    volumes:
+      - document-data:/var/lib/keystone/objects
+
+  web:
+    build:
+      context: .
+      dockerfile: apps/web/Dockerfile
+    depends_on:
+      api:
+        condition: service_healthy
+    init: true
+    restart: unless-stopped
+    ports:
+      - "${KEYSTONE_WEB_PORT:-8080}:8080"
+
+volumes:
+  database-data:
+  document-data:

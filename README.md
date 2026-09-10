@@ -1,6 +1,6 @@
 # Keystone — AI Knowledge Workspace
 
-Keystone is a portfolio-oriented knowledge workspace for organizing source documents and building grounded question-answer workflows. Days 1–4 provide a tested React application, Express API, PostgreSQL persistence, secure sessions, optional Google OAuth, authenticated document ingestion, durable single-filesystem source storage, and pgvector-backed scoped retrieval. Day 5 now includes a provider-neutral, citation-safe grounded-generation core, authorized transactional conversation persistence, authenticated conversation APIs, an API-backed React conversation and citation experience, and deterministic groundedness evaluation. Day 6 currently adds operational health/readiness and privacy-bounded logs plus production image definitions; the images are locally contract-verified but have not yet been built or exercised in a container runtime.
+Keystone is a portfolio-oriented knowledge workspace for organizing source documents and building grounded question-answer workflows. Days 1–4 provide a tested React application, Express API, PostgreSQL persistence, secure sessions, optional Google OAuth, authenticated document ingestion, durable single-filesystem source storage, and pgvector-backed scoped retrieval. Day 5 now includes a provider-neutral, citation-safe grounded-generation core, authorized transactional conversation persistence, authenticated conversation APIs, an API-backed React conversation and citation experience, and deterministic groundedness evaluation. Day 6 currently adds operational health/readiness, privacy-bounded logs, production image definitions, and a Compose topology with container-runtime smoke coverage in CI.
 
 ## Day 1 capabilities
 
@@ -130,13 +130,24 @@ Before starting, generate a private signing secret (for example, `openssl rand -
 
 The web build uses API mode by default. Set `VITE_API_URL` when the API is hosted on another origin. To run the deliberately local, non-networked portfolio preview instead, set `VITE_DATA_MODE=fixture`; this is the only mode that exposes the demo-session control.
 
-## Production image definitions
+## Production containers
 
 `apps/api/Dockerfile` builds the shared contracts and API, installs only the API production dependency closure in its runtime stage, runs as Node's unprivileged `node` user, and declares `/var/lib/keystone/objects` as the persistent document-storage volume. It defaults `OBJECT_STORAGE_DIRECTORY` to that mounted path (and runtime configuration may override it) and checks the dependency-free `/api/health` endpoint.
 
 `apps/web/Dockerfile` builds the Vite SPA in its default same-origin API mode and serves it from an unprivileged Nginx process on port 8080. Its Nginx configuration provides SPA history fallback, a local `/healthz` check, a 10 MiB request limit matching the API, security headers, no request-bearing Nginx logs, and same-origin `/api` proxy rules for an API upstream named `api` on port 4000. The container image does not configure a distinct-origin `VITE_API_URL`.
 
-These are image artifacts only, not a deployment or a container topology. Their mutation-tested static contracts pass locally and in GitHub Actions, but Docker and Podman were unavailable in the implementation environment and the images have not yet been built or exercised. Task 4 will supply the topology and runtime smoke coverage.
+`compose.yaml` connects the production web and API images to PostgreSQL 16 with pgvector. The database and document bytes use separate named volumes, the API waits for database health, and the public web service waits for API health. Only the Nginx web entrypoint is published; it proxies API requests over the private Compose network.
+
+To run the production topology locally, copy `.env.example` to `.env`, generate distinct local-only values for `KEYSTONE_DATABASE_PASSWORD` and `KEYSTONE_ACCESS_TOKEN_SECRET`, then run:
+
+```bash
+docker compose build
+docker compose up --detach --wait
+node scripts/smoke-containers.mjs
+docker compose down
+```
+
+The database password must be URL-safe because Compose interpolates it into the API's PostgreSQL URL. `docker compose down` preserves both named volumes; add `--volumes` only when deliberately deleting local database and document data. The GitHub Actions `container-smoke` job builds these images and starts this topology before exercising web health, API liveness/readiness, registration, login, authenticated identity, deep SPA routing, and non-root runtime users. Docker and Podman were unavailable in the implementation environment, so local verification is limited to mutation-tested static contracts; container-runtime results are reported only from CI.
 
 Google OAuth remains disabled unless `GOOGLE_OAUTH_CLIENT_ID`, `GOOGLE_OAUTH_CLIENT_SECRET`, and `GOOGLE_OAUTH_REDIRECT_URI` are all present. Configure the callback URI in Google to match exactly. The client control is enabled only after API capability discovery confirms complete configuration.
 
@@ -171,6 +182,6 @@ In API mode, Day 4 creates document metadata, uploads the actual selected bytes 
 3. **Day 3 — complete:** Express API, PostgreSQL, email/password authentication, optional Google OAuth boundary, authorized metadata persistence, and frontend API integration
 4. **Day 4 — complete:** normalization/chunking, PDF/TXT/Markdown/DOCX textual extraction, authorized durable filesystem byte storage, pgvector schema, provider-neutral transactional indexing, authenticated indexing/retry UI, and scoped semantic source search
 5. **Day 5 — complete:** provider-neutral grounded generation, server-validated citations, conversation history, low-confidence behavior, explicit external-provider data-flow documentation, and deterministic groundedness evaluation
-6. **Day 6 — in progress:** CI-verified operational readiness, structured observability, and production-image contracts; container topology/runtime smoke, end-to-end coverage, deployment guidance, and final polish remain
+6. **Day 6 — in progress:** CI-verified operational readiness, structured observability, production images, and a Compose topology with runtime smoke coverage; browser end-to-end coverage, deployment guidance, and final polish remain
 
 See [`PROJECT_STATUS.md`](PROJECT_STATUS.md) for the current handoff state.

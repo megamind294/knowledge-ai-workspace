@@ -113,6 +113,7 @@ describe("conversation routes", () => {
 
     expect(await screen.findByText("Employees receive twenty days.")).toBeVisible();
     const sources = screen.getByRole("region", { name: /sources for answer/i });
+    expect(within(sources).getByRole("heading", { name: "Sources", level: 2 })).toBeVisible();
     expect(within(sources).getByText("Annual leave")).toBeVisible();
     expect(within(sources).getByRole("link", { name: /open policy.md/i })).toHaveAttribute(
       "href",

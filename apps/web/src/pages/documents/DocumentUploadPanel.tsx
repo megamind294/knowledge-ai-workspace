@@ -174,7 +174,8 @@ export function DocumentUploadPanel() {
           Document file
           <input
             accept=".pdf,.txt,.md,.docx"
-            className="mt-2 block w-full rounded-xl border border-dashed border-white/20 bg-slate-950/70 px-4 py-3 text-sm text-slate-300 file:mr-4 file:rounded-lg file:border-0 file:bg-indigo-300 file:px-3 file:py-2 file:font-semibold file:text-slate-950"
+            aria-label="Document file"
+            className="peer sr-only"
             data-a11y-id="document-file-input"
             onChange={(event) => {
               const file = event.target.files?.[0];
@@ -194,6 +195,17 @@ export function DocumentUploadPanel() {
             ref={fileInputRef}
             type="file"
           />
+          <span
+            aria-hidden="true"
+            className="mt-2 flex w-full items-center gap-4 rounded-xl border border-dashed border-white/20 bg-slate-950/70 px-4 py-3 text-sm text-slate-200 peer-focus-visible:outline peer-focus-visible:outline-2 peer-focus-visible:outline-offset-2 peer-focus-visible:outline-indigo-300"
+          >
+            <span className="shrink-0 rounded-lg bg-indigo-300 px-3 py-2 font-semibold text-slate-950">
+              Choose file
+            </span>
+            <span className="min-w-0 truncate">
+              {selectedFile?.name ?? "No file selected"}
+            </span>
+          </span>
         </label>
 
         <label className="text-sm font-medium text-slate-200">

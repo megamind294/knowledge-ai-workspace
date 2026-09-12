@@ -43,10 +43,14 @@ describe("validated local document upload preview", () => {
     expect(
       await screen.findByRole("heading", { name: /add a document preview/i }),
     ).toBeVisible();
-    expect(screen.getByLabelText(/document file/i)).toHaveAttribute(
+    const fileInput = screen.getByLabelText(/document file/i);
+    expect(fileInput).toHaveAttribute(
       "accept",
       ".pdf,.txt,.md,.docx",
     );
+    expect(fileInput).toHaveClass("sr-only");
+    expect(screen.getByText("Choose file")).toBeVisible();
+    expect(screen.getByText("No file selected")).toBeVisible();
     expect(
       screen.getByText(/pdf, txt, markdown, or docx up to 10 mib/i),
     ).toBeVisible();

@@ -77,9 +77,11 @@ test("sign in, create a workspace, upload real bytes, index, answer, and open a 
   await expectAccessible(page, "DOCUMENT_INDEXED");
 
   await page.getByRole("link", { name: "Conversations", exact: true }).click();
+  await expect(page.getByRole("option", { name: workspaceName, exact: true })).toBeAttached();
   await expectAccessible(page, "CONVERSATION_FORM");
   await page.getByLabel("Workspace").selectOption({ label: workspaceName });
   await page.getByLabel("Conversation title").fill("Retention check");
+  await expect(page.getByRole("option", { name: "retention-policy.txt", exact: true })).toBeAttached();
   await page.getByLabel("Document scope").selectOption({ label: "retention-policy.txt" });
   await page.getByRole("button", { name: "Create conversation" }).click();
   await page.getByLabel("Ask a question").fill("How long must company records be retained?");

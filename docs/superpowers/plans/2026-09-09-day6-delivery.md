@@ -10,7 +10,7 @@
 
 **Spec:** `docs/superpowers/specs/2026-08-27-ai-knowledge-workspace-design.md`
 
-**Progress:** Day 6 Tasks 1–3 are complete on the draft delivery branch. Task 1 provides dependency-free liveness and bounded database-backed readiness, including timeout recovery. Task 2 adds privacy-bounded structured operational events. Task 3 adds immutable-digest, non-root API and web image definitions, production-only API dependencies, explicit persistent document storage, health checks, Nginx SPA fallback, security headers, a same-origin API proxy, and mutation-tested container contracts. The local repository suite has 347 runnable tests with nine PostgreSQL/pgvector cases skipped without their database. All 356 tests passed on implementation commit `dad52bdf482654011f7bff27d89d8bd75990a4bd` in [GitHub Actions run #142](https://github.com/megamind294/knowledge-ai-workspace/actions/runs/34437142538), alongside lint, strict type-checking, production builds, dependency validation, grounded-answer acceptance, and a zero-vulnerability production audit. Docker and Podman remain unavailable locally, so Task 4 still owns actual image builds and runtime smoke coverage.
+**Progress:** Day 6 Tasks 1–5 are complete on the draft delivery branch. Tasks 1–3 provide operational probes, privacy-bounded logging, and hardened non-root production images. Task 4 adds a health-ordered Compose topology with persistent database and document volumes plus real container-runtime smoke coverage. Task 5 adds deterministic Chromium acceptance for credential sign-in, workspace creation, real byte upload and indexing, grounded answers, citation navigation, recovery behavior, and critical-state accessibility. The local repository suite has 365 runnable tests with nine PostgreSQL/pgvector cases skipped without their database. All 374 repository tests, the grounded-answer fixture suite, production builds, real container smoke, and two browser journeys passed on commit `776d1792ea32feb66dbca25acc98d5abbe9510ef` in [GitHub Actions run #178](https://github.com/megamind294/knowledge-ai-workspace/actions/runs/34690174737). No production deployment or live-provider quality claim is made.
 
 ## Global constraints
 
@@ -53,13 +53,13 @@ Task 3's static container contracts pass locally and in GitHub Actions. Docker a
 
 ### Task 4: Container topology and CI smoke
 
-- [ ] Add a local Compose topology for web, API, pgvector PostgreSQL, and persistent document storage.
-- [ ] Build images and exercise health, readiness, authentication, and SPA routing through built containers in CI.
+- [x] Add a local Compose topology for web, API, pgvector PostgreSQL, and persistent document storage.
+- [x] Build images and exercise health, readiness, authentication, and SPA routing through built containers in CI.
 
 ### Task 5: Browser smoke and accessibility
 
-- [ ] Add deterministic end-to-end coverage for sign-in, workspace creation, upload, indexing, grounded answer, and citation navigation.
-- [ ] Add automated accessibility checks for critical authenticated and recovery flows.
+- [x] Add deterministic end-to-end coverage for sign-in, workspace creation, upload, indexing, grounded answer, and citation navigation.
+- [x] Add automated accessibility checks for critical authenticated and recovery flows.
 
 ### Task 6: Deployment guidance and final acceptance
 

@@ -1,6 +1,6 @@
 # Keystone — AI Knowledge Workspace
 
-Keystone is a portfolio-oriented knowledge workspace for organizing source documents and building grounded question-answer workflows. Days 1–4 provide a tested React application, Express API, PostgreSQL persistence, secure sessions, optional Google OAuth, authenticated document ingestion, durable single-filesystem source storage, and pgvector-backed scoped retrieval. Day 5 now includes a provider-neutral, citation-safe grounded-generation core, authorized transactional conversation persistence, authenticated conversation APIs, an API-backed React conversation and citation experience, and deterministic groundedness evaluation. Day 6 currently adds operational health/readiness, privacy-bounded logs, production image definitions, and a Compose topology with container-runtime smoke coverage in CI.
+Keystone is a portfolio-oriented knowledge workspace for organizing source documents and building grounded question-answer workflows. Days 1–4 provide a tested React application, Express API, PostgreSQL persistence, secure sessions, optional Google OAuth, authenticated document ingestion, durable single-filesystem source storage, and pgvector-backed scoped retrieval. Day 5 adds a provider-neutral, citation-safe grounded-generation core, authorized transactional conversation persistence, authenticated conversation APIs, an API-backed React conversation and citation experience, and deterministic groundedness evaluation. Day 6 currently adds operational health/readiness, privacy-bounded logs, production image definitions, a Compose topology with container-runtime smoke coverage, and deterministic production-browser and accessibility acceptance in CI.
 
 ## Day 1 capabilities
 
@@ -182,6 +182,6 @@ In API mode, Day 4 creates document metadata, uploads the actual selected bytes 
 3. **Day 3 — complete:** Express API, PostgreSQL, email/password authentication, optional Google OAuth boundary, authorized metadata persistence, and frontend API integration
 4. **Day 4 — complete:** normalization/chunking, PDF/TXT/Markdown/DOCX textual extraction, authorized durable filesystem byte storage, pgvector schema, provider-neutral transactional indexing, authenticated indexing/retry UI, and scoped semantic source search
 5. **Day 5 — complete:** provider-neutral grounded generation, server-validated citations, conversation history, low-confidence behavior, explicit external-provider data-flow documentation, and deterministic groundedness evaluation
-6. **Day 6 — in progress:** CI-verified operational readiness, structured observability, production images, and a Compose topology with runtime smoke coverage; browser end-to-end coverage, deployment guidance, and final polish remain
+6. **Day 6 — in progress:** CI-verified operational readiness, structured observability, production images, Compose runtime smoke, and Chromium end-to-end/accessibility acceptance; deployment guidance and final polish remain
 
 See [`PROJECT_STATUS.md`](PROJECT_STATUS.md) for the current handoff state.

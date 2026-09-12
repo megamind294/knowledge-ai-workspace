@@ -145,15 +145,15 @@ export function DocumentUploadPanel() {
   }
 
   return (
-    <section className="rounded-2xl border border-indigo-300/20 bg-indigo-950/30 p-6">
+    <section className="rounded-2xl border border-indigo-300/20 bg-indigo-950/30 p-6" data-a11y-id="document-upload-panel">
       <div className="max-w-3xl">
-        <p className="text-xs font-semibold uppercase tracking-[0.2em] text-indigo-300">
+        <p className="text-xs font-semibold uppercase tracking-[0.2em] text-indigo-300" data-a11y-id="document-upload-eyebrow">
           {isApi ? "Authenticated ingestion" : "Local simulation"}
         </p>
-        <h2 className="mt-2 text-xl font-semibold text-white">
+        <h2 className="mt-2 text-xl font-semibold text-white" data-a11y-id="document-upload-heading">
           {isApi ? "Upload and index a document" : "Add a document preview"}
         </h2>
-        <p className="mt-2 text-sm leading-6 text-slate-300">
+        <p className="mt-2 text-sm leading-6 text-slate-300" data-a11y-id="document-upload-description">
           {isApi ? (
             <>
               PDF, TXT, Markdown, and DOCX files can be indexed up to 10 MiB
@@ -175,6 +175,7 @@ export function DocumentUploadPanel() {
           <input
             accept=".pdf,.txt,.md,.docx"
             className="mt-2 block w-full rounded-xl border border-dashed border-white/20 bg-slate-950/70 px-4 py-3 text-sm text-slate-300 file:mr-4 file:rounded-lg file:border-0 file:bg-indigo-300 file:px-3 file:py-2 file:font-semibold file:text-slate-950"
+            data-a11y-id="document-file-input"
             onChange={(event) => {
               const file = event.target.files?.[0];
               setSelectedFile(
@@ -199,6 +200,7 @@ export function DocumentUploadPanel() {
           Workspace
           <select
             className="mt-2 block w-full rounded-xl border border-white/10 bg-slate-950 px-3 py-2.5 text-slate-100 disabled:opacity-100 disabled:text-slate-300"
+            data-a11y-id="document-workspace-select"
             disabled={workspacesQuery.isPending || createDocument.isPending}
             onChange={(event) => {
               setWorkspaceId(event.target.value);
@@ -221,6 +223,7 @@ export function DocumentUploadPanel() {
           Collection
           <select
             className="mt-2 block w-full rounded-xl border border-white/10 bg-slate-950 px-3 py-2.5 text-slate-100 disabled:opacity-100 disabled:text-slate-300"
+            data-a11y-id="document-collection-select"
             disabled={
               !workspaceId || collectionsQuery.isPending || createDocument.isPending
             }
@@ -261,6 +264,7 @@ export function DocumentUploadPanel() {
         <div className="lg:col-span-2">
           <button
             className="rounded-xl bg-indigo-300 px-4 py-2.5 text-sm font-semibold text-slate-950 transition hover:bg-indigo-200 disabled:cursor-not-allowed disabled:opacity-60"
+            data-a11y-id="document-upload-submit"
             disabled={createDocument.isPending}
             type="submit"
           >

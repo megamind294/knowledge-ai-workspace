@@ -25,7 +25,23 @@ async function signIn(page: Page, email: string) {
 async function expectAccessible(page: Page, checkpoint: string) {
   const results = await new AxeBuilder({ page }).analyze();
   const rules = results.violations.map(({ id }) => id).filter((id) => /^[a-z0-9-]+$/.test(id));
-  if (rules.length > 0) throw new Error(`A11Y_CHECKPOINT_${checkpoint}:${rules.join(",")}`);
+  const elements = new Set<string>();
+  for (const violation of results.violations) {
+    for (const node of violation.nodes) {
+      const selector = node.target[0];
+      if (typeof selector !== "string") continue;
+      const marker = await page.locator(selector).first().evaluate((element) =>
+        element.closest("[data-a11y-id]")?.getAttribute("data-a11y-id") ?? null,
+      ).catch(() => null);
+      if (marker && /^[a-z0-9-]+$/.test(marker)) elements.add(marker);
+    }
+  }
+  if (rules.length > 0) {
+    const markers = [...elements];
+    throw new Error(
+      `A11Y_CHECKPOINT_${checkpoint}:${rules.join(",")}${markers.length > 0 ? `;elements=${markers.join(",")}` : ""}`,
+    );
+  }
 }
 
 test("sign in, create a workspace, upload real bytes, index, answer, and open a citation", async ({ page, request }) => {
@@ -95,7 +111,7 @@ test("invalid sign-in and authenticated repository recovery are accessible", asy
       body: JSON.stringify({ error: { code: "INTERNAL_ERROR", message: "Temporarily unavailable", requestId: randomUUID() } }),
     });
   });
-  await page.getByRole("link", { name: "Workspaces" }).click();
+  await page.getByRole("link", { name: "Workspaces", exact: true }).click();
   await expect(page.getByRole("heading", { name: "Workspaces unavailable" })).toBeVisible();
   await expect(page.getByRole("button", { name: "Retry workspaces" })).toBeVisible();
   await expectAccessible(page, "WORKSPACES_ERROR");

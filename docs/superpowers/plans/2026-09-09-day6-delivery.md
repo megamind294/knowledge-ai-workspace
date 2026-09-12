@@ -10,7 +10,7 @@
 
 **Spec:** `docs/superpowers/specs/2026-08-27-ai-knowledge-workspace-design.md`
 
-**Progress:** Day 6 Tasks 1–5 are complete on the draft delivery branch. Tasks 1–3 provide operational probes, privacy-bounded logging, and hardened non-root production images. Task 4 adds a health-ordered Compose topology with persistent database and document volumes plus real container-runtime smoke coverage. Task 5 adds deterministic Chromium acceptance for credential sign-in, workspace creation, real byte upload and indexing, grounded answers, citation navigation, recovery behavior, and critical-state accessibility. The local repository suite has 365 runnable tests with nine PostgreSQL/pgvector cases skipped without their database. All 374 repository tests, the grounded-answer fixture suite, production builds, real container smoke, and two browser journeys passed on commit `776d1792ea32feb66dbca25acc98d5abbe9510ef` in [GitHub Actions run #178](https://github.com/megamind294/knowledge-ai-workspace/actions/runs/34690174737). No production deployment or live-provider quality claim is made.
+**Progress:** Day 6 Tasks 1–5 are complete on the draft delivery branch. Tasks 1–3 provide operational probes, privacy-bounded logging, and hardened non-root production images. Task 4 adds a health-ordered Compose topology with persistent database and document volumes plus real container-runtime smoke coverage. Task 5 adds deterministic Chromium acceptance for credential sign-in, workspace creation, real byte upload and indexing, grounded answers, citation navigation, recovery behavior, and critical-state accessibility. Task 6 now includes an executable deployment/operations runbook and an automated documentation contract. The local repository suite has 366 runnable tests with nine PostgreSQL/pgvector cases skipped without their database. All 374 pre-runbook repository tests, the grounded-answer fixture suite, production builds, real container smoke, and two browser journeys passed on commit `776d1792ea32feb66dbca25acc98d5abbe9510ef` in [GitHub Actions run #178](https://github.com/megamind294/knowledge-ai-workspace/actions/runs/34690174737). No production deployment or live-provider quality claim is made.
 
 ## Global constraints
 
@@ -63,7 +63,7 @@ Task 3's static container contracts pass locally and in GitHub Actions. Docker a
 
 ### Task 6: Deployment guidance and final acceptance
 
-- [ ] Document the managed demo path, Azure/AWS production architecture, secrets, networking, storage, migrations, backup/restore, monitoring, rollback, and provider data flow.
+- [x] Document the managed demo path, Azure/AWS production architecture, secrets, networking, storage, migrations, backup/restore, monitoring, rollback, and provider data flow.
 - [ ] Complete clean-install acceptance, container and browser smoke tests, independent review, exact-head CI, final polish, and merge.
 
 ## Plan self-review

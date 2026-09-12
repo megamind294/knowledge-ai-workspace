@@ -138,6 +138,8 @@ The web build uses API mode by default. Set `VITE_API_URL` when the API is hoste
 
 `compose.yaml` connects the production web and API images to PostgreSQL 16 with pgvector. The database and document bytes use separate named volumes, the API waits for database health, and the public web service waits for API health. Only the Nginx web entrypoint is published; it proxies API requests over the private Compose network.
 
+The operator handoff in [`docs/DEPLOYMENT.md`](docs/DEPLOYMENT.md) covers the verified single-host demo path, Azure and AWS reference architectures, secrets and provider data flow, private networking, migrations, coordinated database/document backups, restore rehearsal, monitoring, and immutable-digest rollback. It distinguishes executable repository artifacts from cloud infrastructure that has not been provisioned.
+
 To run the production topology locally, copy `.env.example` to `.env`, generate distinct local-only values for `KEYSTONE_DATABASE_PASSWORD` and `KEYSTONE_ACCESS_TOKEN_SECRET`, then run:
 
 ```bash
@@ -182,6 +184,6 @@ In API mode, Day 4 creates document metadata, uploads the actual selected bytes 
 3. **Day 3 — complete:** Express API, PostgreSQL, email/password authentication, optional Google OAuth boundary, authorized metadata persistence, and frontend API integration
 4. **Day 4 — complete:** normalization/chunking, PDF/TXT/Markdown/DOCX textual extraction, authorized durable filesystem byte storage, pgvector schema, provider-neutral transactional indexing, authenticated indexing/retry UI, and scoped semantic source search
 5. **Day 5 — complete:** provider-neutral grounded generation, server-validated citations, conversation history, low-confidence behavior, explicit external-provider data-flow documentation, and deterministic groundedness evaluation
-6. **Day 6 — in progress:** CI-verified operational readiness, structured observability, production images, Compose runtime smoke, and Chromium end-to-end/accessibility acceptance; deployment guidance and final polish remain
+6. **Day 6 — in progress:** CI-verified operational readiness, structured observability, production images, Compose runtime smoke, Chromium end-to-end/accessibility acceptance, and a deployment/operations runbook; final acceptance and merge remain
 
 See [`PROJECT_STATUS.md`](PROJECT_STATUS.md) for the current handoff state.

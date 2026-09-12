@@ -15,11 +15,11 @@ Promote images by immutable image digest. Do not rebuild a tag independently in 
 
 ## Managed demo path
 
-The lowest-risk portfolio demo is one managed Linux VM with Docker Engine, the Compose plugin, TLS termination, and encrypted persistent disks. This preserves the tested service-DNS name `api` and the two named-volume boundaries without pretending that the filesystem adapter supports horizontal scaling.
+The lowest-risk portfolio demo is one managed Linux VM with Node.js 20.19 or newer, Docker Engine, the Compose plugin, TLS termination, and encrypted persistent disks. This preserves the tested service-DNS name `api` and the two named-volume boundaries without pretending that the filesystem adapter supports horizontal scaling.
 
 1. Create a small VM in an Azure or AWS private network and restrict administrative access to a VPN, bastion, or tightly scoped source addresses.
 2. Attach an encrypted data disk for Docker volumes. Keep the OS and Docker runtime patched.
-3. Install Docker Engine and Compose, clone a reviewed release, and create an untracked `.env` owned by the deployment account with mode `0600`.
+3. Install Node.js 20.19 or newer, Docker Engine, and Compose; clone a reviewed release; and create an untracked `.env` owned by the deployment account with mode `0600`.
 4. Put a managed HTTPS load balancer or reverse proxy in front of VM port 8080. Do not expose PostgreSQL or API port 4000 publicly.
 5. Start and verify the exact release:
 
@@ -30,6 +30,19 @@ The lowest-risk portfolio demo is one managed Linux VM with Docker Engine, the C
    ```
 
 6. Verify `/healthz`, `/api/health`, and `/api/ready` through the HTTPS hostname before allowing demo traffic.
+
+The base Compose file intentionally runs the credential-authenticated product with provider and Google integrations disabled. For a public provider-backed demo, set `KEYSTONE_PUBLIC_URL`, `EMBEDDING_API_KEY`, and `GENERATION_API_KEY` in the protected `.env`, then create this untracked `compose.public.yaml` override:
+
+```yaml
+services:
+  api:
+    environment:
+      WEB_APP_URL: ${KEYSTONE_PUBLIC_URL:?Set the public HTTPS origin}
+      EMBEDDING_API_KEY: ${EMBEDDING_API_KEY:?Set the embedding provider key}
+      GENERATION_API_KEY: ${GENERATION_API_KEY:?Set the generation provider key}
+```
+
+Use `docker compose -f compose.yaml -f compose.public.yaml ...` for build, start, and stop commands. Add `GOOGLE_OAUTH_CLIENT_ID`, `GOOGLE_OAUTH_CLIENT_SECRET`, and an exact HTTPS `GOOGLE_OAUTH_REDIRECT_URI` to the same override only when all three are configured. The optional provider endpoint, model, dimension, and timeout variables must likewise be explicitly forwarded by the override; never assume arbitrary host environment variables reach the container.
 
 For a disposable local demo, the same commands work on a developer machine. `docker compose down` preserves data; `docker compose down --volumes` intentionally destroys both named volumes.
 
@@ -49,7 +62,7 @@ Required production secrets are `DATABASE_URL` and a randomly generated `ACCESS_
 
 Google OAuth is enabled only when its client ID, client secret, and exact callback URI are all configured. Embedding requires `EMBEDDING_API_KEY`; grounded chat requires both embedding and generation keys. Public provider endpoints and public application URLs must use HTTPS.
 
-Provider-backed chat sends the user's question to the embedding endpoint. When retrieval passes the confidence threshold, the generation endpoint receives the question and at most eight retrieved passages, bounded to 24,000 source characters. Those passages can contain private workspace text. Approve provider region, retention, training, subprocessors, and deletion terms before enabling the integration. Keystone cannot delete copies retained by an external provider.
+Document indexing sends normalized document chunks to the embedding provider in batches of at most 64; each default chunk contains at most 300 words with a 50-word overlap. Provider-backed chat separately sends the user's question to the embedding endpoint. When retrieval passes the confidence threshold, the generation endpoint receives the question and at most eight retrieved passages, bounded to 24,000 source characters. Both indexing chunks and retrieved passages can contain private workspace text. Approve provider region, retention, training, subprocessors, and deletion terms before enabling either integration. Keystone cannot delete copies retained by an external provider.
 
 Never place tokens, passwords, document text, prompts, provider bodies, or full request URLs in operational logs. The API intentionally emits only allow-listed JSON fields for lifecycle, request completion, correlation, and readiness-transition events.
 
@@ -59,7 +72,9 @@ Never place tokens, passwords, document text, prompts, provider bodies, or full 
 - `/api/health` is dependency-free API liveness. Use it for restart decisions.
 - `/api/ready` performs a bounded PostgreSQL probe. Use it for load-balancer admission and remove a replica from traffic on `503`.
 
-Expose only HTTPS on the public ingress. Keep API-to-database and web-to-API traffic on private networks, restrict database security groups to the API identity/subnet, and deny direct public access to ports 4000 and 5432. Preserve the original scheme through `X-Forwarded-Proto`; production configuration rejects non-HTTPS public origins.
+Expose only HTTPS on the public ingress. Keep API-to-database and web-to-API traffic on private networks, restrict database security groups to the API identity/subnet, and deny direct public access to ports 4000 and 5432. Production configuration rejects non-HTTPS public origins.
+
+The committed Nginx proxy overwrites `X-Forwarded-Proto` with its internal `$scheme`, so TLS terminated before Nginx is represented as `http` to the API. The current API does not use that header for cookie security or authorization, but a platform that needs accurate downstream scheme telemetry must deploy and test a trusted-ingress forwarding policy. In that design, port 8080 must accept traffic only from the trusted TLS ingress so clients cannot spoof forwarding headers.
 
 Readiness intentionally excludes AI-provider availability. A provider outage should disable or fail provider-backed workflows safely without removing authentication and document-management traffic from service.
 
@@ -73,7 +88,7 @@ There is no automatic down-migration command. Application rollback is safe only 
 
 ## Backup and restore
 
-PostgreSQL rows and document bytes form one logical backup. Assign both artifacts the same backup identifier and retention policy.
+PostgreSQL rows and document bytes form one logical backup. Assign both artifacts the same backup identifier and retention policy. A shared identifier is not a consistency guarantee: maintain a write-quiescence window from before the first capture until after the second capture completes.
 
 For the Compose demo, quiesce writes before capture:
 
@@ -85,15 +100,25 @@ docker compose cp api:/var/lib/keystone/objects backups/objects
 docker compose start api web
 ```
 
-Prefer crash-consistent managed disk snapshots plus a managed PostgreSQL backup in cloud environments. Encrypt backups, restrict restore permissions, test retention expiry, and keep at least one copy outside the failure domain of the primary service.
+In cloud environments, remove the public ingress or otherwise quiesce writes across the entire managed PostgreSQL backup and filesystem-snapshot window. If the platform cannot coordinate those captures, this release does not provide an application-level checkpoint protocol and the pair must not be described as a consistent backup. Encrypt backups, restrict restore permissions, test retention expiry, and keep at least one copy outside the failure domain of the primary service.
 
-Restore only into an isolated environment first. Create an empty database and document volume, restore the database with `pg_restore --clean --if-exists --no-owner`, restore the matching object directory with ownership assigned to the API runtime user, start the candidate release, and run the smoke and browser acceptance checks. Promote the restore only after row counts, representative downloads, indexing state, grounded citations, and `/api/ready` have been verified.
+Restore only into an isolated environment first. For a disposable Compose restore target, keep application services stopped, start only `database`, recreate the database, and restore the matching dump:
+
+```bash
+docker compose stop web api
+docker compose up --detach --wait database
+docker compose exec -T database dropdb --if-exists -U "${KEYSTONE_DATABASE_USER:-keystone}" "${KEYSTONE_DATABASE_NAME:-keystone}"
+docker compose exec -T database createdb -U "${KEYSTONE_DATABASE_USER:-keystone}" "${KEYSTONE_DATABASE_NAME:-keystone}"
+docker compose exec -T database pg_restore -U "${KEYSTONE_DATABASE_USER:-keystone}" -d "${KEYSTONE_DATABASE_NAME:-keystone}" --clean --if-exists --no-owner < backups/keystone.dump
+```
+
+Restore the object snapshot with the platform's volume-restore mechanism, preserving its paths and assigning ownership to the API container's `node` user. Then start the candidate release and run the smoke and browser acceptance checks. Promote the restore only after row counts, representative downloads, indexing state, grounded citations, and `/api/ready` have been verified. A production restore procedure must be rehearsed for the chosen storage platform; the repository cannot supply a portable ownership-safe volume restore command.
 
 ## Monitoring and alerting
 
-Collect the API's JSON stdout events and container/platform metrics. Build dashboards for request count, status class, duration, readiness state, restarts, CPU, memory, disk usage, PostgreSQL connections/storage, backup age, and provider latency/error rates without recording provider payloads.
+Collect the API's JSON stdout events and container/platform metrics. The current allow-listed events support request count, aggregate status class, duration, correlation, lifecycle, and readiness state; platform metrics provide restarts, CPU, memory, disk, and database resource signals. Provider-specific telemetry is not currently emitted. Provider latency/error dashboards require additional privacy-safe operation, outcome, and duration instrumentation before they can be built without inferring from aggregate request data.
 
-Alert on sustained `/api/ready` failures, elevated 5xx rate, latency regression, restart loops, low database or document-volume capacity, migration failure, expired TLS certificates, backup failure, and missed restore rehearsal. Correlation IDs connect safe request-completion events to platform traces without logging user content.
+Alert on sustained `/api/ready` failures, elevated aggregate 5xx rate, latency regression, restart loops, low database or document-volume capacity, migration failure, expired TLS certificates, backup failure, and missed restore rehearsal. Add provider alerts only after the provider instrumentation described above exists. Correlation IDs connect safe request-completion events to platform traces without logging user content.
 
 Treat `/api/health` failure as a process incident, `/api/ready` failure as a database/service-admission incident, and provider failures as degraded AI functionality. Define recovery-time and recovery-point objectives before choosing alert thresholds and backup frequency.
 

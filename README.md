@@ -138,7 +138,7 @@ The web build uses API mode by default. Set `VITE_API_URL` when the API is hoste
 
 `compose.yaml` connects the production web and API images to PostgreSQL 16 with pgvector. The database and document bytes use separate named volumes, the API waits for database health, and the public web service waits for API health. Only the Nginx web entrypoint is published; it proxies API requests over the private Compose network.
 
-The operator handoff in [`docs/DEPLOYMENT.md`](docs/DEPLOYMENT.md) covers the verified single-host demo path, Azure and AWS reference architectures, secrets and provider data flow, private networking, migrations, coordinated database/document backups, restore rehearsal, monitoring, and immutable-digest rollback. It distinguishes executable repository artifacts from cloud infrastructure that has not been provisioned.
+The operator handoff in [`docs/DEPLOYMENT.md`](docs/DEPLOYMENT.md) covers the CI-verified Compose topology underlying a proposed single-host demo path, Azure and AWS reference architectures, secrets and provider data flow, private networking, migrations, coordinated database/document backups, restore rehearsal, monitoring, and immutable-digest rollback. It distinguishes executable repository artifacts from cloud infrastructure that has not been provisioned.
 
 To run the production topology locally, copy `.env.example` to `.env`, generate distinct local-only values for `KEYSTONE_DATABASE_PASSWORD` and `KEYSTONE_ACCESS_TOKEN_SECRET`, then run:
 

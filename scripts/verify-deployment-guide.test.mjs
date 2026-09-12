@@ -16,6 +16,10 @@ async function readGuide() {
   }
 }
 
+async function readStatus() {
+  return readFile(resolve(root, "PROJECT_STATUS.md"), "utf8");
+}
+
 test("deployment guide covers the complete operator handoff", async () => {
   const guide = await readGuide();
   const requiredHeadings = [
@@ -46,4 +50,17 @@ test("deployment guide covers the complete operator handoff", async () => {
   assert.match(guide, /pg_restore/, "guide must include a database restore procedure");
   assert.match(guide, /immutable image digest/i, "guide must require immutable releases");
   assert.match(guide, /does not claim a live deployment/i, "guide must preserve the truthful deployment boundary");
+  assert.match(guide, /normalized document chunks.*embedding provider/i, "guide must disclose indexing data egress");
+  assert.match(guide, /KEYSTONE_PUBLIC_URL/, "guide must configure the public application origin");
+  assert.match(guide, /Node\.js 20\.19/, "guide must list the smoke-test runtime prerequisite");
+  assert.match(guide, /write-quiescence window/i, "guide must require coordinated persistence capture");
+  assert.match(guide, /provider-specific telemetry is not currently emitted/i, "guide must distinguish desired provider metrics from implemented logs");
+  assert.match(guide, /overwrites `X-Forwarded-Proto`/i, "guide must disclose the current proxy scheme boundary");
+});
+
+test("project status does not retain superseded Day 6 claims", async () => {
+  const status = await readStatus();
+
+  assert.doesNotMatch(status, /images have not yet been built or exercised/i);
+  assert.doesNotMatch(status, /Task 4 container topology\/runtime smoke tests.*remain/i);
 });

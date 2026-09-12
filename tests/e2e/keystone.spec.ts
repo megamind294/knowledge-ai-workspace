@@ -28,8 +28,9 @@ async function expectAccessible(page: Page, checkpoint: string) {
   const elements = new Set<string>();
   for (const violation of results.violations) {
     for (const node of violation.nodes) {
-      const selector = node.target[0];
-      if (typeof selector !== "string") continue;
+      const target = node.target[0];
+      const selector = typeof target === "string" ? target : target[0];
+      if (!selector) continue;
       const marker = await page.locator(selector).first().evaluate((element) =>
         element.closest("[data-a11y-id]")?.getAttribute("data-a11y-id") ?? null,
       ).catch(() => null);

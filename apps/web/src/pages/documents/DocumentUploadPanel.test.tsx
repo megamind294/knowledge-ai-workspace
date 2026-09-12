@@ -58,6 +58,7 @@ describe("validated local document upload preview", () => {
     expect(screen.getByRole("combobox", { name: /collection/i })).toHaveClass(
       "disabled:opacity-100",
       "disabled:text-slate-300",
+      "disabled:[-webkit-text-fill-color:#cbd5e1]",
     );
   });
 

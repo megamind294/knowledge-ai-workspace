@@ -211,7 +211,7 @@ export function DocumentUploadPanel() {
         <label className="text-sm font-medium text-slate-200">
           Workspace
           <select
-            className="mt-2 block w-full rounded-xl border border-white/10 bg-slate-950 px-3 py-2.5 text-slate-100 disabled:opacity-100 disabled:text-slate-300"
+            className="mt-2 block w-full rounded-xl border border-white/10 bg-slate-950 px-3 py-2.5 text-slate-100 disabled:opacity-100 disabled:text-slate-300 disabled:[-webkit-text-fill-color:#cbd5e1]"
             data-a11y-id="document-workspace-select"
             disabled={workspacesQuery.isPending || createDocument.isPending}
             onChange={(event) => {
@@ -234,7 +234,7 @@ export function DocumentUploadPanel() {
         <label className="text-sm font-medium text-slate-200">
           Collection
           <select
-            className="mt-2 block w-full rounded-xl border border-white/10 bg-slate-950 px-3 py-2.5 text-slate-100 disabled:opacity-100 disabled:text-slate-300"
+            className="mt-2 block w-full rounded-xl border border-white/10 bg-slate-950 px-3 py-2.5 text-slate-100 disabled:opacity-100 disabled:text-slate-300 disabled:[-webkit-text-fill-color:#cbd5e1]"
             data-a11y-id="document-collection-select"
             disabled={
               !workspaceId || collectionsQuery.isPending || createDocument.isPending

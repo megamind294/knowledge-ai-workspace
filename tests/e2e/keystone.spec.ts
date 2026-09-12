@@ -23,6 +23,9 @@ async function signIn(page: Page, email: string) {
 }
 
 async function expectAccessible(page: Page, checkpoint: string) {
+  await page.addStyleTag({
+    content: "*, *::before, *::after { animation-duration: 0s !important; transition-delay: 0s !important; transition-duration: 0s !important; }",
+  });
   const results = await new AxeBuilder({ page }).analyze();
   const rules = results.violations.map(({ id }) => id).filter((id) => /^[a-z0-9-]+$/.test(id));
   const elements = new Set<string>();

@@ -33,4 +33,5 @@ test("browser suite targets the built compose topology with a deterministic prov
   assert.doesNotMatch(reporter, /result\.(?:stdout|stderr)|test\.title/);
   assert.match(reporter, /A11Y_CHECKPOINT_/);
   assert.match(journey, /data-a11y-id/);
+  assert.match(journey, /transition-duration: 0s/);
 });

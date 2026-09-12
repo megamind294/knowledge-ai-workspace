@@ -2,9 +2,9 @@
 
 ## Current milestone
 
-**Day 6 — deployment, operations, observability, and end-to-end hardening in progress**
+**Day 6 — deployment, operations, observability, and end-to-end hardening complete**
 
-Day 6 Tasks 1–5 are complete on the draft delivery branch. Tasks 1–4 provide operational probes, privacy-bounded structured logging, hardened non-root production images, and a health-ordered Compose topology with persistent PostgreSQL and document volumes. Task 5 adds deterministic production-browser acceptance for credential sign-in, workspace creation, real document upload and indexing, grounded answers, citation navigation, repository recovery, and accessibility across critical states. Task 6's operator runbook now covers the executable demo path, cloud reference architectures, secrets, networking, migrations, coordinated backups, restore rehearsal, monitoring, and rollback; final acceptance and merge remain. The local repository suite has 367 runnable tests with nine PostgreSQL/pgvector cases skipped without their database. All 374 pre-runbook repository tests, grounded-answer fixtures, lint, strict type-checking, production builds, real container smoke, and two Chromium journeys passed on commit `776d1792ea32feb66dbca25acc98d5abbe9510ef` in [GitHub Actions run #178](https://github.com/megamind294/knowledge-ai-workspace/actions/runs/34690174737).
+Day 6 Tasks 1–6 are complete and merge-ready. The milestone provides operational probes, privacy-bounded structured logging, hardened non-root production images, a health-ordered Compose topology with persistent PostgreSQL and document volumes, deterministic production-browser acceptance, automated accessibility checks, and an independently reviewed deployment/operations runbook. Clean installation, all 367 locally runnable tests, grounded fixtures, lint, strict type checking, and production builds passed on the final reviewed tree. All 376 repository tests, the required 32-test PostgreSQL/pgvector grounded acceptance suite, real container smoke, and both Chromium journeys passed on implementation commit `7b98bed6e5b331b5806e40fc05cbf36f0f31ab4d` in [GitHub Actions run #186](https://github.com/megamind294/knowledge-ai-workspace/actions/runs/34723319135). Final independent review reported no critical or important findings.
 
 Day 1 was merged into `main` through [pull request #2](https://github.com/megamind294/knowledge-ai-workspace/pull/2). Day 2 was merged through [pull request #4](https://github.com/megamind294/knowledge-ai-workspace/pull/4) after clean local acceptance and GitHub Actions verification.
 
@@ -240,6 +240,17 @@ Day 3 now includes:
 - final independent Day 5 review completed with its provider data-flow disclosure finding resolved before merge
 - the independently reviewed final documentation tree passing exact-head [GitHub Actions run #127](https://github.com/megamind294/knowledge-ai-workspace/actions/runs/34340967297) at commit `4c99bf0144d05fc35020ea07dd911461bbb5506d`
 
-## Next milestone
+## Day 6 completed scope
 
-Day 6 Tasks 1–5 and the Task 6 deployment/operations runbook are complete on the draft branch. Exact-head clean-install, PostgreSQL/pgvector, production-container, browser, accessibility, documentation-contract, and independent-review acceptance must pass before the branch is merged. No production deployment or live-provider quality claim is made.
+- dependency-free API liveness and bounded PostgreSQL-backed readiness
+- privacy-bounded structured lifecycle, request-completion, correlation, and readiness-transition events
+- digest-pinned, non-root API and web production images
+- persistent database and document volumes with health-ordered Compose startup
+- real production-image smoke coverage for health, readiness, authentication, and SPA routing
+- deterministic Chromium coverage for registration, sign-in, workspace creation, byte upload, indexing, grounded answers, citation navigation, and recovery
+- automated Axe checks across critical and failure states, with contrast, control, metadata, and heading-order fixes
+- operator guidance for single-host demos, Azure/AWS reference architectures, secrets, networking, migrations, coordinated backup/restore, monitoring, rollout, and rollback
+- mutation-tested container, Compose, browser, privacy-reporting, and deployment-guide contracts
+- clean-install, local quality, PostgreSQL/pgvector, container-runtime, browser, accessibility, exact-head CI, and independent-review acceptance
+
+No production deployment, live-provider quality, OCR, or horizontally shared object storage is claimed.

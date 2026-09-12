@@ -133,6 +133,9 @@ describe("validated local document upload preview", () => {
       await screen.findByText(/release-notes.md was added as a local preview/i),
     ).toBeVisible();
     expect(await screen.findByText("release-notes.md")).toBeVisible();
+    for (const metadata of screen.getAllByText(/markdown ·/i)) {
+      expect(metadata).toHaveClass("text-slate-400");
+    }
     expect(fileInput).toHaveValue("");
     const created = (await repository.getDocuments("product-research")).filter(
       (document) => document.name === "release-notes.md",

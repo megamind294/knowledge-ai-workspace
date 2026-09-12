@@ -56,6 +56,10 @@ test("deployment guide covers the complete operator handoff", async () => {
   assert.match(guide, /write-quiescence window/i, "guide must require coordinated persistence capture");
   assert.match(guide, /provider-specific telemetry is not currently emitted/i, "guide must distinguish desired provider metrics from implemented logs");
   assert.match(guide, /overwrites `X-Forwarded-Proto`/i, "guide must disclose the current proxy scheme boundary");
+  assert.match(guide, /Azure Front Door.*Azure Database for PostgreSQL.*Key Vault.*Azure Monitor/s, "guide must map the Azure architecture");
+  assert.match(guide, /CloudFront.*RDS for PostgreSQL.*Secrets Manager.*CloudWatch/s, "guide must map the AWS architecture");
+  assert.match(guide, /manual provider canary/i, "guide must use an available provider rollout signal");
+  assert.doesNotMatch(guide, /watching readiness, 5xx rate, latency, restarts, and provider errors/i);
 });
 
 test("project status does not retain superseded Day 6 claims", async () => {

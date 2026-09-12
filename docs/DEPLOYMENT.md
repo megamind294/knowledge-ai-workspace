@@ -127,7 +127,7 @@ Treat `/api/health` failure as a process incident, `/api/ready` failure as a dat
 1. Run the acceptance checklist on the release commit and require exact-head CI.
 2. Record the API image digest, web image digest, migration set, configuration version, and backup identifier.
 3. Deploy the new images without traffic, wait for health/readiness, and run the container smoke test against the candidate URL.
-4. Shift traffic gradually while watching readiness, 5xx rate, latency, restarts, and provider errors.
+4. Shift traffic gradually while watching readiness, aggregate 5xx rate, latency, and restarts. When provider-backed workflows are enabled, run a manual provider canary with non-sensitive test content and verify the expected indexed-source and grounded-answer result; do not infer provider health from telemetry this release does not emit.
 5. If application behavior regresses and the schema is backward compatible, route traffic to the previous immutable image digests.
 6. If data or an incompatible migration is involved, stop writes and execute the rehearsed database-plus-document restore procedure. Do not mix a restored database with document bytes from another backup identifier.
 

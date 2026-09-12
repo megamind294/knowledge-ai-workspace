@@ -135,25 +135,25 @@ export function DocumentDetailPage() {
 
               <dl className="grid gap-4 rounded-2xl border border-white/10 bg-slate-900/60 p-6 text-sm">
                 <div>
-                  <dt className="text-slate-500">Format</dt>
+                  <dt className="text-slate-400">Format</dt>
                   <dd className="mt-1 uppercase text-slate-200">
                     {document.mediaType}
                   </dd>
                 </div>
                 <div>
-                  <dt className="text-slate-500">Size</dt>
+                  <dt className="text-slate-400">Size</dt>
                   <dd className="mt-1 text-slate-200">
                     {formatBytes(document.sizeBytes)}
                   </dd>
                 </div>
                 <div>
-                  <dt className="text-slate-500">Created</dt>
+                  <dt className="text-slate-400">Created</dt>
                   <dd className="mt-1 text-slate-200">
                     {dateFormatter.format(new Date(document.createdAt))}
                   </dd>
                 </div>
                 <div>
-                  <dt className="text-slate-500">Updated</dt>
+                  <dt className="text-slate-400">Updated</dt>
                   <dd className="mt-1 text-slate-200">
                     {dateFormatter.format(new Date(document.updatedAt))}
                   </dd>

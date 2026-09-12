@@ -51,6 +51,10 @@ describe("validated local document upload preview", () => {
       screen.getByText(/pdf, txt, markdown, or docx up to 10 mib/i),
     ).toBeVisible();
     expect(screen.getByText(/no file bytes are uploaded/i)).toBeVisible();
+    expect(screen.getByRole("combobox", { name: /collection/i })).toHaveClass(
+      "disabled:opacity-100",
+      "disabled:text-slate-300",
+    );
   });
 
   it("scopes collection choices to the selected workspace", async () => {

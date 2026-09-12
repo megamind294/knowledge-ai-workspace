@@ -29,7 +29,7 @@ export function AuthLayout({
             source-backed conversations into one focused research surface.
           </p>
         </div>
-        <p className="text-sm text-slate-500">Day 1 product preview</p>
+        <p className="text-sm text-slate-400">Day 1 product preview</p>
       </section>
 
       <section className="flex min-h-screen items-center justify-center px-6 py-12 sm:px-10">

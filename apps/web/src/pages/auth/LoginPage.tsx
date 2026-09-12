@@ -33,7 +33,7 @@ export function LoginPage() {
       footer={
         <p>
           New to Keystone?{" "}
-          <Link className="font-semibold text-indigo-300 hover:text-indigo-200" to="/register">
+          <Link className="font-semibold text-indigo-300 underline decoration-2 underline-offset-4 hover:text-indigo-200" to="/register">
             Create account
           </Link>
         </p>
@@ -45,7 +45,7 @@ export function LoginPage() {
           Email address
           <input
             autoComplete="email"
-            className="mt-2 w-full rounded-xl border border-white/10 bg-slate-900 px-4 py-3 text-slate-100 placeholder:text-slate-600"
+            className="mt-2 w-full rounded-xl border border-white/10 bg-slate-900 px-4 py-3 text-slate-100 placeholder:text-slate-400"
             name="email"
             placeholder="you@example.com"
             required
@@ -56,7 +56,7 @@ export function LoginPage() {
           Password
           <input
             autoComplete="current-password"
-            className="mt-2 w-full rounded-xl border border-white/10 bg-slate-900 px-4 py-3 text-slate-100 placeholder:text-slate-600"
+            className="mt-2 w-full rounded-xl border border-white/10 bg-slate-900 px-4 py-3 text-slate-100 placeholder:text-slate-400"
             name="password"
             placeholder="Enter your password"
             required
@@ -73,7 +73,7 @@ export function LoginPage() {
       </form>
 
       {error ? <p className="mt-4 rounded-xl border border-rose-400/20 bg-rose-400/5 px-4 py-3 text-sm text-rose-200" role="alert">{error}</p> : null}
-      <div className="my-6 flex items-center gap-3 text-xs uppercase tracking-[0.16em] text-slate-600">
+      <div className="my-6 flex items-center gap-3 text-xs uppercase tracking-[0.16em] text-slate-400">
         <span className="h-px flex-1 bg-white/10" />
         Preview access
         <span className="h-px flex-1 bg-white/10" />
@@ -89,7 +89,7 @@ export function LoginPage() {
       >
         Continue with Google
       </button>}
-      <p className="mt-3 text-center text-xs text-slate-500">
+      <p className="mt-3 text-center text-xs text-slate-400">
         {googleOAuthEnabled
           ? "Google authentication is handled by the configured provider; credentials never pass through this form."
           : "Google sign-in remains unavailable until provider configuration is added."}

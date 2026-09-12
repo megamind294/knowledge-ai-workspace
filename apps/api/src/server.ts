@@ -1,21 +1,27 @@
 import { loadApiConfig } from "./config.js";
+import { createApiLifecycle } from "./operations/lifecycle.js";
 import { createApiRuntime } from "./runtime.js";
 
 const config = loadApiConfig();
 const runtime = await createApiRuntime(config);
 
-const server = runtime.app.listen(config.port, () => {
-  console.log(`Knowledge AI API listening on port ${config.port}`);
+const server = runtime.app.listen(config.port);
+const lifecycle = createApiLifecycle({
+  logger: runtime.operationalLogger,
+  closeServer: () =>
+    new Promise<void>((resolve, reject) => {
+      server.close((error) => {
+        if (error) reject(error);
+        else resolve();
+      });
+    }),
+  closeRuntime: runtime.close,
 });
+server.once("listening", () => lifecycle.startup());
 
-let closing = false;
 async function shutdown() {
-  if (closing) return;
-  closing = true;
-  server.close(async () => {
-    await runtime.close();
-    process.exitCode = 0;
-  });
+  await lifecycle.shutdown();
+  process.exitCode = 0;
 }
 
 process.once("SIGINT", () => void shutdown());

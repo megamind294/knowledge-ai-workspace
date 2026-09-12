@@ -43,14 +43,23 @@ describe("validated local document upload preview", () => {
     expect(
       await screen.findByRole("heading", { name: /add a document preview/i }),
     ).toBeVisible();
-    expect(screen.getByLabelText(/document file/i)).toHaveAttribute(
+    const fileInput = screen.getByLabelText(/document file/i);
+    expect(fileInput).toHaveAttribute(
       "accept",
       ".pdf,.txt,.md,.docx",
     );
+    expect(fileInput).toHaveClass("sr-only");
+    expect(screen.getByText("Choose file")).toBeVisible();
+    expect(screen.getByText("No file selected")).toBeVisible();
     expect(
       screen.getByText(/pdf, txt, markdown, or docx up to 10 mib/i),
     ).toBeVisible();
     expect(screen.getByText(/no file bytes are uploaded/i)).toBeVisible();
+    expect(screen.getByRole("combobox", { name: /collection/i })).toHaveClass(
+      "disabled:opacity-100",
+      "disabled:text-slate-300",
+      "disabled:[-webkit-text-fill-color:#cbd5e1]",
+    );
   });
 
   it("scopes collection choices to the selected workspace", async () => {
@@ -124,6 +133,9 @@ describe("validated local document upload preview", () => {
       await screen.findByText(/release-notes.md was added as a local preview/i),
     ).toBeVisible();
     expect(await screen.findByText("release-notes.md")).toBeVisible();
+    for (const metadata of screen.getAllByText(/markdown ·/i)) {
+      expect(metadata).toHaveClass("text-slate-400");
+    }
     expect(fileInput).toHaveValue("");
     const created = (await repository.getDocuments("product-research")).filter(
       (document) => document.name === "release-notes.md",

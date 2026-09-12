@@ -2,7 +2,9 @@
 
 ## Current milestone
 
-**Day 6 — deployment, operations, observability, and end-to-end hardening ready to start**
+**Day 6 — deployment, operations, observability, and end-to-end hardening complete**
+
+Day 6 Tasks 1–6 are complete and merge-ready. The milestone provides operational probes, privacy-bounded structured logging, hardened non-root production images, a health-ordered Compose topology with persistent PostgreSQL and document volumes, deterministic production-browser acceptance, automated accessibility checks, and an independently reviewed deployment/operations runbook. Clean installation, all 367 locally runnable tests, grounded fixtures, lint, strict type checking, and production builds passed on the final reviewed tree. All 376 repository tests, the required 32-test PostgreSQL/pgvector grounded acceptance suite, real container smoke, and both Chromium journeys passed on implementation commit `7b98bed6e5b331b5806e40fc05cbf36f0f31ab4d` in [GitHub Actions run #186](https://github.com/megamind294/knowledge-ai-workspace/actions/runs/34723319135). Final independent review reported no critical or important findings.
 
 Day 1 was merged into `main` through [pull request #2](https://github.com/megamind294/knowledge-ai-workspace/pull/2). Day 2 was merged through [pull request #4](https://github.com/megamind294/knowledge-ai-workspace/pull/4) after clean local acceptance and GitHub Actions verification.
 
@@ -44,12 +46,12 @@ No file bytes are uploaded, parsed, stored, embedded, or sent to an AI provider 
 - 23 automated tests covering repository and critical view/routing contracts
 - clean lint, strict type-check, test, and production-build commands
 
-## Explicitly not implemented in the current Day 4 slice
+## Current limitations
 
 - shared cloud object storage for horizontally scaled API instances; the current durable adapter targets one persistent filesystem
 - OCR for scanned or image-only PDFs; those files currently return the safe empty-document result
-- generated AI answers or citations
 - production deployment
+- live provider-quality validation or general semantic-entailment enforcement
 
 These are planned milestones, not hidden or partially implemented features.
 
@@ -238,6 +240,17 @@ Day 3 now includes:
 - final independent Day 5 review completed with its provider data-flow disclosure finding resolved before merge
 - the independently reviewed final documentation tree passing exact-head [GitHub Actions run #127](https://github.com/megamind294/knowledge-ai-workspace/actions/runs/34340967297) at commit `4c99bf0144d05fc35020ea07dd911461bbb5506d`
 
-## Next milestone
+## Day 6 completed scope
 
-Day 5 was merged into `main` through [pull request #8](https://github.com/megamind294/knowledge-ai-workspace/pull/8) as `2be317ce5e4ef0e56558520d452353ca1348d611`. The React experience consumes the authenticated conversation API only in API mode; provider-backed routes are composed only when both embedding and generation providers are configured. The deterministic corpus checks system boundaries and detects a controlled unsupported-answer failure; it does not claim live-provider quality or general semantic-groundedness enforcement. Day 6 will add deployment, operations, observability, and end-to-end hardening.
+- dependency-free API liveness and bounded PostgreSQL-backed readiness
+- privacy-bounded structured lifecycle, request-completion, correlation, and readiness-transition events
+- digest-pinned, non-root API and web production images
+- persistent database and document volumes with health-ordered Compose startup
+- real production-image smoke coverage for health, readiness, authentication, and SPA routing
+- deterministic Chromium coverage for registration, sign-in, workspace creation, byte upload, indexing, grounded answers, citation navigation, and recovery
+- automated Axe checks across critical and failure states, with contrast, control, metadata, and heading-order fixes
+- operator guidance for single-host demos, Azure/AWS reference architectures, secrets, networking, migrations, coordinated backup/restore, monitoring, rollout, and rollback
+- mutation-tested container, Compose, browser, privacy-reporting, and deployment-guide contracts
+- clean-install, local quality, PostgreSQL/pgvector, container-runtime, browser, accessibility, exact-head CI, and independent-review acceptance
+
+No production deployment, live-provider quality, OCR, or horizontally shared object storage is claimed.

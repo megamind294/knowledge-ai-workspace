@@ -3,6 +3,39 @@ import { ApiClientError } from "../api/apiClient";
 import { createApiKnowledgeRepository } from "./apiKnowledgeRepository";
 
 describe("API knowledge repository", () => {
+  it("creates a workspace through the authenticated API contract", async () => {
+    const workspace = {
+      id: "00000000-0000-4000-8000-000000000001",
+      name: "Release evidence",
+      slug: "release-evidence",
+      description: "Deterministic browser sources",
+      role: "owner" as const,
+      createdAt: "2026-09-10T00:00:00.000Z",
+      updatedAt: "2026-09-10T00:00:00.000Z",
+    };
+    const request = vi.fn().mockResolvedValue({ workspace });
+    const repository = createApiKnowledgeRepository({ request } as never);
+
+    await expect(repository.createWorkspace({
+      name: "Release evidence",
+      slug: "release-evidence",
+      description: "Deterministic browser sources",
+    })).resolves.toMatchObject({
+      id: workspace.id,
+      name: workspace.name,
+      collectionCount: 0,
+      documentCount: 0,
+    });
+    expect(request).toHaveBeenCalledWith("/api/workspaces", {
+      method: "POST",
+      body: JSON.stringify({
+        name: "Release evidence",
+        slug: "release-evidence",
+        description: "Deterministic browser sources",
+      }),
+    });
+  });
+
   it("maps workspace, collection, document, and dashboard responses into the existing UI model", async () => {
     const request = vi.fn(async (path: string) => {
       if (path === "/api/workspaces") return { workspaces: [{ id: "w1", name: "Research", slug: "research", description: "Sources", role: "owner", createdAt: "2026-09-01T00:00:00.000Z", updatedAt: "2026-09-01T00:00:00.000Z" }] };

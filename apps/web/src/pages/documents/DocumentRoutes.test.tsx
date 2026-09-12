@@ -106,6 +106,11 @@ describe("document library and detail routes", () => {
       screen.getByText(/text extraction could not be completed/i),
     ).toBeVisible();
     expect(screen.getByText(/local ingestion simulation/i)).toBeVisible();
+    for (const label of ["Format", "Size", "Created", "Updated"]) {
+      expect(screen.getByText(label, { selector: "dt" })).toHaveClass(
+        "text-slate-400",
+      );
+    }
 
     await user.click(
       screen.getByRole("button", { name: /retry simulated ingestion/i }),

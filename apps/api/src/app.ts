@@ -1,5 +1,9 @@
 import { randomUUID } from "node:crypto";
-import type { ApiErrorResponse, HealthResponse } from "@knowledge-ai/contracts";
+import type {
+  ApiErrorResponse,
+  HealthResponse,
+  ReadinessResponse,
+} from "@knowledge-ai/contracts";
 import express, {
   type ErrorRequestHandler,
   type Express,
@@ -22,6 +26,8 @@ import type {
 import { createConversationRouter } from "./conversations/conversationRouter.js";
 import type { ConversationRepository } from "./conversations/postgresConversationRepository.js";
 import type { GroundedAnswerService } from "./answers/groundedAnswerService.js";
+import type { ReadinessProbe } from "./operations/readiness.js";
+import type { OperationalLogger } from "./operations/operationalLogger.js";
 
 const REQUEST_ID_PATTERN = /^[A-Za-z0-9._-]{1,128}$/;
 
@@ -31,6 +37,10 @@ function resolveRequestId(value: string | undefined) {
 
 interface CreateAppOptions {
   corsOrigin?: string;
+  readiness?: ReadinessProbe;
+  operationalLogger?: OperationalLogger;
+  createOperationalCorrelationId?: () => string;
+  now?: () => number;
   auth?: {
     service: AuthService;
     accessTokenSecret: Uint8Array;
@@ -68,7 +78,29 @@ interface CreateAppOptions {
 
 export function createApp(options: CreateAppOptions = {}) {
   const app = express();
+  const createOperationalCorrelationId =
+    options.createOperationalCorrelationId ?? randomUUID;
+  const now = options.now ?? Date.now;
+  let readinessState: "ready" | "unavailable" | undefined;
   app.disable("x-powered-by");
+  app.use((request, response, next) => {
+    const requestId = resolveRequestId(request.header("x-request-id"));
+    const correlationId = createOperationalCorrelationId();
+    response.locals.requestId = requestId;
+    response.locals.operationalCorrelationId = correlationId;
+    response.setHeader("x-request-id", requestId);
+    const startedAt = now();
+    response.once("finish", () => {
+      options.operationalLogger?.emit({
+        eventType: "api.request.completed",
+        correlationId,
+        method: request.method,
+        statusCode: response.statusCode,
+        durationMs: now() - startedAt,
+      });
+    });
+    next();
+  });
   const corsOrigin = options.corsOrigin;
   if (corsOrigin) {
     app.use((request, response, next) => {
@@ -87,12 +119,6 @@ export function createApp(options: CreateAppOptions = {}) {
     });
   }
   app.use(express.json({ limit: "1mb" }));
-  app.use((request, response, next) => {
-    const requestId = resolveRequestId(request.header("x-request-id"));
-    response.locals.requestId = requestId;
-    response.setHeader("x-request-id", requestId);
-    next();
-  });
 
   app.get("/api/health", (_request, response) => {
     const body: HealthResponse = {
@@ -100,6 +126,38 @@ export function createApp(options: CreateAppOptions = {}) {
       service: "knowledge-ai-api",
     };
     response.json(body);
+  });
+
+  app.get("/api/ready", async (_request, response) => {
+    response.setHeader("cache-control", "no-store");
+    let nextReadinessState: "ready" | "unavailable";
+    try {
+      await options.readiness?.check();
+      if (!options.readiness) throw new Error("Readiness probe unavailable");
+      nextReadinessState = "ready";
+      const body: ReadinessResponse = {
+        status: "ready",
+        service: "knowledge-ai-api",
+        checks: { database: "ok" },
+      };
+      response.json(body);
+    } catch {
+      nextReadinessState = "unavailable";
+      const body: ReadinessResponse = {
+        status: "unavailable",
+        service: "knowledge-ai-api",
+        checks: { database: "unavailable" },
+      };
+      response.status(503).json(body);
+    }
+    if (readinessState !== nextReadinessState) {
+      readinessState = nextReadinessState;
+      options.operationalLogger?.emit({
+        eventType: "api.readiness.transition",
+        correlationId: response.locals.operationalCorrelationId as string,
+        readiness: nextReadinessState,
+      });
+    }
   });
 
   if (options.auth) {

@@ -30,6 +30,13 @@ describe("authentication preview", () => {
       "href",
       "/register",
     );
+    expect(screen.getByRole("link", { name: /create account/i })).toHaveClass(
+      "underline",
+    );
+    expect(screen.getByText(/preview access/i)).toHaveClass("text-slate-400");
+    expect(screen.getByText(/google sign-in remains unavailable/i)).toHaveClass(
+      "text-slate-400",
+    );
 
     await user.click(
       screen.getByRole("button", { name: /explore demo workspace/i }),

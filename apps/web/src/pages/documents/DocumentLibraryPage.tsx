@@ -122,7 +122,7 @@ export function DocumentLibraryPage() {
                       <p className="truncate font-semibold text-white">
                         {document.name}
                       </p>
-                      <p className="mt-1 text-xs uppercase tracking-wide text-slate-500">
+                      <p className="mt-1 text-xs uppercase tracking-wide text-slate-400">
                         {document.mediaType} · {formatBytes(document.sizeBytes)}
                       </p>
                     </div>

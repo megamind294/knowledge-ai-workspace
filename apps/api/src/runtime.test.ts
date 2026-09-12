@@ -1,9 +1,10 @@
 import request from "supertest";
-import { describe, expect, it } from "vitest";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import type { ApiConfig } from "./config.js";
 import { IngestionService } from "./ingestion/ingestionService.js";
 import { GroundedAnswerService } from "./answers/groundedAnswerService.js";
 import { createApiRuntime } from "./runtime.js";
+import type { OperationalLogger } from "./operations/operationalLogger.js";
 import { FileSystemObjectStore } from "./storage/fileSystemObjectStore.js";
 import { createPgMemPool } from "./testSupport/pgMem.js";
 
@@ -19,16 +20,44 @@ const config: ApiConfig = {
   webAppUrl: "https://web.example.com",
 };
 
+const testOperationalLogger: OperationalLogger = { emit: () => undefined };
+
+function createTestRuntime(runtimeConfig: ApiConfig) {
+  return createApiRuntime(runtimeConfig, {
+    pool: createPgMemPool(),
+    operationalLogger: testOperationalLogger,
+  });
+}
+
 describe("production API runtime", () => {
+  let consoleLog: ReturnType<typeof vi.spyOn>;
+
+  beforeEach(() => {
+    consoleLog = vi.spyOn(console, "log");
+  });
+
+  afterEach(() => {
+    expect(consoleLog).not.toHaveBeenCalled();
+    consoleLog.mockRestore();
+  });
+
   it("composes the durable filesystem object store", async () => {
-    const runtime = await createApiRuntime(config, { pool: createPgMemPool() });
+    const runtime = await createTestRuntime(config);
 
     expect(runtime.objectStore).toBeInstanceOf(FileSystemObjectStore);
     await runtime.close();
   });
 
   it("migrates PostgreSQL and composes authenticated application routes", async () => {
-    const runtime = await createApiRuntime(config, { pool: createPgMemPool() });
+    const runtime = await createTestRuntime(config);
+
+    await request(runtime.app)
+      .get("/api/ready")
+      .expect(200, {
+        status: "ready",
+        service: "knowledge-ai-api",
+        checks: { database: "ok" },
+      });
 
     const registration = await request(runtime.app)
       .post("/api/auth/register")
@@ -68,7 +97,7 @@ describe("production API runtime", () => {
   });
 
   it("composes the ingestion service only when embeddings are configured", async () => {
-    const runtime = await createApiRuntime(
+    const runtime = await createTestRuntime(
       {
         ...config,
         embedding: {
@@ -79,7 +108,6 @@ describe("production API runtime", () => {
           timeoutMs: 15000,
         },
       },
-      { pool: createPgMemPool() },
     );
 
     expect(runtime.ingestionService).toBeInstanceOf(IngestionService);
@@ -109,7 +137,7 @@ describe("production API runtime", () => {
   });
 
   it("composes authenticated grounded-conversation routes when both AI providers are configured", async () => {
-    const runtime = await createApiRuntime(
+    const runtime = await createTestRuntime(
       {
         ...config,
         embedding: {
@@ -126,7 +154,6 @@ describe("production API runtime", () => {
           timeoutMs: 100,
         },
       },
-      { pool: createPgMemPool() },
     );
     expect(runtime.groundedAnswerService).toBeInstanceOf(GroundedAnswerService);
 
@@ -166,9 +193,8 @@ describe("production API runtime", () => {
 
   it("refuses to compose without durable storage and token configuration", async () => {
     await expect(
-      createApiRuntime(
+      createTestRuntime(
         { ...config, accessTokenSecret: null, databaseUrl: null },
-        { pool: createPgMemPool() },
       ),
     ).rejects.toThrowError(/database_url and access_token_secret are required/i);
   });

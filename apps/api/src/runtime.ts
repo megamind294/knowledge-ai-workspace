@@ -7,7 +7,11 @@ import { GoogleOAuthAdapter } from "./auth/googleOAuth.js";
 import { PostgresAuthRepository } from "./auth/postgresAuthRepository.js";
 import type { ApiConfig } from "./config.js";
 import { runMigrations } from "./database/migrate.js";
-import { createDatabasePool, type DatabasePool } from "./database/pool.js";
+import {
+  createDatabasePool,
+  queryWithDriverTimeout,
+  type DatabasePool,
+} from "./database/pool.js";
 import { DocumentParser } from "./ingestion/documentParser.js";
 import { IngestionService } from "./ingestion/ingestionService.js";
 import { PostgresIngestionRepository } from "./ingestion/postgresIngestionRepository.js";
@@ -15,6 +19,11 @@ import { PostgresKnowledgeRepository } from "./knowledge/postgresKnowledgeReposi
 import { PostgresRetrievalRepository } from "./retrieval/postgresRetrievalRepository.js";
 import { FileSystemObjectStore } from "./storage/fileSystemObjectStore.js";
 import { PostgresConversationRepository } from "./conversations/postgresConversationRepository.js";
+import { createDatabaseReadinessProbe } from "./operations/readiness.js";
+import {
+  createConsoleOperationalLogger,
+  type OperationalLogger,
+} from "./operations/operationalLogger.js";
 
 const GOOGLE_AUTHORIZATION_ENDPOINT = "https://accounts.google.com/o/oauth2/v2/auth";
 const GOOGLE_TOKEN_ENDPOINT = "https://oauth2.googleapis.com/token";
@@ -22,6 +31,7 @@ const GOOGLE_USER_INFO_ENDPOINT = "https://openidconnect.googleapis.com/v1/useri
 
 interface RuntimeOptions {
   pool?: DatabasePool;
+  operationalLogger?: OperationalLogger;
 }
 
 export async function createApiRuntime(
@@ -33,6 +43,7 @@ export async function createApiRuntime(
   }
 
   const pool = options.pool ?? createDatabasePool(config);
+  const operationalLogger = options.operationalLogger ?? createConsoleOperationalLogger();
   await runMigrations(pool);
 
   const accessTokenSecret = new TextEncoder().encode(config.accessTokenSecret);
@@ -76,6 +87,10 @@ export async function createApiRuntime(
 
   return {
     app: createApp({
+      operationalLogger,
+      readiness: createDatabaseReadinessProbe({
+        query: (queryConfig) => queryWithDriverTimeout(pool, queryConfig),
+      }),
       auth: {
         service: authService,
         accessTokenSecret,
@@ -119,6 +134,7 @@ export async function createApiRuntime(
           : undefined,
     }),
     close: () => pool.end(),
+    operationalLogger,
     ingestionService,
     groundedAnswerService,
     objectStore,

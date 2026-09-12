@@ -70,7 +70,7 @@ test("sign in, create a workspace, upload real bytes, index, answer, and open a 
     mimeType: "text/plain",
     buffer: Buffer.from("Retention Policy\nCompany records must be retained for seven years."),
   });
-  await page.getByLabel("Workspace").selectOption({ label: workspaceName });
+  await page.getByRole("combobox", { name: "Workspace", exact: true }).selectOption({ label: workspaceName });
   await page.getByRole("button", { name: "Upload and index" }).click();
   await expect(page.getByRole("status")).toContainText("is indexed and ready to search");
   await expect(page.getByRole("link", { name: "Open retention-policy.txt", exact: true })).toBeVisible();
@@ -79,10 +79,10 @@ test("sign in, create a workspace, upload real bytes, index, answer, and open a 
   await page.getByRole("link", { name: "Conversations", exact: true }).click();
   await expect(page.getByRole("option", { name: workspaceName, exact: true })).toBeAttached();
   await expectAccessible(page, "CONVERSATION_FORM");
-  await page.getByLabel("Workspace").selectOption({ label: workspaceName });
+  await page.getByRole("combobox", { name: "Workspace", exact: true }).selectOption({ label: workspaceName });
   await page.getByLabel("Conversation title").fill("Retention check");
   await expect(page.getByRole("option", { name: "retention-policy.txt", exact: true })).toBeAttached();
-  await page.getByLabel("Document scope").selectOption({ label: "retention-policy.txt" });
+  await page.getByRole("combobox", { name: "Document scope", exact: true }).selectOption({ label: "retention-policy.txt" });
   await page.getByRole("button", { name: "Create conversation" }).click();
   await page.getByLabel("Ask a question").fill("How long must company records be retained?");
   await page.getByRole("button", { name: "Send question" }).click();
